@@ -1,0 +1,9 @@
+{
+  "name": "racoon-lms-on-user-created",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "dependencies": {
+    "node-appwrite": "^17.0.0"
+  }
+}

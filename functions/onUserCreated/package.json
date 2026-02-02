@@ -1,0 +1,17 @@
+{
+  "name": "on-user-created",
+  "version": "1.0.0",
+  "description": "Trigger cuando un usuario se crea en Auth para crear su perfil",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "node-appwrite": "^14.0.0"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "author": "RacoonDevs",
+  "license": "ISC"
+}

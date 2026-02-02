@@ -1,0 +1,17 @@
+{
+  "name": "sync-user-profile",
+  "version": "1.0.0",
+  "description": "Sincroniza cambios entre profiles y Auth de Appwrite",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "node-appwrite": "^14.0.0"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "author": "RacoonDevs",
+  "license": "ISC"
+}
