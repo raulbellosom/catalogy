@@ -9,6 +9,7 @@ import { useSubdomain } from "@/shared/hooks";
 import { useStoreBySlug, useProducts } from "@/shared/hooks";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
+import { ThemeToggle } from "@/shared/ui/molecules/ThemeToggle";
 import { motion } from "motion/react";
 
 /**
@@ -63,30 +64,33 @@ export function CatalogPage() {
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
       {/* Header */}
-      <header className="bg-[var(--color-card)] border-b border-[var(--color-card-border)] sticky top-0 z-10 safe-top">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={store.name}
-                className="w-16 h-16 rounded-xl object-cover"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center">
-                <StoreIcon className="w-8 h-8 text-[var(--color-primary)]" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-[var(--color-fg)]">
-                {store.name}
-              </h1>
-              {store.description && (
-                <p className="text-[var(--color-fg-secondary)] mt-1">
-                  {store.description}
-                </p>
+      <header className="bg-[var(--color-card)]/90 backdrop-blur-md border-b border-[var(--color-card-border)] sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={store.name}
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <StoreIcon className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-primary)]" />
+                </div>
               )}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold text-[var(--color-fg)] truncate">
+                  {store.name}
+                </h1>
+                {store.description && (
+                  <p className="text-sm sm:text-base text-[var(--color-fg-secondary)] mt-1 line-clamp-1 sm:line-clamp-2">
+                    {store.description}
+                  </p>
+                )}
+              </div>
             </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>

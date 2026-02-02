@@ -1,4 +1,8 @@
 import { Sun, Moon, Monitor } from "lucide-react";
+import {
+  ThemeAnimationType,
+  useModeAnimation,
+} from "react-theme-switch-animation";
 import { useTheme } from "@/app/providers";
 
 /**
@@ -7,6 +11,11 @@ import { useTheme } from "@/app/providers";
  */
 export function ThemeToggle() {
   const { preference, setPreference } = useTheme();
+  const { ref, toggleSwitchTheme } = useModeAnimation({
+    animationType: ThemeAnimationType.CIRCLE,
+    duration: 500,
+    easing: "ease-in-out",
+  });
 
   const cycleTheme = () => {
     const nextTheme = {
@@ -14,7 +23,14 @@ export function ThemeToggle() {
       light: "dark",
       dark: "system",
     };
-    setPreference(nextTheme[preference]);
+
+    // Trigger animation
+    toggleSwitchTheme();
+
+    // Update preference after a brief delay to sync with animation
+    setTimeout(() => {
+      setPreference(nextTheme[preference]);
+    }, 50);
   };
 
   const Icon = {
@@ -31,6 +47,7 @@ export function ThemeToggle() {
 
   return (
     <button
+      ref={ref}
       onClick={cycleTheme}
       className="p-2 rounded-lg text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)] transition-colors"
       aria-label={label}
