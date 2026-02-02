@@ -44,3 +44,8 @@ dev-dist/
 
 # Misc
 *.pem
+
+*.zip
+*.tar.gz
+*.rar
+*.7z
