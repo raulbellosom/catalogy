@@ -2,7 +2,7 @@
 
 **Tipo:** HTTP Function (invocada desde frontend)  
 **Runtime:** Node 18  
-**SDK:** node-appwrite ^14
+**SDK:** node-appwrite ^17
 
 ## Qué hace
 

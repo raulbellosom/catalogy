@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { switchTheme } from "react-theme-switch-animation";
 
 /**
  * @typedef {'light' | 'dark' | 'system'} ThemePreference
@@ -82,10 +83,20 @@ export function ThemeProvider({ children }) {
   }, [preference]);
 
   /**
-   * Set theme preference and persist to localStorage
+   * Set theme preference and persist to localStorage with animation
    * @param {ThemePreference} newPreference
    */
   const setPreference = (newPreference) => {
+    const newResolvedTheme =
+      newPreference === "system" ? getSystemTheme() : newPreference;
+
+    // Animate theme transition
+    switchTheme({
+      theme: newResolvedTheme,
+      transitionDuration: 300,
+      reverse: newResolvedTheme === "light", // Reverse animation when going to light mode
+    });
+
     setPreferenceState(newPreference);
     localStorage.setItem(STORAGE_KEY, newPreference);
   };

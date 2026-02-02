@@ -42,15 +42,17 @@ export default async ({ req, res, log, error }) => {
   const db = new Databases(client);
 
   const endpoint =
-    process.env.APPWRITE_FUNCTION_ENDPOINT || process.env.APPWRITE_ENDPOINT;
+    process.env.APPWRITE_FUNCTION_ENDPOINT ||
+    process.env.VITE_APPWRITE_ENDPOINT;
   const projectId =
-    process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.APPWRITE_PROJECT_ID;
+    process.env.APPWRITE_FUNCTION_PROJECT_ID ||
+    process.env.VITE_APPWRITE_PROJECT_ID;
   const apiKey =
-    process.env.APPWRITE_FUNCTION_API_KEY || process.env.APPWRITE_API_KEY;
+    process.env.APPWRITE_FUNCTION_API_KEY || process.env.APPWRITE_ADMIN_API_KEY;
 
-  const databaseId = process.env.APPWRITE_DATABASE_ID || "main";
+  const databaseId = process.env.VITE_APPWRITE_DATABASE_ID || "main";
   const profilesCollectionId =
-    process.env.APPWRITE_PROFILES_COLLECTION_ID || "profiles";
+    process.env.VITE_APPWRITE_COLLECTION_PROFILES_ID || "profiles";
 
   if (!endpoint || !projectId || !apiKey) {
     error("Missing APPWRITE endpoint/projectId/apiKey env vars");

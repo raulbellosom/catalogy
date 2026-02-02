@@ -250,7 +250,8 @@ function getAppwriteEndpoint(log) {
 
   // 2) Lo que te dé Appwrite runtime / tu env
   let endpoint =
-    process.env.APPWRITE_FUNCTION_API_ENDPOINT || process.env.APPWRITE_ENDPOINT;
+    process.env.APPWRITE_FUNCTION_API_ENDPOINT ||
+    process.env.VITE_APPWRITE_ENDPOINT;
 
   if (!endpoint) throw new Error("No Appwrite endpoint configured");
 
@@ -292,32 +293,33 @@ function getAppwriteEndpoint(log) {
 export default async ({ req, res, log, error }) => {
   const endpoint = getAppwriteEndpoint(log);
   const projectId =
-    process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.APPWRITE_PROJECT_ID;
+    process.env.APPWRITE_FUNCTION_PROJECT_ID ||
+    process.env.VITE_APPWRITE_PROJECT_ID;
 
   if (!projectId) {
     return json(res, 500, {
       ok: false,
-      error: "Missing APPWRITE_FUNCTION_PROJECT_ID or APPWRITE_PROJECT_ID",
+      error: "Missing APPWRITE_FUNCTION_PROJECT_ID or VITE_APPWRITE_PROJECT_ID",
     });
   }
 
   logRuntimeInfo(log);
   log(`Connecting to Appwrite: endpoint=${endpoint}, project=${projectId}`);
 
-  const API_KEY = must("APPWRITE_API_KEY");
+  const API_KEY = must("APPWRITE_ADMIN_API_KEY");
   if (DEBUG) {
     log(`Config: apiKey=${redact(API_KEY)}`);
     log(
-      `Config: db=${process.env.APPWRITE_DATABASE_ID}, profiles=${process.env.APPWRITE_PROFILES_COLLECTION_ID}, verifications=${process.env.APPWRITE_EMAIL_VERIFICATIONS_COLLECTION_ID}`,
+      `Config: db=${process.env.VITE_APPWRITE_DATABASE_ID}, profiles=${process.env.VITE_APPWRITE_COLLECTION_PROFILES_ID}, verifications=${process.env.VITE_APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID}`,
     );
   }
 
-  const DB_ID = must("APPWRITE_DATABASE_ID");
-  const PROFILES_COLL_ID = must("APPWRITE_PROFILES_COLLECTION_ID");
+  const DB_ID = must("VITE_APPWRITE_DATABASE_ID");
+  const PROFILES_COLL_ID = must("VITE_APPWRITE_COLLECTION_PROFILES_ID");
   const VERIFICATIONS_COLL_ID = must(
-    "APPWRITE_EMAIL_VERIFICATIONS_COLLECTION_ID",
+    "VITE_APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID",
   );
-  const APP_BASE_URL = must("APP_BASE_URL");
+  const APP_BASE_URL = must("VITE_APP_BASE_URL");
 
   try {
     const body = safeBodyJson(req);

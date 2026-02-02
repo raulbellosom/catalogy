@@ -1,12 +1,21 @@
 import { Client, Account, Databases, Storage } from "appwrite";
+import {
+  appwriteConfig,
+  collections,
+  buckets,
+  appConfig,
+  DATABASE_ID,
+  COLLECTIONS,
+  BUCKETS,
+  APP_CONFIG,
+} from "./env";
 
 /**
  * Appwrite client configuration
- * Uses environment variables from .env
+ * Uses centralized environment configuration from env.js
  */
 
-const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
-const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+const { endpoint, projectId } = appwriteConfig;
 
 if (!endpoint || !projectId) {
   console.error("Missing Appwrite configuration. Check your .env file.");
@@ -22,27 +31,8 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
 
-// Database and collection IDs
-export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID || "main";
+// Re-export from env.js for backward compatibility
+export { DATABASE_ID, COLLECTIONS, BUCKETS, APP_CONFIG };
 
-export const COLLECTIONS = {
-  PROFILES: import.meta.env.VITE_APPWRITE_COLLECTION_PROFILES_ID || "profiles",
-  USER_PREFERENCES:
-    import.meta.env.VITE_APPWRITE_COLLECTION_USER_PREFERENCES_ID ||
-    "userPreferences",
-  STORES: import.meta.env.VITE_APPWRITE_COLLECTION_STORES_ID || "stores",
-  PRODUCTS: import.meta.env.VITE_APPWRITE_COLLECTION_PRODUCTS_ID || "products",
-};
-
-export const BUCKETS = {
-  AVATARS: import.meta.env.VITE_APPWRITE_BUCKET_AVATARS_ID || "avatars",
-  PRODUCT_IMAGES:
-    import.meta.env.VITE_APPWRITE_BUCKET_PRODUCT_IMAGES_ID || "productImages",
-  STORE_LOGOS:
-    import.meta.env.VITE_APPWRITE_BUCKET_STORE_LOGOS_ID || "storeLogos",
-};
-
-// App configuration
-export const APP_CONFIG = {
-  BASE_DOMAIN: import.meta.env.VITE_APP_BASE_DOMAIN || "catalog.racoondevs.com",
-};
+// New exports (recommended)
+export { appwriteConfig, collections, buckets, appConfig };

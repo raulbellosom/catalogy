@@ -11,43 +11,14 @@ import {
   BUCKETS,
 } from "@/shared/lib/appwrite";
 import { Query, ID } from "appwrite";
+import {
+  validateSlugRemote,
+  validateSlugFormat,
+  generateSlug,
+} from "./slugValidationService";
 
-/**
- * Slug validation regex
- * @type {RegExp}
- */
-export const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-/**
- * Validate slug format
- * @param {string} slug
- * @returns {{ valid: boolean, error?: string }}
- */
-export function validateSlug(slug) {
-  if (!slug || slug.trim() === "") {
-    return { valid: false, error: "El slug es requerido" };
-  }
-
-  const trimmed = slug.trim();
-
-  if (trimmed.length < 3) {
-    return { valid: false, error: "El slug debe tener al menos 3 caracteres" };
-  }
-
-  if (trimmed.length > 50) {
-    return { valid: false, error: "El slug no puede exceder 50 caracteres" };
-  }
-
-  if (!SLUG_REGEX.test(trimmed)) {
-    return {
-      valid: false,
-      error:
-        "Solo minúsculas, números y guiones. No puede empezar/terminar con guión",
-    };
-  }
-
-  return { valid: true };
-}
+// Re-export for backward compatibility
+export { validateSlugFormat as validateSlug, generateSlug };
 
 /**
  * Check if slug is available
@@ -126,25 +97,20 @@ export async function getStoreBySlug(slug) {
 export async function createStore(data) {
   const { slug, name, description, templateId, profileId } = data;
 
-  // Validate slug
-  const validation = validateSlug(slug);
+  // Validate slug using Appwrite function (format + availability)
+  const validation = await validateSlugRemote(slug);
   if (!validation.valid) {
-    throw new Error(validation.error);
+    throw new Error(validation.error || "Slug inválido");
   }
 
-  // Check availability
-  const available = await isSlugAvailable(slug);
-  if (!available) {
-    throw new Error("Este slug ya está en uso");
-  }
-
+  // Use the normalized slug from validation
   return await databases.createDocument(
     DATABASE_ID,
     COLLECTIONS.STORES,
     ID.unique(),
     {
       profileId,
-      slug: slug.trim().toLowerCase(),
+      slug: validation.slug, // Slug normalizado por la validación
       name: name.trim(),
       description: description?.trim() || "",
       templateId: templateId || "minimal",
@@ -163,19 +129,15 @@ export async function createStore(data) {
 export async function updateStore(storeId, data) {
   const updateData = { ...data };
 
-  // If slug is being updated, validate it
+  // If slug is being updated, validate it using Appwrite function
   if (data.slug) {
-    const validation = validateSlug(data.slug);
+    const validation = await validateSlugRemote(data.slug);
     if (!validation.valid) {
-      throw new Error(validation.error);
+      throw new Error(validation.error || "Slug inválido");
     }
 
-    const available = await isSlugAvailable(data.slug, storeId);
-    if (!available) {
-      throw new Error("Este slug ya está en uso");
-    }
-
-    updateData.slug = data.slug.trim().toLowerCase();
+    // Use normalized slug from validation
+    updateData.slug = validation.slug;
   }
 
   // Trim text fields

@@ -230,15 +230,35 @@ Cada template es personalizable via Puck Editor (@puckeditor/core):
 - Inputs: { slug: string }
 - Outputs: { valid: boolean, message?: string }
 
-### createProfile
+### onUserCreated
 
-- Nombre: createProfile
-- Proposito: Crear perfil automaticamente cuando se registra un usuario
+- Nombre: onUserCreated
+- Proposito: Crear perfil y preferencias automaticamente cuando se registra un usuario, y enviar email de verificación
 - Tipo de trigger: event (users.\*.create)
-- Scopes necesarios: databases.write, users.read
+- Scopes necesarios: databases.write, users.read, execution.write
 - Colecciones/buckets tocados: profiles, userPreferences
 - Inputs: evento de usuario
-- Outputs: perfil creado
+- Outputs: perfil creado, preferencias creadas, email enviado
+
+### syncUserProfile
+
+- Nombre: syncUserProfile
+- Proposito: Sincronizar cambios de perfil entre la colección profiles y Appwrite Auth
+- Tipo de trigger: manual (HTTP autenticado)
+- Scopes necesarios: databases.write, users.write
+- Colecciones/buckets tocados: profiles
+- Inputs: { firstName, lastName, email, phone, avatarFileId }
+- Outputs: perfil actualizado
+
+### emailVerification
+
+- Nombre: emailVerification
+- Proposito: Gestionar envío, verificación y reenvío de correos de verificación de email
+- Tipo de trigger: manual (HTTP)
+- Scopes necesarios: databases.write, users.read
+- Colecciones/buckets tocados: profiles, emailVerifications
+- Inputs: { action, token?, userAuthId?, email? }
+- Outputs: email enviado, verificación confirmada
 
 ## Requisitos no funcionales
 

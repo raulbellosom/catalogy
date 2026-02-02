@@ -15,13 +15,25 @@ functions/
 │   ├── src/
 │   │   └── main.js
 │   └── package.json
-├── validateSlug/
+├── onUserCreated/
 │   ├── README.md
 │   ├── .env.example
 │   ├── src/
 │   │   └── main.js
 │   └── package.json
-└── createProfile/
+├── syncUserProfile/
+│   ├── README.md
+│   ├── .env.example
+│   ├── src/
+│   │   └── main.js
+│   └── package.json
+├── emailVerification/
+│   ├── README.md
+│   ├── .env.example
+│   ├── src/
+│   │   └── main.js
+│   └── package.json
+└── validateSlug/
     ├── README.md
     ├── .env.example
     ├── src/
@@ -170,16 +182,31 @@ APPWRITE_ADMIN_API_KEY=
 
 ## Functions del proyecto Catalogy
 
+### onUserCreated
+
+- Proposito: Crear perfil y preferencias automaticamente al registrarse un usuario, y enviar email de verificación
+- Trigger: event (users.\*.create)
+- Scopes: databases.write, users.read, execution.write
+- Colecciones: profiles, userPreferences
+- Invoca: emailVerification (para enviar email de verificación)
+
+### syncUserProfile
+
+- Proposito: Sincronizar cambios de perfil entre la colección profiles y Appwrite Auth
+- Trigger: manual (HTTP autenticado)
+- Scopes: databases.write, users.write
+- Colecciones: profiles
+
+### emailVerification
+
+- Proposito: Gestionar envío, verificación y reenvío de correos de verificación de email
+- Trigger: manual (HTTP)
+- Scopes: databases.write, users.read
+- Colecciones: profiles, emailVerifications
+
 ### validateSlug
 
 - Proposito: Validar que un slug sea unico y cumpla formato URL-safe
 - Trigger: manual (HTTP)
 - Scopes: databases.read
 - Colecciones: stores
-
-### createProfile
-
-- Proposito: Crear perfil automaticamente al registrarse un usuario
-- Trigger: event (users.\*.create)
-- Scopes: databases.write, users.read
-- Colecciones: profiles, userPreferences

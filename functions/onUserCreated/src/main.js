@@ -29,15 +29,17 @@ export default async ({ req, res, log, error }) => {
   const db = new Databases(client);
 
   const endpoint =
-    process.env.APPWRITE_FUNCTION_ENDPOINT || process.env.APPWRITE_ENDPOINT;
+    process.env.APPWRITE_FUNCTION_ENDPOINT ||
+    process.env.VITE_APPWRITE_ENDPOINT;
   const projectId =
-    process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.APPWRITE_PROJECT_ID;
+    process.env.APPWRITE_FUNCTION_PROJECT_ID ||
+    process.env.VITE_APPWRITE_PROJECT_ID;
   const apiKey =
-    process.env.APPWRITE_FUNCTION_API_KEY || process.env.APPWRITE_API_KEY;
+    process.env.APPWRITE_FUNCTION_API_KEY || process.env.APPWRITE_ADMIN_API_KEY;
 
-  const databaseId = process.env.APPWRITE_DATABASE_ID || "main";
+  const databaseId = process.env.VITE_APPWRITE_DATABASE_ID || "main";
   const profilesCollectionId =
-    process.env.APPWRITE_PROFILES_COLLECTION_ID || "profiles";
+    process.env.VITE_APPWRITE_COLLECTION_PROFILES_ID || "profiles";
 
   if (!endpoint || !projectId || !apiKey) {
     error("Missing APPWRITE endpoint/projectId/apiKey env vars");
@@ -100,7 +102,8 @@ export default async ({ req, res, log, error }) => {
     // Create User Preferences (Default: Mexico/Spanish)
     // -----------------------------------------------------------------------
     const prefsCollectionId =
-      process.env.APPWRITE_USER_PREFERENCES_COLLECTION_ID || "userPreferences";
+      process.env.VITE_APPWRITE_COLLECTION_USER_PREFERENCES_ID ||
+      "userPreferences";
     try {
       // Check if exists first to be safe (idempotent)
       await db.getDocument(databaseId, prefsCollectionId, userId);
@@ -120,7 +123,8 @@ export default async ({ req, res, log, error }) => {
     // -----------------------------------------------------------------------
     // Trigger Email Verification
     // -----------------------------------------------------------------------
-    const verificationFunctionId = process.env.APPWRITE_FN_EMAIL_VERIFICATION;
+    const verificationFunctionId =
+      process.env.VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID;
     if (verificationFunctionId) {
       try {
         const functions = new Functions(client);
@@ -140,7 +144,7 @@ export default async ({ req, res, log, error }) => {
       }
     } else {
       log(
-        "APPWRITE_FN_EMAIL_VERIFICATION not set, skipping auto-verification email.",
+        "VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID not set, skipping auto-verification email.",
       );
     }
 

@@ -1,0 +1,21 @@
+{
+  "name": "Catalogy - Catálogos Digitales",
+  "short_name": "Catalogy",
+  "description": "Crea y comparte catálogos de productos personalizados",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "es",
+  "dir": "ltr"
+}
