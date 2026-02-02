@@ -92,8 +92,27 @@ export function AppLayout() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <nav className="p-4">
+              <nav className="p-4 flex-1 overflow-y-auto">
                 <MobileNavItems onNavigate={() => setIsMobileMenuOpen(false)} />
+
+                {/* Legal links */}
+                <div className="mt-4 pt-4 border-t border-[var(--color-border)] space-y-2">
+                  <Link
+                    to="/legal/privacy"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors px-3 py-2"
+                  >
+                    Aviso de privacidad
+                  </Link>
+                  <Link
+                    to="/legal/terms"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors px-3 py-2"
+                  >
+                    Términos de uso
+                  </Link>
+                </div>
+
                 <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
                   <button
                     onClick={handleLogout}
@@ -132,6 +151,23 @@ export function AppLayout() {
             </span>
             <ThemeToggle />
           </div>
+
+          {/* Legal links */}
+          <div className="mb-4 space-y-1">
+            <Link
+              to="/legal/privacy"
+              className="block text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              Aviso de privacidad
+            </Link>
+            <Link
+              to="/legal/terms"
+              className="block text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+            >
+              Términos de uso
+            </Link>
+          </div>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-[var(--color-error)] hover:bg-[var(--color-error-bg)] transition-colors text-sm"
