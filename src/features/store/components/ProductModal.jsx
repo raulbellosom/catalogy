@@ -343,7 +343,8 @@ export function ProductModal({
               className="text-lg font-medium"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Pricing Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="relative group">
                 <Input
                   type="number"
@@ -383,27 +384,28 @@ export function ProductModal({
                   <option value="CAD">CAD - Dólar Canadiense</option>
                 </select>
               </div>
+            </div>
 
-              <div className="relative group">
-                <Input
-                  type="number"
-                  label="Stock Disponible"
-                  placeholder="0"
-                  value={stock}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "" || parseInt(val) >= 0) {
-                      setStock(val);
-                    }
-                  }}
-                  required
-                  min="0"
-                  step="1"
-                  className="pr-12"
-                />
-                <div className="absolute right-4 top-[38px] text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
-                  <Package className="w-4 h-4" />
-                </div>
+            {/* Stock Row */}
+            <div className="relative group">
+              <Input
+                type="number"
+                label="Stock Disponible"
+                placeholder="0"
+                value={stock}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || parseInt(val) >= 0) {
+                    setStock(val);
+                  }
+                }}
+                required
+                min="0"
+                step="1"
+                className="pr-12"
+              />
+              <div className="absolute right-4 top-[38px] text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                <Package className="w-4 h-4" />
               </div>
             </div>
 

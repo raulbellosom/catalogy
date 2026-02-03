@@ -64,12 +64,12 @@ export function CatalogControls({
             </div>
             <input
               type="range"
-              min={priceBounds.min}
+              min={1}
               max={priceBounds.max}
               step="1"
               value={minPrice}
               onChange={(event) => onMinPriceChange(Number(event.target.value))}
-              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-gray-700 accent-[var(--noir-accent)]"
+              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-gray-700 accent-(--noir-accent)"
             />
           </div>
           <div className="flex-1 space-y-2">
@@ -79,12 +79,12 @@ export function CatalogControls({
             </div>
             <input
               type="range"
-              min={priceBounds.min}
+              min={1}
               max={priceBounds.max}
               step="1"
               value={maxPrice}
               onChange={(event) => onMaxPriceChange(Number(event.target.value))}
-              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-gray-700 accent-[var(--noir-accent)]"
+              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-gray-700 accent-(--noir-accent)"
             />
           </div>
         </div>

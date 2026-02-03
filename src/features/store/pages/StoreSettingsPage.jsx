@@ -22,6 +22,8 @@ import {
   X,
   Link as LinkIcon,
   Edit3,
+  Droplets,
+  Type,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
@@ -74,6 +76,41 @@ const safeParseCategories = (raw) => {
     }))
     .filter((item) => item.id && item.name);
 };
+
+const FONTS = [
+  { id: "inter", name: "Inter (Modern Sans)", class: "font-sans" },
+  {
+    id: "merriweather",
+    name: "Merriweather (Classic Serif)",
+    class: "font-serif",
+  },
+  { id: "jetbrains", name: "JetBrains (Tech Mono)", class: "font-mono" },
+  {
+    id: "roboto",
+    name: "Roboto (Neutral)",
+    style: { fontFamily: "'Roboto', sans-serif" },
+  },
+  {
+    id: "playfair",
+    name: "Playfair Display (Elegant)",
+    style: { fontFamily: "'Playfair Display', serif" },
+  },
+  {
+    id: "montserrat",
+    name: "Montserrat (Geometric)",
+    style: { fontFamily: "'Montserrat', sans-serif" },
+  },
+];
+
+const COLOR_PRESETS = [
+  { primary: "#6366f1", secondary: "#4f46e5", name: "Original" },
+  { primary: "#3b82f6", secondary: "#1e40af", name: "Ocean" },
+  { primary: "#22c55e", secondary: "#15803d", name: "Forest" },
+  { primary: "#a855f7", secondary: "#7e22ce", name: "Royal" },
+  { primary: "#f97316", secondary: "#c2410c", name: "Sunset" },
+  { primary: "#171717", secondary: "#404040", name: "Minimal" },
+  { primary: "#ec4899", secondary: "#be185d", name: "Berry" },
+];
 
 const slugifyCategory = (value) =>
   value
@@ -176,6 +213,13 @@ export function StoreSettingsPage() {
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(null);
   const [pendingLogoFile, setPendingLogoFile] = useState(null);
 
+  // Style State
+  const [primaryColor, setPrimaryColor] = useState(COLOR_PRESETS[0].primary);
+  const [secondaryColor, setSecondaryColor] = useState(
+    COLOR_PRESETS[0].secondary,
+  );
+  const [selectedFont, setSelectedFont] = useState(FONTS[0].id);
+
   // Categories State
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -197,6 +241,17 @@ export function StoreSettingsPage() {
       setLogoPreviewUrl(
         store.logoFileId ? getStoreLogoUrl(store.logoFileId) : null,
       );
+
+      // Setup Style settings
+      const settings =
+        typeof store.settings === "string"
+          ? JSON.parse(store.settings || "{}")
+          : store.settings || {};
+
+      if (settings.colors?.primary) setPrimaryColor(settings.colors.primary);
+      if (settings.colors?.secondary)
+        setSecondaryColor(settings.colors.secondary);
+      if (settings.font) setSelectedFont(settings.font);
     }
   }, [store]);
 
@@ -404,10 +459,16 @@ export function StoreSettingsPage() {
         slug: slug.trim().toLowerCase(),
         description: description.trim(),
         purchaseInstructions: purchaseInstructions.trim(),
-        templateId,
         activeRenderer,
         categoriesJson: JSON.stringify(categories),
         logoFileId: finalLogoId || null,
+        settings: {
+          colors: {
+            primary: primaryColor,
+            secondary: secondaryColor,
+          },
+          font: selectedFont,
+        },
       };
 
       // Solo incluir paymentLink si tiene un valor válido (campos URL en Appwrite no aceptan cadenas vacías)
@@ -613,7 +674,22 @@ export function StoreSettingsPage() {
     activeRenderer !== (store?.activeRenderer || "template") ||
     currentCategoriesJson !== storedCategoriesJson ||
     !!pendingLogoFile ||
-    currentLogoId !== (store?.logoFileId || "");
+    currentLogoId !== (store?.logoFileId || "") ||
+    primaryColor !==
+      (typeof store?.settings === "string"
+        ? JSON.parse(store?.settings || "{}")
+        : store?.settings || {}
+      ).colors?.primary ||
+    secondaryColor !==
+      (typeof store?.settings === "string"
+        ? JSON.parse(store?.settings || "{}")
+        : store?.settings || {}
+      ).colors?.secondary ||
+    selectedFont !==
+      (typeof store?.settings === "string"
+        ? JSON.parse(store?.settings || "{}")
+        : store?.settings || {}
+      ).font;
 
   const rendererLabel =
     activeRenderer === "puck"
@@ -1041,6 +1117,131 @@ export function StoreSettingsPage() {
                   Plantilla
                 </h3>
                 <TemplateSelector value={templateId} onChange={setTemplateId} />
+              </div>
+
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                    Estilo
+                  </h3>
+                  <p className="text-sm text-(--color-fg-secondary)">
+                    Personaliza los colores y la tipografía de tu tienda.
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Colors Section */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold flex items-center gap-2">
+                      <Droplets className="w-4 h-4 text-(--color-primary)" />
+                      Colores
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Primary Color Input */}
+                      <div className="p-3 border border-(--color-border) rounded-xl bg-(--color-bg) flex items-center gap-3">
+                        <div className="relative w-10 h-10 shrink-0">
+                          <input
+                            type="color"
+                            value={primaryColor}
+                            onChange={(e) => setPrimaryColor(e.target.value)}
+                            className="absolute inset-0 w-full h-full p-0 border-0 rounded-full overflow-hidden cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-xs font-medium text-(--color-fg-secondary) block">
+                            Color Primario
+                          </label>
+                          <span className="text-sm font-mono uppercase text-(--color-fg)">
+                            {primaryColor}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Secondary Color Input */}
+                      <div className="p-3 border border-(--color-border) rounded-xl bg-(--color-bg) flex items-center gap-3">
+                        <div className="relative w-10 h-10 shrink-0">
+                          <input
+                            type="color"
+                            value={secondaryColor}
+                            onChange={(e) => setSecondaryColor(e.target.value)}
+                            className="absolute inset-0 w-full h-full p-0 border-0 rounded-full overflow-hidden cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-xs font-medium text-(--color-fg-secondary) block">
+                            Color Secundario
+                          </label>
+                          <span className="text-sm font-mono uppercase text-(--color-fg)">
+                            {secondaryColor}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Presets */}
+                    <div>
+                      <span className="text-xs text-(--color-fg-muted) block mb-2 font-medium">
+                        Presets sugeridos
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {COLOR_PRESETS.map((preset, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setPrimaryColor(preset.primary);
+                              setSecondaryColor(preset.secondary);
+                            }}
+                            className="w-10 h-10 rounded-full border border-(--color-border) overflow-hidden relative group hover:scale-110 transition-transform"
+                            title={preset.name}
+                          >
+                            <div className="absolute inset-0 flex">
+                              <div
+                                className="w-1/2 h-full"
+                                style={{ backgroundColor: preset.primary }}
+                              />
+                              <div
+                                className="w-1/2 h-full"
+                                style={{ backgroundColor: preset.secondary }}
+                              />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-(--color-border)" />
+
+                  {/* Fonts Section */}
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold flex items-center gap-2">
+                      <Type className="w-4 h-4 text-(--color-primary)" />
+                      Tipografía
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {FONTS.map((font) => (
+                        <button
+                          key={font.id}
+                          type="button"
+                          onClick={() => setSelectedFont(font.id)}
+                          className={`p-4 rounded-xl border text-left transition-all ${selectedFont === font.id ? "border-(--color-primary) bg-(--color-primary)/5 ring-1 ring-(--color-primary)" : "border-(--color-border) hover:border-(--color-border-hover) bg-(--color-bg)"}`}
+                        >
+                          <div
+                            className={`text-xl font-medium mb-1 ${font.class}`}
+                            style={font.style}
+                          >
+                            Agc
+                          </div>
+                          <div className="text-xs text-(--color-fg-secondary)">
+                            {font.name}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="lg:col-span-1 space-y-6">

@@ -202,7 +202,7 @@ export function ProductImageCarousel({
 
       {/* Image Counter (visible on hover if multiple) */}
       {hasMultiple && isHovered && (
-        <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+        <div className="absolute top-2 left-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium rounded-full">
           {currentIndex + 1} / {imageUrls.length}
         </div>
       )}

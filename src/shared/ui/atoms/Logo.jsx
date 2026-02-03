@@ -16,21 +16,25 @@ export function Logo({
   className = "",
   asLink = true,
   imgClass = "w-8 h-8 object-contain",
+  forcePlatform = false,
 }) {
   const { isStoreDomain, slug } = useSubdomainContext();
+  const isActualStoreDomain = isStoreDomain && !forcePlatform;
 
   // Try to get store data if we are in store domain
-  const { data: storeBySlug } = useStoreBySlug(isStoreDomain ? slug : null);
+  const { data: storeBySlug } = useStoreBySlug(
+    isActualStoreDomain ? slug : null,
+  );
 
   // Logic for Logo Source
   const logoSrc =
-    isStoreDomain && storeBySlug?.logoFileId
+    isActualStoreDomain && storeBySlug?.logoFileId
       ? getStoreLogoUrl(storeBySlug.logoFileId)
       : "/icon.png"; // Default platform logo
 
   const showText = variant === "full";
   const brandName =
-    isStoreDomain && storeBySlug ? storeBySlug.name : "Catalogy";
+    isActualStoreDomain && storeBySlug ? storeBySlug.name : "Catalogy";
 
   const Component = asLink ? Link : "div";
   const linkProps = asLink ? { to: isStoreDomain ? "/" : "/" } : {};

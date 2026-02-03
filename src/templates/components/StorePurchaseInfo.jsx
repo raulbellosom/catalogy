@@ -1,37 +1,71 @@
+import { Info, CreditCard, ExternalLink } from "lucide-react";
+
 export function StorePurchaseInfo({ store, tone = "light" }) {
   const instructions = store?.purchaseInstructions?.trim();
   const paymentLink = store?.paymentLink?.trim();
   if (!instructions && !paymentLink) return null;
 
   const isNoir = tone === "noir";
-  const panelClass = isNoir
-    ? "bg-[var(--noir-surface)] border border-[var(--noir-border)] text-[var(--noir-strong)]"
-    : "bg-[var(--color-card)] border border-(--color-border) text-(--color-fg)";
-  const mutedClass = isNoir
-    ? "text-[var(--noir-muted)]"
+
+  // Noir theme constants
+  const panelBase = isNoir
+    ? "bg-(--noir-surface) border border-(--noir-border) text-(--noir-strong)"
+    : "bg-(--color-card) border border-(--color-border) text-(--color-fg)";
+
+  const iconBg = isNoir ? "bg-(--noir-surface-2)" : "bg-(--color-bg-secondary)";
+  const iconColor = isNoir ? "text-(--noir-accent)" : "text-(--color-primary)";
+  const mutedText = isNoir
+    ? "text-(--noir-muted)"
     : "text-(--color-fg-secondary)";
-  const linkClass = isNoir
-    ? "text-[var(--noir-accent)]"
-    : "text-(--color-primary)";
 
   return (
-    <section className={`rounded-2xl p-6 space-y-3 ${panelClass}`}>
-      <h3 className="text-lg font-semibold">Instrucciones de compra</h3>
-      {instructions && (
-        <p className={`text-sm leading-relaxed ${mutedClass}`}>
-          {instructions}
-        </p>
-      )}
-      {paymentLink && (
-        <a
-          href={paymentLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 text-sm font-semibold ${linkClass}`}
-        >
-          Abrir link de pago
-        </a>
-      )}
+    <section className={`rounded-3xl p-6 md:p-8 space-y-6 ${panelBase}`}>
+      <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between">
+        {instructions && (
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className={`p-2 rounded-xl ${iconBg} ${iconColor}`}>
+                <Info className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold tracking-tight">
+                Instrucciones de Compra
+              </h3>
+            </div>
+            <p className={`text-sm leading-relaxed ${mutedText} max-w-2xl`}>
+              {instructions}
+            </p>
+          </div>
+        )}
+
+        {paymentLink && (
+          <div className="flex flex-col gap-3 min-w-[240px]">
+            <div className="flex items-center gap-2 md:justify-end">
+              <div className={`p-2 rounded-xl ${iconBg} ${iconColor}`}>
+                <CreditCard className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold tracking-tight">Link de Pago</h3>
+            </div>
+            <a
+              href={paymentLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1 ${
+                isNoir
+                  ? "bg-(--noir-accent) text-black hover:bg-white"
+                  : "bg-(--color-primary) text-white hover:opacity-90"
+              }`}
+            >
+              Pagar ahora
+              <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </a>
+            <p
+              className={`text-[10px] uppercase tracking-widest text-center ${mutedText}`}
+            >
+              Transacción 100% Protegida
+            </p>
+          </div>
+        )}
+      </div>
     </section>
   );
 }

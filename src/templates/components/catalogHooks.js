@@ -42,20 +42,20 @@ export const useCatalogFilters = ({ store, products }) => {
       .filter((price) => typeof price === "number");
     if (!prices.length) return { min: 0, max: 0 };
     return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
+      min: 1, // Siempre permitir filtrar desde 1 como base mínima
+      max: prices.length ? Math.max(...prices) : 0,
     };
   }, [productList]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryIds, setActiveCategoryIds] = useState([]);
-  const [minPrice, setMinPrice] = useState(priceBounds.min);
+  const [minPrice, setMinPrice] = useState(1);
   const [maxPrice, setMaxPrice] = useState(priceBounds.max);
 
   useEffect(() => {
-    setMinPrice(priceBounds.min);
+    setMinPrice(1);
     setMaxPrice(priceBounds.max);
-  }, [priceBounds.min, priceBounds.max]);
+  }, [priceBounds.max]);
 
   const toggleCategory = (categoryId) => {
     setActiveCategoryIds((prev) =>
@@ -83,9 +83,7 @@ export const useCatalogFilters = ({ store, products }) => {
       if (!matchesQuery) return false;
 
       if (!activeCategoryIds.length) return true;
-      const ids = Array.isArray(product.categoryIds)
-        ? product.categoryIds
-        : [];
+      const ids = Array.isArray(product.categoryIds) ? product.categoryIds : [];
       return ids.some((id) => activeCategoryIds.includes(id));
     });
   }, [

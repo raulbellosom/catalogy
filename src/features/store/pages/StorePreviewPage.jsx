@@ -12,7 +12,7 @@ export function StorePreviewPage() {
   return (
     <div className="store-preview-wrapper relative">
       {/* Preview Banner */}
-      <div className="bg-(--color-primary) text-white py-2 px-4 sticky top-0 z-50 flex items-center justify-between">
+      <div className="bg-(--color-primary) text-white h-10 px-4 fixed top-0 left-0 right-0 z-[60] flex items-center justify-between">
         <Link
           to="/app/store"
           className="flex items-center gap-2 text-sm font-medium hover:bg-white/10 px-3 py-1 rounded-lg transition-colors"

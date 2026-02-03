@@ -105,23 +105,58 @@ export function CatalogPage({ previewSlug }) {
 
   // Theme override from store.settings (optional)
   const themeStyle = (() => {
-    const colors = store?.settings?.colors || {};
-    const font = store?.settings?.font;
+    const settings =
+      typeof store?.settings === "string"
+        ? JSON.parse(store.settings || "{}")
+        : store?.settings || {};
+
+    const colors = settings.colors || {};
+    const fontId = settings.font;
+
+    const FONT_MAP = {
+      inter: '"Inter", sans-serif',
+      merriweather: '"Merriweather", serif',
+      jetbrains: '"JetBrains Mono", monospace',
+      roboto: '"Roboto", sans-serif',
+      playfair: '"Playfair Display", serif',
+      montserrat: '"Montserrat", sans-serif',
+    };
 
     /** @type {Record<string, string>} */
     const style = {};
-    if (colors.primary) style["--color-primary"] = colors.primary;
-    if (colors.secondary) style["--color-primary-hover"] = colors.secondary;
-    if (font?.id) style["--store-font"] = font.id;
+    if (colors.primary) {
+      style["--color-primary"] = colors.primary;
+      style["--primary"] = colors.primary;
+    }
+    if (colors.secondary) {
+      style["--color-primary-hover"] = colors.secondary;
+      style["--primary-hover"] = colors.secondary;
+    }
+
+    // Standard theme aliases
+    style["--border"] = "var(--color-border)";
+    style["--background"] = "var(--color-bg)";
+    style["--foreground"] = "var(--color-fg)";
+    style["--muted"] = "var(--color-bg-tertiary)";
+    style["--muted-foreground"] = "var(--color-fg-muted)";
+
+    if (fontId && FONT_MAP[fontId]) style["fontFamily"] = FONT_MAP[fontId];
     return style;
   })();
 
   return (
-    <div className="bg-[var(--color-bg)]" style={themeStyle}>
+    <div
+      className="bg-(--color-bg) transition-colors duration-300"
+      style={themeStyle}
+    >
       {activeRenderer === "puck" ? (
         <PuckRenderer store={store} products={products} />
       ) : (
-        <TemplateComponent store={store} products={products} />
+        <TemplateComponent
+          store={store}
+          products={products}
+          isPreview={!!previewSlug}
+        />
       )}
     </div>
   );
