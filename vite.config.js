@@ -78,6 +78,9 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    watch: {
+      ignored: ["**/functions/**", "**/documentation/**"],
+    },
   },
   build: {
     outDir: "dist",

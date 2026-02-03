@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Store,
@@ -8,8 +8,11 @@ import {
   LogOut,
   Menu,
   X,
+  ChevronLeft,
   ChevronRight,
   Users,
+  User,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { useIsAdmin } from "@/shared/hooks";
@@ -18,281 +21,609 @@ import { motion, AnimatePresence } from "motion/react";
 
 /**
  * @typedef {Object} NavItem
- * @property {string} path
+ * @property {string} to
  * @property {string} label
  * @property {React.ComponentType} icon
+ * @property {boolean} exact
  */
 
 /** @type {NavItem[]} */
 const NAV_ITEMS = [
-  { path: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/app/store", label: "Mi tienda", icon: Store },
-  { path: "/app/products", label: "Productos", icon: Package },
-  { path: "/app/settings", label: "Configuracion", icon: Settings },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { to: "/app/store", label: "Mi tienda", icon: Store, exact: false },
+  { to: "/app/products", label: "Productos", icon: Package, exact: false },
+  { to: "/app/settings", label: "Configuracion", icon: Settings, exact: false },
 ];
 
 /**
- * App layout for authenticated dashboard pages
- * Includes sidebar navigation (desktop) and bottom nav (mobile)
+ * Desktop/Mobile navigation item with smooth animations
+ * @param {Object} props
+ * @param {string} props.to
+ * @param {React.ComponentType} props.icon
+ * @param {string} props.label
+ * @param {boolean} [props.collapsed]
+ * @param {boolean} [props.exact]
+ * @param {() => void} [props.onClick]
  */
-export function AppLayout() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+function NavItem({ to, icon: Icon, label, collapsed, exact = false, onClick }) {
+  return (
+    <NavLink
+      to={to}
+      end={exact}
+      onClick={onClick}
+      className={({ isActive }) =>
+        `group flex items-center overflow-hidden transition-all relative select-none mx-2 my-0.5 rounded-xl ${
+          isActive
+            ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
+            : "text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)]"
+        }`
+      }
+      title={collapsed ? label : undefined}
+    >
+      {({ isActive }) => (
+        <>
+          {/* Active indicator */}
+          {isActive && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-[var(--color-primary)] rounded-r-full"></div>
+          )}
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+          {/* Icon area - fixed width */}
+          <div className="flex h-11 w-12 shrink-0 items-center justify-center">
+            <Icon
+              className={`h-5 w-5 transition-transform ${
+                isActive ? "scale-105" : "group-hover:scale-105"
+              }`}
+            />
+          </div>
+
+          {/* Text - smooth reveal with grid technique */}
+          <div
+            className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
+              collapsed ? "grid-cols-[0fr]" : "grid-cols-[1fr]"
+            }`}
+          >
+            <span className="overflow-hidden whitespace-nowrap text-sm font-semibold pr-3">
+              {label}
+            </span>
+          </div>
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+/**
+ * Mobile bottom nav item
+ * @param {Object} props
+ * @param {string} props.to
+ * @param {React.ComponentType} props.icon
+ * @param {boolean} [props.exact]
+ */
+function MobileNavItem({ to, icon: Icon, label, exact = false }) {
+  return (
+    <NavLink
+      to={to}
+      end={exact}
+      className={({ isActive }) =>
+        `flex flex-col items-center gap-1 rounded-xl py-2 px-3 text-xs font-semibold transition-all relative ${
+          isActive
+            ? "text-[var(--color-primary)]"
+            : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <motion.div
+            initial={false}
+            animate={{
+              scale: isActive ? 1.15 : 1,
+              y: isActive ? -2 : 0,
+            }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+            <Icon className="h-5 w-5" />
+          </motion.div>
+          <span className="truncate max-w-[64px]">{label}</span>
+          {isActive && (
+            <motion.div
+              layoutId="mobile-nav-indicator"
+              className="absolute -top-0.5 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-[var(--color-primary)]"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+/**
+ * User avatar component
+ * @param {Object} props
+ * @param {string} props.name
+ * @param {string} [props.size]
+ */
+function UserAvatar({ name, size = "md" }) {
+  const sizeClasses = {
+    sm: "h-8 w-8 text-xs",
+    md: "h-10 w-10 text-sm",
+    lg: "h-12 w-12 text-base",
   };
 
+  const initials =
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?";
+
   return (
-    <div className="min-h-screen bg-[var(--color-bg-secondary)]">
-      {/* Mobile header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--color-card)] border-b border-[var(--color-card-border)] safe-top">
-        <div className="flex items-center justify-between h-14 px-4">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 -ml-2 text-[var(--color-fg)]"
-            aria-label="Abrir menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <span className="font-semibold text-[var(--color-fg)]">Catalogy</span>
-          <ThemeToggle />
-        </div>
-      </header>
-
-      {/* Mobile menu overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 z-50 bg-black/50"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-72 bg-[var(--color-card)] safe-top safe-bottom"
-            >
-              <div className="flex items-center justify-between h-14 px-4 border-b border-[var(--color-card-border)]">
-                <span className="font-semibold text-[var(--color-fg)]">
-                  Menu
-                </span>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 -mr-2 text-[var(--color-fg)]"
-                  aria-label="Cerrar menu"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <nav className="p-4 flex-1 overflow-y-auto">
-                <MobileNavItems onNavigate={() => setIsMobileMenuOpen(false)} />
-
-                {/* Legal links */}
-                <div className="mt-4 pt-4 border-t border-[var(--color-border)] space-y-2">
-                  <Link
-                    to="/legal/privacy"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors px-3 py-2"
-                  >
-                    Aviso de privacidad
-                  </Link>
-                  <Link
-                    to="/legal/terms"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="block text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors px-3 py-2"
-                  >
-                    Términos de uso
-                  </Link>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[var(--color-error)] hover:bg-[var(--color-error-bg)] transition-colors"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span>Cerrar sesion</span>
-                  </button>
-                </div>
-              </nav>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:left-0 lg:top-0 lg:bottom-0 lg:w-64 bg-[var(--color-card)] border-r border-[var(--color-card-border)]">
-        {/* Logo */}
-        <div className="flex items-center gap-2 h-16 px-6 border-b border-[var(--color-card-border)]">
-          <Store className="w-7 h-7 text-[var(--color-primary)]" />
-          <span className="text-xl font-bold text-[var(--color-fg)]">
-            Catalogy
-          </span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <DesktopNavItems />
-        </nav>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-[var(--color-card-border)]">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-[var(--color-fg-secondary)] truncate">
-              {user?.email}
-            </span>
-            <ThemeToggle />
-          </div>
-
-          {/* Legal links */}
-          <div className="mb-4 space-y-1">
-            <Link
-              to="/legal/privacy"
-              className="block text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
-            >
-              Aviso de privacidad
-            </Link>
-            <Link
-              to="/legal/terms"
-              className="block text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
-            >
-              Términos de uso
-            </Link>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-[var(--color-error)] hover:bg-[var(--color-error-bg)] transition-colors text-sm"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Cerrar sesion</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="lg:pl-64 pt-14 lg:pt-0 min-h-screen">
-        <div className="p-4 lg:p-6 safe-bottom">
-          <Outlet />
-        </div>
-      </main>
+    <div
+      className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] flex items-center justify-center font-bold text-white ring-2 ring-[var(--color-card)] ring-offset-2 ring-offset-[var(--color-bg)]`}
+    >
+      {initials}
     </div>
   );
 }
 
 /**
  * Desktop navigation items
+ * @param {Object} props
+ * @param {boolean} props.collapsed
  */
-function DesktopNavItems() {
+function DesktopNavItems({ collapsed }) {
   const { data: isAdmin, isLoading } = useIsAdmin();
 
   return (
-    <ul className="space-y-1">
+    <>
       {NAV_ITEMS.map((item) => (
-        <li key={item.path}>
-          <NavLink
-            to={item.path}
-            end={item.path === "/app"}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
-                  : "text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)]"
-              }`
-            }
-          >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
-          </NavLink>
-        </li>
+        <NavItem key={item.to} {...item} collapsed={collapsed} />
       ))}
       {!isLoading && isAdmin && (
         <>
-          <li className="my-2 border-t border-[var(--color-border)] pt-2"></li>
-          <li>
-            <NavLink
-              to="/app/admin/users"
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
-                    : "text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)]"
-                }`
-              }
-            >
-              <Users className="w-5 h-5" />
-              <span>Usuarios</span>
-            </NavLink>
-          </li>
+          <div className="my-2 border-t border-[var(--color-border)] mx-2"></div>
+          <NavItem
+            to="/app/admin/users"
+            label="Usuarios"
+            icon={Users}
+            collapsed={collapsed}
+            exact={false}
+          />
         </>
       )}
-    </ul>
+    </>
   );
 }
 
 /**
- * Mobile navigation items
- * @param {{ onNavigate: () => void }} props
+ * Mobile drawer navigation items
+ * @param {Object} props
+ * @param {() => void} props.onNavigate
  */
-function MobileNavItems({ onNavigate }) {
+function MobileDrawerNavItems({ onNavigate }) {
   const { data: isAdmin, isLoading } = useIsAdmin();
 
   return (
-    <ul className="space-y-1">
+    <>
       {NAV_ITEMS.map((item) => (
-        <li key={item.path}>
-          <NavLink
-            to={item.path}
-            end={item.path === "/app"}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center justify-between px-3 py-3 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
-                  : "text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)]"
-              }`
-            }
-          >
-            <div className="flex items-center gap-3">
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </div>
-            <ChevronRight className="w-5 h-5 opacity-50" />
-          </NavLink>
-        </li>
+        <NavItem key={item.to} {...item} onClick={onNavigate} />
       ))}
       {!isLoading && isAdmin && (
         <>
-          <li className="my-2 border-t border-[var(--color-border)] pt-2"></li>
-          <li>
-            <NavLink
-              to="/app/admin/users"
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                `flex items-center justify-between px-3 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-[var(--color-primary)] text-[var(--color-primary-fg)]"
-                    : "text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)]"
-                }`
-              }
-            >
-              <div className="flex items-center gap-3">
-                <Users className="w-5 h-5" />
-                <span>Usuarios</span>
-              </div>
-              <ChevronRight className="w-5 h-5 opacity-50" />
-            </NavLink>
-          </li>
+          <div className="my-2 border-t border-[var(--color-border)] mx-2"></div>
+          <NavItem
+            to="/app/admin/users"
+            label="Usuarios"
+            icon={Users}
+            onClick={onNavigate}
+            exact={false}
+          />
         </>
       )}
-    </ul>
+    </>
+  );
+}
+
+/**
+ * App layout for authenticated dashboard pages
+ * Includes collapsible sidebar (desktop), bottom nav (mobile), and top navbar
+ */
+export function AppLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // Sidebar collapsed state (persisted in localStorage)
+  const [collapsed, setCollapsed] = useState(() => {
+    const stored = localStorage.getItem("sidebar-collapsed");
+    return stored === "true";
+  });
+
+  const toggleSidebar = () => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem("sidebar-collapsed", String(newState));
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  }, [window.location.pathname]);
+
+  const displayName = user?.name || user?.email?.split("@")[0] || "Usuario";
+
+  return (
+    <div className="min-h-screen bg-[var(--color-bg-secondary)]">
+      {/* ========== DESKTOP SIDEBAR ========== */}
+      <aside
+        className={`hidden lg:flex lg:flex-col lg:fixed lg:left-0 lg:top-0 lg:bottom-0 bg-[var(--color-card)] border-r border-[var(--color-card-border)] transition-all duration-300 ease-in-out z-30 ${
+          collapsed ? "lg:w-16" : "lg:w-64"
+        }`}
+      >
+        {/* Logo area */}
+        <div className="flex h-16 items-center border-b border-[var(--color-card-border)] overflow-hidden px-2">
+          <div className="flex h-full w-12 shrink-0 items-center justify-center">
+            <Store className="h-7 w-7 text-[var(--color-primary)]" />
+          </div>
+          <div
+            className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
+              collapsed ? "grid-cols-[0fr]" : "grid-cols-[1fr]"
+            }`}
+          >
+            <span className="overflow-hidden whitespace-nowrap text-xl font-bold text-[var(--color-fg)]">
+              Catalogy
+            </span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-4">
+          <DesktopNavItems collapsed={collapsed} />
+        </nav>
+
+        {/* Footer - collapse button */}
+        <div className="border-t border-[var(--color-card-border)]">
+          <button
+            onClick={toggleSidebar}
+            className="flex h-12 w-full items-center justify-center hover:bg-[var(--color-bg-tertiary)] transition-colors"
+            aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4 text-[var(--color-fg-secondary)]" />
+            ) : (
+              <ChevronLeft className="h-4 w-4 text-[var(--color-fg-secondary)]" />
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* ========== DESKTOP TOP NAVBAR ========== */}
+      <header
+        className={`hidden lg:flex lg:fixed lg:top-0 lg:right-0 lg:h-16 lg:items-center lg:justify-between border-b border-[var(--color-card-border)] bg-[var(--color-card)]/80 backdrop-blur-lg px-6 transition-all duration-300 ease-in-out z-20 ${
+          collapsed ? "lg:left-16" : "lg:left-64"
+        }`}
+      >
+        {/* Breadcrumb or page title */}
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-[var(--color-primary)]" />
+          <h1 className="text-lg font-bold text-[var(--color-fg)]">
+            Panel de control
+          </h1>
+        </div>
+
+        {/* Right side - theme toggle and user profile */}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <div className="h-8 w-px bg-[var(--color-border)]"></div>
+
+          {/* User profile dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-[var(--color-bg-tertiary)] transition-colors group"
+            >
+              <div className="text-right">
+                <div className="text-sm font-bold text-[var(--color-fg)] max-w-[150px] truncate">
+                  {displayName}
+                </div>
+                <div className="text-xs text-[var(--color-fg-secondary)]">
+                  {user?.email}
+                </div>
+              </div>
+              <UserAvatar name={displayName} size="md" />
+            </button>
+
+            {/* Dropdown menu */}
+            <AnimatePresence>
+              {isProfileMenuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsProfileMenuOpen(false)}
+                  />
+
+                  {/* Menu */}
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-xl shadow-lg overflow-hidden z-50"
+                  >
+                    {/* User info */}
+                    <div className="px-4 py-3 border-b border-[var(--color-border)]">
+                      <div className="text-sm font-bold text-[var(--color-fg)]">
+                        {displayName}
+                      </div>
+                      <div className="text-xs text-[var(--color-fg-secondary)] truncate">
+                        {user?.email}
+                      </div>
+                    </div>
+
+                    {/* Menu items */}
+                    <div className="py-2">
+                      <button
+                        onClick={() => {
+                          navigate("/app/settings");
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)] transition-colors"
+                      >
+                        <User className="h-4 w-4" />
+                        <span>Mi perfil</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate("/app/settings");
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)] transition-colors"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Configuracion</span>
+                      </button>
+                    </div>
+
+                    {/* Legal links */}
+                    <div className="border-t border-[var(--color-border)] py-2">
+                      <Link
+                        to="/legal/privacy"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        Aviso de privacidad
+                      </Link>
+                      <Link
+                        to="/legal/terms"
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+                      >
+                        Términos de uso
+                      </Link>
+                    </div>
+
+                    {/* Logout */}
+                    <div className="border-t border-[var(--color-border)] p-2">
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[var(--color-error)] hover:bg-[var(--color-error-bg)] transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Cerrar sesion</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </header>
+
+      {/* ========== DESKTOP MAIN CONTENT ========== */}
+      <main
+        className={`hidden lg:block lg:min-h-screen lg:pt-16 transition-all duration-300 ease-in-out ${
+          collapsed ? "lg:pl-16" : "lg:pl-64"
+        }`}
+      >
+        <div className="p-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={window.location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {/* ========== DESKTOP FOOTER ========== */}
+      <footer
+        className={`hidden lg:flex lg:fixed lg:bottom-0 lg:right-0 lg:h-12 lg:items-center lg:justify-end border-t border-[var(--color-card-border)] bg-[var(--color-card)]/50 backdrop-blur-sm px-6 transition-all duration-300 ease-in-out ${
+          collapsed ? "lg:left-16" : "lg:left-64"
+        }`}
+      >
+        <a
+          href="https://racoondevs.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+        >
+          Powered by RacoonDevs
+        </a>
+      </footer>
+
+      {/* ========== MOBILE HEADER ========== */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--color-card)]/90 backdrop-blur-lg border-b border-[var(--color-card-border)] safe-top">
+        <div className="flex items-center justify-between h-14 px-4">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="p-2 -ml-2 rounded-lg hover:bg-[var(--color-bg-tertiary)] transition-colors"
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-6 h-6 text-[var(--color-fg)]" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Store className="h-6 w-6 text-[var(--color-primary)]" />
+            <span className="font-bold text-[var(--color-fg)]">Catalogy</span>
+          </div>
+
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* ========== MOBILE DRAWER ========== */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Drawer */}
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-80 max-w-[85vw] bg-[var(--color-card)] safe-top safe-bottom overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between h-14 px-4 border-b border-[var(--color-card-border)]">
+                <span className="font-bold text-[var(--color-fg)]">Menú</span>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 -mr-2 rounded-lg hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                  aria-label="Cerrar menu"
+                >
+                  <X className="w-6 h-6 text-[var(--color-fg)]" />
+                </button>
+              </div>
+
+              {/* User info */}
+              <div className="p-4 border-b border-[var(--color-border)]">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/10 to-[var(--color-primary)]/5">
+                  <UserAvatar name={displayName} size="lg" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-[var(--color-fg)] truncate">
+                      {displayName}
+                    </div>
+                    <div className="text-xs text-[var(--color-fg-secondary)] truncate">
+                      {user?.email}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <nav className="p-2">
+                <MobileDrawerNavItems
+                  onNavigate={() => setIsMobileMenuOpen(false)}
+                />
+              </nav>
+
+              {/* Theme toggle */}
+              <div className="px-4 py-3 border-t border-[var(--color-border)]">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-[var(--color-fg-secondary)]">
+                    Tema
+                  </span>
+                  <ThemeToggle />
+                </div>
+              </div>
+
+              {/* Legal links */}
+              <div className="px-4 py-3 border-t border-[var(--color-border)] space-y-2">
+                <Link
+                  to="/legal/privacy"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+                >
+                  Aviso de privacidad
+                </Link>
+                <Link
+                  to="/legal/terms"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block text-sm text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+                >
+                  Términos de uso
+                </Link>
+              </div>
+
+              {/* Logout */}
+              <div className="p-4 border-t border-[var(--color-border)]">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-[var(--color-error)] hover:bg-[var(--color-error-bg)] transition-colors"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">Cerrar sesion</span>
+                </button>
+              </div>
+
+              {/* Powered by */}
+              <div className="p-4 border-t border-[var(--color-border)]">
+                <a
+                  href="https://racoondevs.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center text-xs text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-colors"
+                >
+                  Powered by RacoonDevs
+                </a>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ========== MOBILE MAIN CONTENT ========== */}
+      <main className="lg:hidden min-h-screen pt-14 pb-20 safe-top safe-bottom">
+        <div className="p-4">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={window.location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {/* ========== MOBILE BOTTOM NAV ========== */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--color-card-border)] bg-[var(--color-card)]/90 backdrop-blur-lg safe-bottom">
+        <div className="grid grid-cols-4 gap-1 px-2 py-1.5">
+          {NAV_ITEMS.slice(0, 4).map((item) => (
+            <MobileNavItem key={item.to} {...item} />
+          ))}
+        </div>
+      </nav>
+    </div>
   );
 }

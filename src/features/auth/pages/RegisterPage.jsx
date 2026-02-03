@@ -183,10 +183,11 @@ export function RegisterPage() {
   return (
     <div className="animate-fade-in">
       {/* Header con gradiente y efecto brillante */}
-      <div className="mb-4 sm:mb-5 relative">
-        <div className="absolute -top-20 -left-20 w-40 h-40 bg-[var(--color-primary)] opacity-20 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="mb-4 sm:mb-5 relative overflow-hidden">
+        {/* Efectos de fondo decorativos responsivos */}
+        <div className="absolute -top-10 left-4 sm:-left-10 w-20 sm:w-40 h-20 sm:h-40 bg-[var(--color-primary)] opacity-20 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"></div>
         <div
-          className="absolute -top-10 -right-20 w-32 h-32 bg-[var(--color-accent)] opacity-20 rounded-full blur-3xl animate-pulse-slow"
+          className="absolute -top-5 right-4 sm:-right-10 w-16 sm:w-32 h-16 sm:h-32 bg-[var(--color-accent)] opacity-20 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"
           style={{ animationDelay: "1s" }}
         ></div>
 

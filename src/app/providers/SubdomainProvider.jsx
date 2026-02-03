@@ -19,23 +19,39 @@ const SubdomainContext = createContext(
  * @param {{ children: React.ReactNode }} props
  */
 export function SubdomainProvider({ children }) {
-  const { isRootDomain, slug, isLoading } = useSubdomain();
+  try {
+    const { isRootDomain, slug, isLoading } = useSubdomain();
 
-  const value = useMemo(
-    () => ({
-      isRootDomain,
-      isStoreDomain: !isRootDomain && !!slug,
-      slug,
-      isLoading,
-    }),
-    [isRootDomain, slug, isLoading],
-  );
+    const value = useMemo(
+      () => ({
+        isRootDomain,
+        isStoreDomain: !isRootDomain && !!slug,
+        slug,
+        isLoading,
+      }),
+      [isRootDomain, slug, isLoading],
+    );
 
-  return (
-    <SubdomainContext.Provider value={value}>
-      {children}
-    </SubdomainContext.Provider>
-  );
+    return (
+      <SubdomainContext.Provider value={value}>
+        {children}
+      </SubdomainContext.Provider>
+    );
+  } catch (error) {
+    console.error("SubdomainProvider error:", error);
+    // Provide fallback context if initialization fails
+    const fallbackValue = {
+      isRootDomain: true,
+      isStoreDomain: false,
+      slug: null,
+      isLoading: false,
+    };
+    return (
+      <SubdomainContext.Provider value={fallbackValue}>
+        {children}
+      </SubdomainContext.Provider>
+    );
+  }
 }
 
 /**

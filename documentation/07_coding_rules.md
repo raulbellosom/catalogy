@@ -206,7 +206,7 @@ return (
         </ModalFooter>
       }
     >
-      <p className="text-[var(--color-fg-secondary)]">
+      <p className="text-(--color-fg-secondary)">
         ¿Estás seguro de que quieres eliminar este elemento?
       </p>
     </Modal>

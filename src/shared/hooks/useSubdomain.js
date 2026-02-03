@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { APP_CONFIG } from "@/shared/lib/appwrite";
+import { APP_CONFIG } from "@/shared/lib/env";
 
 /**
  * @typedef {Object} SubdomainResult

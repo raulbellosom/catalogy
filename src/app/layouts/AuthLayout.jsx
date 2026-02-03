@@ -17,7 +17,7 @@ export function AuthLayout() {
       <Navbar showAuthButtons={true} currentPath={location.pathname} />
 
       {/* Main content - centered, grows to fill space */}
-      <main className="flex-1 flex items-center justify-center px-4 py-6 pt-20 sm:pt-24">
+      <main className="flex-1 flex items-center justify-center px-4 py-8 pt-24 sm:pt-24 overflow-x-hidden min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md">
           {/* Logo/Brand - visible on mobile */}
           <Link
@@ -31,19 +31,19 @@ export function AuthLayout() {
           </Link>
 
           {/* Auth card con efecto de vidrio y sombra moderna */}
-          <div className="w-full relative">
-            {/* Efectos de fondo decorativos */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] rounded-2xl blur-lg opacity-20 animate-pulse-slow"></div>
+          <div className="w-full relative overflow-hidden">
+            {/* Efectos de fondo decorativos - contenidos dentro del card */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] rounded-2xl blur-sm opacity-15 animate-pulse-slow"></div>
 
-            <div className="relative bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl shadow-2xl p-4 sm:p-6 backdrop-blur-xl">
+            <div className="relative bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl shadow-lg p-4 sm:p-6 overflow-hidden">
               <Outlet />
             </div>
           </div>
         </div>
       </main>
 
-      {/* Footer - hidden on small screens to save space */}
-      <div className="hidden md:block flex-shrink-0">
+      {/* Footer - always visible but minimal on mobile */}
+      <div className="flex-shrink-0">
         <Footer />
       </div>
 

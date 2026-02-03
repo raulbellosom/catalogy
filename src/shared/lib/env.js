@@ -60,8 +60,14 @@ export const collections = {
   products: getEnvVar("VITE_APPWRITE_COLLECTION_PRODUCTS_ID", "products", true),
 };
 
-// Alias legacy para compatibilidad
-export const COLLECTIONS = collections;
+// Alias legacy para compatibilidad (mayúsculas para mantener compatibilidad con código existente)
+export const COLLECTIONS = {
+  PROFILES: collections.profiles,
+  USER_PREFERENCES: collections.userPreferences,
+  EMAIL_VERIFICATIONS: collections.emailVerifications,
+  STORES: collections.stores,
+  PRODUCTS: collections.products,
+};
 
 // ============================================================
 // Storage Buckets
@@ -81,8 +87,12 @@ export const buckets = {
   ),
 };
 
-// Alias legacy para compatibilidad
-export const BUCKETS = buckets;
+// Alias legacy para compatibilidad (mayúsculas para mantener compatibilidad con código existente)
+export const BUCKETS = {
+  AVATARS: buckets.avatars,
+  PRODUCT_IMAGES: buckets.productImages,
+  STORE_LOGOS: buckets.storeLogos,
+};
 
 // ============================================================
 // Appwrite Functions
