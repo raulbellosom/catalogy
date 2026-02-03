@@ -315,7 +315,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
           {/* Product Grid */}
           <div className="flex-1">
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-12 gap-x-8">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-12">
                 {filteredProducts.map((product) => {
                   // Get first valid image
                   const imageId = product.imageFileIds?.[0];
