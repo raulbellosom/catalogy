@@ -19,7 +19,7 @@ import {
 /**
  * Modal to create or edit a product
  */
-export function ProductModal({ isOpen, onClose, storeId, product }) {
+export function ProductModal({ isOpen, onClose, storeId, product, categories }) {
   const isEditMode = !!product;
 
   // Mutations
@@ -34,6 +34,7 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("0");
   const [currency, setCurrency] = useState("MXN");
+  const [categoryIds, setCategoryIds] = useState([]);
 
   // Image management
   const [initialImageFileId, setInitialImageFileId] = useState("");
@@ -56,6 +57,7 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
         setPrice(product.price != null ? product.price.toString() : "");
         setStock(product.stock != null ? product.stock.toString() : "0");
         setCurrency(product.currency || "MXN");
+        setCategoryIds(Array.isArray(product.categoryIds) ? product.categoryIds : []);
 
         const fileId = product.imageFileId || "";
         setImageFileId(fileId);
@@ -73,6 +75,7 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
         setPrice("");
         setStock("0");
         setCurrency("MXN");
+        setCategoryIds([]);
         setImageFileId("");
         setInitialImageFileId("");
         setImageUrl(null);
@@ -121,6 +124,14 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
     setImageUrl(null);
   };
 
+  const handleToggleCategory = (categoryId) => {
+    setCategoryIds((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
+    );
+  };
+
   const handleClose = async () => {
     // Cleanup: If the user cancels and we uploaded a new image, delete it.
     if (imageFileId && imageFileId !== initialImageFileId) {
@@ -165,6 +176,7 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
         stock: stockNum,
         currency,
         imageFileId: imageFileId || null,
+        categoryIds,
       };
 
       if (isEditMode) {
@@ -314,6 +326,37 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
+                Categorias
+              </label>
+              {categories?.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => {
+                    const isActive = categoryIds.includes(category.id);
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleToggleCategory(category.id)}
+                        className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                          isActive
+                            ? "bg-(--color-primary) text-white border-(--color-primary)"
+                            : "bg-(--color-bg-secondary) text-(--color-fg-secondary) border-(--color-border)"
+                        }`}
+                      >
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-(--color-fg-secondary)">
+                  Crea categorias en la configuracion de la tienda.
+                </p>
+              )}
             </div>
 
             <div className="p-5 bg-(--color-bg-secondary) rounded-2xl border border-(--color-border) border-dashed space-y-2">

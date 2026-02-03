@@ -10,9 +10,17 @@ export {
   getTemplateList,
   TEMPLATE_IDS,
 } from "./registry";
-export { ProductCard, StoreHeader, ProductGrid } from "./components";
+export {
+  ProductCard,
+  StoreHeader,
+  ProductGrid,
+  StoreFooter,
+  CatalogControls,
+  StorePurchaseInfo,
+} from "./components";
 export {
   MinimalTemplate,
   StorefrontTemplate,
   GalleryTemplate,
+  NoirGridTemplate,
 } from "./variants";

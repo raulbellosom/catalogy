@@ -6,7 +6,8 @@
  */
 
 import { motion } from "motion/react";
-import { ImageOff, Tag } from "lucide-react";
+import { ImageOff, Tag, Share2 } from "lucide-react";
+import { shareProduct } from "./catalogHooks";
 
 /**
  * @typedef {Object} Product
@@ -59,14 +60,26 @@ const sizeVariants = {
  * @param {'small'|'medium'|'large'|'full'} [props.size='medium'] - Tamano de la tarjeta
  * @param {boolean} [props.showDescription=true] - Mostrar descripcion
  * @param {Function} [props.onClick] - Handler de click
+ * @param {Function} [props.onShare] - Handler de compartir
+ * @param {boolean} [props.shared] - Estado de compartido
  */
 export function ProductCard({
   product,
   size = "medium",
   showDescription = true,
   onClick,
+  onShare,
+  shared = false,
 }) {
   const imageUrl = getImageUrl(product.imageFileId);
+  const handleShare = async (event) => {
+    event.stopPropagation();
+    if (onShare) {
+      onShare(product);
+      return;
+    }
+    await shareProduct(product);
+  };
 
   return (
     <motion.div
@@ -84,6 +97,14 @@ export function ProductCard({
     >
       {/* Imagen */}
       <div className="aspect-square bg-[var(--muted)] relative overflow-hidden">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-[var(--card)]/80 border border-[var(--border)] flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--primary)]"
+          aria-label="Compartir producto"
+        >
+          <Share2 className="h-4 w-4" />
+        </button>
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -116,6 +137,11 @@ export function ProductCard({
             {formatPrice(product.price, product.currency)}
           </span>
         </div>
+        {shared && (
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+            Copiado
+          </span>
+        )}
       </div>
     </motion.div>
   );

@@ -1,179 +1,127 @@
 /**
- * Puck Editor - Componentes de Catalogo
+ * Puck Editor - Bloques funcionales de Catalogo
  *
- * Bloques especificos para mostrar datos del catalogo:
- * header de tienda, grid de productos, producto individual.
+ * Solo bloques esenciales para construir el catalogo:
+ * header de tienda y catalogo de productos.
  */
 
-import {
-  StoreHeader,
-  ProductGrid,
-  ProductCard,
-} from "../../templates/components";
+import { ImageOff } from "lucide-react";
+import { StoreHeader } from "@/templates/components";
+import { getProductImageUrl } from "@/shared/services/productService";
+
+const FALLBACK_STORE = {
+  name: "Nombre de la tienda",
+  description: "Descripcion breve de ejemplo",
+};
+
+const FALLBACK_PRODUCTS = [
+  {
+    $id: "1",
+    name: "Producto ejemplo",
+    price: 99.99,
+    description: "Descripcion corta del producto",
+    currency: "MXN",
+  },
+  {
+    $id: "2",
+    name: "Otro producto",
+    price: 149.99,
+    description: "Descripcion simple",
+    currency: "MXN",
+  },
+  {
+    $id: "3",
+    name: "Tercer producto",
+    price: 199.99,
+    description: "Descripcion neutral",
+    currency: "MXN",
+  },
+];
+
+const formatPrice = (price, currency = "MXN") => {
+  if (typeof price !== "number") return "";
+  return price.toLocaleString("es-MX", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const ProductCard = ({ product }) => {
+  const imageUrl = product.imageFileId
+    ? getProductImageUrl(product.imageFileId)
+    : null;
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
+      <div className="aspect-square bg-[var(--muted)] flex items-center justify-center">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <ImageOff className="w-10 h-10 text-[var(--muted-foreground)]" />
+        )}
+      </div>
+      <div className="p-3 space-y-1.5">
+        <h3 className="text-sm font-semibold text-[var(--foreground)] line-clamp-2">
+          {product.name}
+        </h3>
+        {product.description && (
+          <p className="text-xs text-[var(--muted-foreground)] line-clamp-2">
+            {product.description}
+          </p>
+        )}
+        <div className="text-sm font-semibold text-[var(--foreground)]">
+          {formatPrice(product.price, product.currency)}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /**
- * Componente: StoreHeaderBlock
- * Renderiza el header de la tienda con datos reales
+ * StoreHeaderBlock
+ * Renderiza el header con datos reales de la tienda
  */
 export const StoreHeaderBlock = {
   label: "Header de Tienda",
-  fields: {
-    variant: {
-      type: "select",
-      label: "Estilo",
-      options: [
-        { label: "Minimal", value: "minimal" },
-        { label: "Banner", value: "banner" },
-        { label: "Hero", value: "hero" },
-      ],
-    },
-    showDescription: {
-      type: "radio",
-      label: "Mostrar descripcion",
-      options: [
-        { label: "Si", value: true },
-        { label: "No", value: false },
-      ],
-    },
-  },
-  defaultProps: {
-    variant: "minimal",
-    showDescription: true,
-  },
-  // Los datos de store se inyectan via context
-  render: ({ variant, showDescription, puck }) => {
-    const store = puck.appState?.data?.root?.props?.store || {
-      name: "Nombre de la tienda",
-      description: "Descripcion de ejemplo",
-    };
-
+  fields: {},
+  defaultProps: {},
+  render: ({ puck }) => {
+    const store = puck.appState?.data?.root?.props?.store || FALLBACK_STORE;
     return (
-      <StoreHeader
-        store={store}
-        variant={variant}
-        showDescription={showDescription}
-      />
+      <StoreHeader store={store} variant="minimal" showDescription={true} />
     );
   },
 };
 
 /**
- * Componente: ProductGridBlock
- * Renderiza el grid de productos con datos reales
+ * ProductCatalogBlock
+ * Renderiza un catalogo simple y neutral con grid responsivo
  */
-export const ProductGridBlock = {
-  label: "Grid de Productos",
-  fields: {
-    variant: {
-      type: "select",
-      label: "Layout",
-      options: [
-        { label: "Lista", value: "list" },
-        { label: "Compacto", value: "compact" },
-        { label: "Estandar", value: "standard" },
-        { label: "Amplio", value: "wide" },
-      ],
-    },
-    showDescription: {
-      type: "radio",
-      label: "Mostrar descripcion",
-      options: [
-        { label: "Si", value: true },
-        { label: "No", value: false },
-      ],
-    },
-    limit: {
-      type: "number",
-      label: "Limite de productos (0 = todos)",
-      min: 0,
-    },
-  },
-  defaultProps: {
-    variant: "standard",
-    showDescription: true,
-    limit: 0,
-  },
-  render: ({ variant, showDescription, limit, puck }) => {
+export const ProductCatalogBlock = {
+  label: "Catalogo de Productos",
+  fields: {},
+  defaultProps: {},
+  render: ({ puck }) => {
     let products = puck.appState?.data?.root?.props?.products || [];
-
-    // Aplicar limite si es mayor a 0
-    if (limit > 0) {
-      products = products.slice(0, limit);
-    }
-
-    // Datos de ejemplo para el editor
-    if (products.length === 0) {
-      products = [
-        {
-          $id: "1",
-          name: "Producto ejemplo",
-          price: 99.99,
-          description: "Descripcion de ejemplo",
-        },
-        {
-          $id: "2",
-          name: "Otro producto",
-          price: 149.99,
-          description: "Otra descripcion",
-        },
-        {
-          $id: "3",
-          name: "Tercer producto",
-          price: 199.99,
-          description: "Mas descripcion",
-        },
-      ];
+    if (!products.length) {
+      products = FALLBACK_PRODUCTS;
     }
 
     return (
-      <ProductGrid
-        products={products}
-        variant={variant}
-        showDescription={showDescription}
-      />
-    );
-  },
-};
-
-/**
- * Componente: FeaturedProductBlock
- * Muestra un producto destacado individual
- */
-export const FeaturedProductBlock = {
-  label: "Producto Destacado",
-  fields: {
-    productIndex: {
-      type: "number",
-      label: "Indice del producto (0 = primero)",
-      min: 0,
-    },
-    size: {
-      type: "select",
-      label: "Tamano",
-      options: [
-        { label: "Pequeno", value: "small" },
-        { label: "Mediano", value: "medium" },
-        { label: "Grande", value: "large" },
-      ],
-    },
-  },
-  defaultProps: {
-    productIndex: 0,
-    size: "large",
-  },
-  render: ({ productIndex, size, puck }) => {
-    const products = puck.appState?.data?.root?.props?.products || [];
-    const product = products[productIndex] || {
-      $id: "featured",
-      name: "Producto destacado",
-      price: 299.99,
-      description: "Este es el producto estrella de tu tienda",
-    };
-
-    return (
-      <div className="flex justify-center">
-        <ProductCard product={product} size={size} showDescription={true} />
-      </div>
+      <section className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {products.map((product) => (
+            <ProductCard key={product.$id} product={product} />
+          ))}
+        </div>
+      </section>
     );
   },
 };

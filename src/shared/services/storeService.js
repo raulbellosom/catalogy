@@ -91,7 +91,18 @@ export async function getStoreBySlug(slug) {
  * @returns {Promise<Object>}
  */
 export async function createStore(data) {
-  const { slug, name, description, templateId, profileId, logoFileId } = data;
+  const {
+    slug,
+    name,
+    description,
+    templateId,
+    profileId,
+    logoFileId,
+    activeRenderer,
+    categoriesJson,
+    purchaseInstructions,
+    paymentLink,
+  } = data;
 
   // Validate slug using Appwrite function (format + availability)
   const validation = await validateSlugRemote(slug);
@@ -111,6 +122,10 @@ export async function createStore(data) {
       description: description?.trim() || "",
       logoFileId: logoFileId || null,
       templateId: templateId || "minimal",
+      activeRenderer: activeRenderer || "template",
+      categoriesJson: categoriesJson || "[]",
+      purchaseInstructions: purchaseInstructions?.trim() || "",
+      paymentLink: paymentLink?.trim() || "",
       settings: data.settings ? JSON.stringify(data.settings) : "{}",
       published: false,
       enabled: true,
@@ -156,7 +171,16 @@ export async function updateStore(storeId, data) {
   // Trim text fields
   if (data.name) updateData.name = data.name.trim();
   if (data.description) updateData.description = data.description.trim();
+  if (data.purchaseInstructions !== undefined) {
+    updateData.purchaseInstructions = data.purchaseInstructions?.trim() || "";
+  }
+  if (data.paymentLink !== undefined) {
+    updateData.paymentLink = data.paymentLink?.trim() || "";
+  }
   if (data.settings) updateData.settings = JSON.stringify(data.settings);
+  if (data.categoriesJson !== undefined) {
+    updateData.categoriesJson = data.categoriesJson || "[]";
+  }
 
   return await databases.updateDocument(
     DATABASE_ID,

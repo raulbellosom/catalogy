@@ -174,18 +174,22 @@ Document ID:
 
 - Auto-generated
 
-| Attribute   | Type    | Required | Default | Constraint(s) | Notes                                        |
-| ----------- | ------- | -------- | ------- | ------------- | -------------------------------------------- |
-| profileId   | string  | yes      |         | size=64       | FK -> profiles.$id (owner)                   |
-| slug        | string  | yes      |         | size=50       | URL-safe, unico, lowercase                   |
-| name        | string  | yes      |         | size=120      | nombre de la tienda                          |
-| description | string  | no       |         | size=500      | descripcion corta                            |
-| logoFileId  | string  | no       |         | size=64       | FK -> storeLogos bucket                      |
-| templateId  | string  | no       | minimal | size=50       | ID del template (minimal/storefront/gallery) |
-| settings    | string  | no       | "{}"    | size=2000     | JSON de configuracion (colores, fonts)       |
-| puckData    | string  | no       | null    | size=100000   | JSON de configuracion Puck Editor            |
-| published   | boolean | no       | false   |               | si el catalogo es publico                    |
-| enabled     | boolean | no       | true    |               | soft delete                                  |
+| Attribute            | Type    | Required | Default  | Constraint(s) | Notes                                        |
+| -------------------- | ------- | -------- | -------- | ------------- | -------------------------------------------- |
+| profileId            | string  | yes      |          | size=64       | FK -> profiles.$id (owner)                   |
+| slug                 | string  | yes      |          | size=50       | URL-safe, unico, lowercase                   |
+| name                 | string  | yes      |          | size=120      | nombre de la tienda                          |
+| description          | string  | no       |          | size=500      | descripcion corta                            |
+| logoFileId           | string  | no       |          | size=64       | FK -> storeLogos bucket                      |
+| templateId           | string  | no       | minimal  | size=50       | ID del template (minimal/storefront/gallery) |
+| activeRenderer       | enum    | no       | template | template,puck | decide que render se publica                 |
+| categoriesJson       | string  | no       | "[]"     | size=2000     | JSON de categorias propias de la tienda      |
+| purchaseInstructions | string  | no       | ""       | size=2000     | instrucciones de compra                      |
+| paymentLink          | URL     | no       | ""       |               | link de pago opcional                        |
+| settings             | string  | no       | "{}"     | size=2000     | JSON de configuracion (colores, fonts)       |
+| puckData             | string  | no       | null     | size=100000   | JSON de configuracion Puck Editor            |
+| published            | boolean | no       | false    |               | si el catalogo es publico                    |
+| enabled              | boolean | no       | true     |               | soft delete                                  |
 
 Indexes:
 
@@ -201,6 +205,11 @@ Query patterns:
 
 - Buscar tienda por slug (publico): `slug = ? AND published = true AND enabled = true`
 - Listar tienda del usuario: `profileId = ? AND enabled = true`
+
+Renderer notes:
+
+- `activeRenderer` decide que se renderiza en publico
+- `templateId` y `puckData` pueden coexistir sin borrarse
 
 Permissions:
 
@@ -219,17 +228,18 @@ Document ID:
 
 - Auto-generated
 
-| Attribute   | Type    | Required | Default | Constraint(s)   | Notes                             |
-| ----------- | ------- | -------- | ------- | --------------- | --------------------------------- |
-| storeId     | string  | yes      |         | size=64         | FK -> stores.$id                  |
-| name        | string  | yes      |         | size=150        | nombre del producto               |
-| description | string  | no       |         | size=2000       | descripcion detallada             |
-| price       | float   | yes      |         | min=0           | precio (sin max por flexibilidad) |
-| currency    | string  | no       | MXN     | size=3          | codigo de moneda ISO              |
-| imageFileId | string  | no       |         | size=64         | FK -> productImages bucket        |
-| stock       | integer | no       | 0       | min=0           | cantidad en inventario            |
-| sortOrder   | integer | no       | 0       | min=0, max=9999 | orden de display                  |
-| enabled     | boolean | no       | true    |                 | soft delete                       |
+| Attribute   | Type     | Required | Default | Constraint(s)   | Notes                             |
+| ----------- | -------- | -------- | ------- | --------------- | --------------------------------- |
+| storeId     | string   | yes      |         | size=64         | FK -> stores.$id                  |
+| name        | string   | yes      |         | size=150        | nombre del producto               |
+| description | string   | no       |         | size=2000       | descripcion detallada             |
+| price       | float    | yes      |         | min=0           | precio (sin max por flexibilidad) |
+| currency    | string   | no       | MXN     | size=3          | codigo de moneda ISO              |
+| imageFileId | string   | no       |         | size=64         | FK -> productImages bucket        |
+| categoryIds | string[] | no       |         | size=50         | ids de categorias asignadas       |
+| stock       | integer  | no       | 0       | min=0           | cantidad en inventario            |
+| sortOrder   | integer  | no       | 0       | min=0, max=9999 | orden de display                  |
+| enabled     | boolean  | no       | true    |                 | soft delete                       |
 
 Indexes:
 

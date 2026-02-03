@@ -27,8 +27,11 @@ import {
   Query,
 } from "../../../shared/lib/appwrite";
 import { useAuth } from "../../../app/providers/AuthProvider";
-import { getTemplate } from "../../templates/registry";
 import { Button } from "../../../shared/ui/atoms/Button";
+import {
+  catalogPuckConfig,
+  catalogDefaultData,
+} from "../configs/catalogConfig";
 
 /**
  * Estados posibles del guardado
@@ -79,33 +82,24 @@ export function PuckEditorPage() {
     enabled: !!store,
   });
 
-  // Obtener template y config
-  const template = store ? getTemplate(store.templateId) : null;
-  const puckConfig = template?.puckConfig;
-
   // Inicializar datos del editor
   useEffect(() => {
-    if (store && puckConfig) {
-      if (store.puckData) {
-        try {
-          const data =
-            typeof store.puckData === "string"
-              ? JSON.parse(store.puckData)
-              : store.puckData;
-          setEditorData(data);
-        } catch (error) {
-          console.error("Error parsing puckData:", error);
-          // Usar data default del template si hay error
-          setEditorData(
-            template.defaultData || { content: [], root: { props: {} } },
-          );
-        }
-      } else {
-        // Sin datos guardados, usar default
-        setEditorData({ content: [], root: { props: { store, products } } });
+    if (!store) return;
+    if (store.puckData) {
+      try {
+        const data =
+          typeof store.puckData === "string"
+            ? JSON.parse(store.puckData)
+            : store.puckData;
+        setEditorData(data);
+      } catch (error) {
+        console.error("Error parsing puckData:", error);
+        setEditorData(catalogDefaultData);
       }
+    } else {
+      setEditorData(catalogDefaultData);
     }
-  }, [store, puckConfig, products, template]);
+  }, [store]);
 
   // Mutation para guardar cambios
   const saveMutation = useMutation({
@@ -179,7 +173,7 @@ export function PuckEditorPage() {
   }
 
   // Sin config de puck
-  if (!puckConfig || !editorData) {
+  if (!editorData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-(--background)">
         <Loader2 className="w-8 h-8 animate-spin text-(--primary)" />
@@ -242,7 +236,7 @@ export function PuckEditorPage() {
       {/* Puck Editor */}
       <div className="flex-1 overflow-hidden puck-editor-theme-fix">
         <Puck
-          config={puckConfig}
+          config={catalogPuckConfig}
           data={{
             ...editorData,
             root: {

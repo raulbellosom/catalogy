@@ -160,6 +160,10 @@ Rutas publicas (subdominio):
   - description
   - logoFileId
   - templateId (template visual del catalogo)
+  - activeRenderer (template | puck, define que se ve en publico)
+  - categoriesJson (categorias propias de la tienda)
+  - purchaseInstructions (texto de compra)
+  - paymentLink (link de pago opcional)
   - puckData (configuracion JSON de Puck Editor)
   - published
   - enabled
@@ -181,14 +185,28 @@ Cada tienda puede elegir un template visual predefinido:
 - **storefront**: Header prominente + descripcion, estilo tienda clasica.
 - **gallery**: Grid visual, pensado para productos con fuerte componente visual (ropa, arte).
 
-### Puck Editor
+### Render publico (activeRenderer)
 
-Cada template es personalizable via Puck Editor (@puckeditor/core):
+- `activeRenderer` define que se muestra publicamente:
+  - `template` -> renderiza el JSX template usando `templateId`
+  - `puck` -> renderiza la pagina desde `puckData`
+- `templateId` y `puckData` siempre se preservan (nunca se borran automaticamente)
+
+### Templates (JSX-only)
+
+- Ubicados en `/templates/`
+- Presets rapidos de layout, sin capacidades de edicion
+- Deben renderizar: nombre, descripcion, logo y catalogo de productos
+
+### Puck Editor (bloques funcionales)
+
+Puck (@puckeditor/core) permite edicion visual drag-and-drop pero sin templates:
 
 - Puck es open source y gratuito (sin licencia, sin cargos)
-- Permite edicion visual drag-and-drop de bloques
+- Solo ofrece bloques funcionales:
+  - StoreHeaderBlock (logo, nombre, descripcion)
+  - ProductCatalogBlock (grid de productos)
 - El layout se guarda como JSON en el campo `puckData` de la tienda
-- Cada template define sus propios componentes/bloques disponibles
 
 ### Pagina de edicion
 
@@ -206,6 +224,7 @@ Cada template es personalizable via Puck Editor (@puckeditor/core):
   - description
   - price
   - imageFileId
+  - categoryIds (categorias asignadas)
   - sortOrder
   - enabled
 - Queries must-have:

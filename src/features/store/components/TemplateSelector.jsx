@@ -7,7 +7,7 @@
 
 import { motion } from "motion/react";
 import { Check, Info } from "lucide-react";
-import { getTemplateList } from "../../templates/registry";
+import { getTemplateList } from "@/templates/registry";
 
 /**
  * Preview visual simplificado para cada template
@@ -66,6 +66,24 @@ function TemplatePreview({ type }) {
               <div
                 key={i}
                 className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-sm"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "noir") {
+    return (
+      <div className="aspect-video bg-[#0f1113] relative w-full h-full">
+        <div className="absolute inset-4 bg-[#17191b] shadow-sm rounded-lg flex flex-col overflow-hidden border border-white/10">
+          <div className="h-6 w-full bg-[#1f2326] border-b border-white/10"></div>
+          <div className="p-2 grid grid-cols-3 gap-1">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="aspect-square bg-[#22262a] rounded-sm"
               />
             ))}
           </div>
@@ -152,6 +170,11 @@ export function TemplateSelector({ value, onChange, disabled = false }) {
                   {template.id === "gallery" && (
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">
                       Galería
+                    </span>
+                  )}
+                  {template.id === "noir" && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">
+                      Oscuro
                     </span>
                   )}
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">

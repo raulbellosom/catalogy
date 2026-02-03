@@ -55,12 +55,18 @@ const itemVariants = {
  * @param {'list'|'compact'|'standard'|'wide'} [props.variant='standard'] - Variante del grid
  * @param {boolean} [props.showDescription=true] - Mostrar descripcion en cards
  * @param {Function} [props.onProductClick] - Handler de click en producto
+ * @param {Function} [props.onShare] - Handler de compartir producto
+ * @param {string|null} [props.sharedProductId] - Producto compartido
+ * @param {string} [props.emptyMessage] - Texto para estado vacio
  */
 export function ProductGrid({
   products = [],
   variant = "standard",
   showDescription = true,
   onProductClick,
+  onShare,
+  sharedProductId = null,
+  emptyMessage,
 }) {
   if (!products || products.length === 0) {
     return (
@@ -70,7 +76,7 @@ export function ProductGrid({
           Sin productos
         </h3>
         <p className="text-sm text-[var(--muted-foreground)] mt-1">
-          Esta tienda aun no tiene productos disponibles
+          {emptyMessage || "Esta tienda aun no tiene productos disponibles"}
         </p>
       </div>
     );
@@ -90,6 +96,8 @@ export function ProductGrid({
             size={cardSizeMap[variant]}
             showDescription={showDescription}
             onClick={() => onProductClick?.(product)}
+            onShare={onShare}
+            shared={sharedProductId === product.$id}
           />
         </motion.div>
       ))}

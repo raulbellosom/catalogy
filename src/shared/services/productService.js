@@ -64,6 +64,7 @@ export async function createProduct(data) {
     sortOrder,
     imageFileId,
     stock,
+    categoryIds,
   } = data;
 
   // Validate
@@ -88,6 +89,7 @@ export async function createProduct(data) {
       sortOrder: sortOrder || 0,
       imageFileId: imageFileId || null,
       stock: parseInt(stock) || 0,
+      categoryIds: Array.isArray(categoryIds) ? categoryIds : [],
       enabled: true,
     },
   );
@@ -123,6 +125,12 @@ export async function updateProduct(productId, data) {
   // Trim description if provided
   if (data.description !== undefined) {
     updateData.description = data.description?.trim() || "";
+  }
+
+  if (data.categoryIds !== undefined) {
+    updateData.categoryIds = Array.isArray(data.categoryIds)
+      ? data.categoryIds
+      : [];
   }
 
   return await databases.updateDocument(

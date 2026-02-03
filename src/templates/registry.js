@@ -2,15 +2,13 @@
  * Template Registry
  *
  * Registro central de todos los templates disponibles para el catalogo.
- * Cada template define su componente, configuracion de Puck y metadata.
+ * Cada template define su componente JSX y metadata.
  */
 
 import { MinimalTemplate } from "./variants/MinimalTemplate";
 import { StorefrontTemplate } from "./variants/StorefrontTemplate";
 import { GalleryTemplate } from "./variants/GalleryTemplate";
-import { minimalPuckConfig } from "../editor/configs/minimalConfig";
-import { storefrontPuckConfig } from "../editor/configs/storefrontConfig";
-import { galleryPuckConfig } from "../editor/configs/galleryConfig";
+import { NoirGridTemplate } from "./variants/NoirGridTemplate";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -19,7 +17,6 @@ import { galleryPuckConfig } from "../editor/configs/galleryConfig";
  * @property {string} description - Descripcion breve del template
  * @property {React.ComponentType} component - Componente React del template
  * @property {string} thumbnail - URL del thumbnail para preview
- * @property {Object} puckConfig - Configuracion de componentes para Puck Editor
  */
 
 /**
@@ -33,7 +30,6 @@ export const TEMPLATES = {
     description: "Tipografia simple, fondo limpio, lista directa de productos",
     component: MinimalTemplate,
     thumbnail: "/templates/minimal-thumb.png",
-    puckConfig: minimalPuckConfig,
   },
   storefront: {
     id: "storefront",
@@ -41,7 +37,6 @@ export const TEMPLATES = {
     description: "Header prominente con descripcion, estilo tienda clasica",
     component: StorefrontTemplate,
     thumbnail: "/templates/storefront-thumb.png",
-    puckConfig: storefrontPuckConfig,
   },
   gallery: {
     id: "gallery",
@@ -50,7 +45,13 @@ export const TEMPLATES = {
       "Grid visual, ideal para productos con fuerte componente visual",
     component: GalleryTemplate,
     thumbnail: "/templates/gallery-thumb.png",
-    puckConfig: galleryPuckConfig,
+  },
+  noir: {
+    id: "noir",
+    name: "Noir Grid",
+    description: "Estetica oscura con cards premium y enfoque editorial",
+    component: NoirGridTemplate,
+    thumbnail: "/templates/noir-thumb.png",
   },
 };
 

@@ -18,6 +18,9 @@ import {
   Copy,
   Share2,
   Eye,
+  Tag,
+  X,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
@@ -45,6 +48,38 @@ import {
 } from "@/shared/services/storeService";
 import { appConfig } from "@/shared/lib/env";
 import { motion, AnimatePresence } from "motion/react";
+
+const safeParseCategories = (raw) => {
+  if (!raw) return [];
+  const parsed =
+    typeof raw === "string"
+      ? (() => {
+          try {
+            return JSON.parse(raw);
+          } catch (error) {
+            console.warn("Error parsing categoriesJson:", error);
+            return [];
+          }
+        })()
+      : raw;
+
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .map((item) => ({
+      id: String(item?.id || "").trim(),
+      name: String(item?.name || "").trim(),
+    }))
+    .filter((item) => item.id && item.name);
+};
+
+const slugifyCategory = (value) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
 
 export function StoreSettingsPage() {
   const navigate = useNavigate();
@@ -106,12 +141,19 @@ export function StoreSettingsPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [purchaseInstructions, setPurchaseInstructions] = useState("");
+  const [paymentLink, setPaymentLink] = useState("");
 
   // Appearance Form State
   const [templateId, setTemplateId] = useState("minimal");
+  const [activeRenderer, setActiveRenderer] = useState("template");
   const [currentLogoId, setCurrentLogoId] = useState("");
   const [logoPreviewUrl, setLogoPreviewUrl] = useState(null);
   const [pendingLogoFile, setPendingLogoFile] = useState(null);
+
+  // Categories State
+  const [categories, setCategories] = useState([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   // Load Store Data
   useEffect(() => {
@@ -119,7 +161,11 @@ export function StoreSettingsPage() {
       setName(store.name || "");
       setSlug(store.slug || "");
       setDescription(store.description || "");
+      setPurchaseInstructions(store.purchaseInstructions || "");
+      setPaymentLink(store.paymentLink || "");
       setTemplateId(store.templateId || "minimal");
+      setActiveRenderer(store.activeRenderer || "template");
+      setCategories(safeParseCategories(store.categoriesJson));
       setCurrentLogoId(store.logoFileId || "");
       setLogoPreviewUrl(
         store.logoFileId ? getStoreLogoUrl(store.logoFileId) : null,
@@ -139,8 +185,28 @@ export function StoreSettingsPage() {
     setLogoPreviewUrl(null);
   };
 
+  const handleAddCategory = () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    const id = slugifyCategory(name);
+    if (!id) {
+      toast.error("Nombre de categoria invalido");
+      return;
+    }
+    if (categories.some((category) => category.id === id)) {
+      toast.error("Esa categoria ya existe");
+      return;
+    }
+    setCategories((prev) => [...prev, { id, name }]);
+    setNewCategoryName("");
+  };
+
+  const handleRemoveCategory = (categoryId) => {
+    setCategories((prev) => prev.filter((item) => item.id !== categoryId));
+  };
+
   const handleSaveStore = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     setIsSubmitting(true);
 
     try {
@@ -155,7 +221,11 @@ export function StoreSettingsPage() {
         name: name.trim(),
         slug: slug.trim().toLowerCase(),
         description: description.trim(),
+        purchaseInstructions: purchaseInstructions.trim(),
+        paymentLink: paymentLink.trim(),
         templateId,
+        activeRenderer,
+        categoriesJson: JSON.stringify(categories),
         logoFileId: finalLogoId || null,
       };
 
@@ -255,13 +325,27 @@ export function StoreSettingsPage() {
   };
 
   // Check for changes
+  const storedCategoriesJson = JSON.stringify(
+    safeParseCategories(store?.categoriesJson),
+  );
+  const currentCategoriesJson = JSON.stringify(categories);
+
   const hasChanges =
     name.trim() !== (store?.name || "") ||
     slug.trim() !== (store?.slug || "") ||
     description.trim() !== (store?.description || "") ||
+    purchaseInstructions.trim() !== (store?.purchaseInstructions || "") ||
+    paymentLink.trim() !== (store?.paymentLink || "") ||
     templateId !== (store?.templateId || "minimal") ||
+    activeRenderer !== (store?.activeRenderer || "template") ||
+    currentCategoriesJson !== storedCategoriesJson ||
     !!pendingLogoFile ||
     currentLogoId !== (store?.logoFileId || "");
+
+  const rendererLabel =
+    activeRenderer === "puck"
+      ? "Editor (Puck)"
+      : `Template (${templateId || "minimal"})`;
 
   if (loadingStore) {
     return (
@@ -439,6 +523,41 @@ export function StoreSettingsPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                      Instrucciones de compra
+                    </h3>
+                    <p className="text-sm text-(--color-fg-secondary)">
+                      Explica como comprar y agrega un link de pago si aplica.
+                    </p>
+                  </div>
+                  <LinkIcon className="w-5 h-5 text-(--color-primary) opacity-60" />
+                </div>
+
+                <Input
+                  label="Link de pago (opcional)"
+                  placeholder="https://..."
+                  value={paymentLink}
+                  onChange={(e) => setPaymentLink(e.target.value)}
+                />
+
+                <div>
+                  <label className="text-sm font-medium text-(--color-fg)">
+                    Instrucciones (opcional)
+                  </label>
+                  <textarea
+                    className="w-full mt-1 px-3 py-2 bg-[var(--color-bg)] border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none resize-none"
+                    rows={4}
+                    value={purchaseInstructions}
+                    onChange={(e) => setPurchaseInstructions(e.target.value)}
+                    maxLength={2000}
+                    placeholder="Ej. Haz tu pedido por WhatsApp y completa el pago con el link de arriba."
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="lg:col-span-1 space-y-6">
@@ -561,12 +680,82 @@ export function StoreSettingsPage() {
           <form
             onSubmit={handleSaveStore}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-          >
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-(--color-fg) mb-4">
-                  Plantilla
-                </h3>
+            >
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                      Render público
+                    </h3>
+                    <p className="text-sm text-(--color-fg-secondary)">
+                      Decide qué se muestra en tu catálogo público. Cambiar esta
+                      opción no borra ni sobrescribe datos.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-3">
+                    <label
+                      className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                        activeRenderer === "template"
+                          ? "border-(--color-primary) bg-(--color-primary)/5"
+                          : "border-(--color-border) hover:border-(--color-border-hover)"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="activeRenderer"
+                        value="template"
+                        checked={activeRenderer === "template"}
+                        onChange={() => setActiveRenderer("template")}
+                        className="mt-1"
+                      />
+                      <div>
+                        <p className="font-semibold text-(--color-fg)">
+                          Mostrar template
+                        </p>
+                        <p className="text-xs text-(--color-fg-secondary) mt-1">
+                          Usa el template seleccionado para la vista pública.
+                        </p>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                        activeRenderer === "puck"
+                          ? "border-(--color-primary) bg-(--color-primary)/5"
+                          : "border-(--color-border) hover:border-(--color-border-hover)"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="activeRenderer"
+                        value="puck"
+                        checked={activeRenderer === "puck"}
+                        onChange={() => setActiveRenderer("puck")}
+                        className="mt-1"
+                      />
+                      <div>
+                        <p className="font-semibold text-(--color-fg)">
+                          Mostrar página del editor
+                        </p>
+                        <p className="text-xs text-(--color-fg-secondary) mt-1">
+                          Publica el layout creado en el editor Puck.
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="text-xs text-(--color-fg-secondary)">
+                    Actualmente visible:{" "}
+                    <span className="font-semibold text-(--color-fg)">
+                      {rendererLabel}
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-bold text-(--color-fg) mb-4">
+                    Plantilla
+                  </h3>
                 <TemplateSelector value={templateId} onChange={setTemplateId} />
               </div>
             </div>
@@ -598,6 +787,81 @@ export function StoreSettingsPage() {
         {/* PRODUCTS TAB */}
         {activeTab === "products" && (
           <div className="space-y-6">
+            <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                    Categorias de productos
+                  </h3>
+                  <p className="text-sm text-(--color-fg-secondary)">
+                    Crea categorias propias para filtrar tu catalogo.
+                  </p>
+                </div>
+                <Tag className="w-5 h-5 text-(--color-primary) opacity-60" />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  label="Nueva categoria"
+                  placeholder="Ej. Plantas de interior"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCategory();
+                    }
+                  }}
+                  maxLength={50}
+                />
+                <Button
+                  type="button"
+                  className="mt-auto"
+                  onClick={handleAddCategory}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar
+                </Button>
+              </div>
+
+              {categories.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <span
+                      key={category.id}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--color-bg-secondary) border border-(--color-border) text-sm text-(--color-fg)"
+                    >
+                      {category.name}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCategory(category.id)}
+                        className="text-(--color-fg-muted) hover:text-(--color-error)"
+                        aria-label="Eliminar categoria"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-(--color-fg-secondary)">
+                  Aun no tienes categorias creadas.
+                </p>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveStore}
+                  isLoading={isSubmitting}
+                  disabled={!hasChanges}
+                >
+                  Guardar categorias
+                </Button>
+              </div>
+            </div>
+
             {/* Toolbar */}
             <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="flex items-center gap-2 w-full md:w-auto">
@@ -669,6 +933,7 @@ export function StoreSettingsPage() {
               onClose={() => setIsProductModalOpen(false)}
               storeId={store?.$id}
               product={editingProduct}
+              categories={categories}
             />
           </div>
         )}

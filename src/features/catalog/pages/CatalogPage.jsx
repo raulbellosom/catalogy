@@ -12,6 +12,8 @@ import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { ThemeToggle } from "@/shared/ui/molecules/ThemeToggle";
 import { motion } from "motion/react";
+import { getTemplate } from "@/templates/registry";
+import { PuckRenderer } from "@/features/editor/components/PuckRenderer";
 
 /**
  * Public catalog page
@@ -90,51 +92,31 @@ export function CatalogPage({ previewSlug }) {
     );
   }
 
-  const logoUrl = store.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
+  const template = getTemplate(store.templateId);
+  const TemplateComponent = template.component;
+  const activeRenderer =
+    store?.activeRenderer === "puck" ? "puck" : "template";
+
+  // Theme override from store.settings (optional)
+  const themeStyle = (() => {
+    const colors = store?.settings?.colors || {};
+    const font = store?.settings?.font;
+
+    /** @type {Record<string, string>} */
+    const style = {};
+    if (colors.primary) style["--color-primary"] = colors.primary;
+    if (colors.secondary) style["--color-primary-hover"] = colors.secondary;
+    if (font?.id) style["--store-font"] = font.id;
+    return style;
+  })();
 
   return (
-    <div className="bg-[var(--color-bg)]">
-      {/* Hero section for store info */}
-      <div className="bg-(--color-card) border-b border-[var(--color-card-border)] py-8 sm:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={store.name}
-                className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl object-cover shadow-lg"
-              />
-            ) : (
-              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-[var(--color-primary)]/10 rounded-3xl flex items-center justify-center">
-                <StoreIcon className="w-12 h-12 text-[var(--color-primary)]" />
-              </div>
-            )}
-            <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-fg)] mb-3">
-                {store.name}
-              </h1>
-              {store.description && (
-                <p className="text-lg text-[var(--color-fg-secondary)] max-w-2xl">
-                  {store.description}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Products */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 safe-bottom">
-        {loadingProducts ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
-          </div>
-        ) : products.length === 0 ? (
-          <EmptyProducts />
-        ) : (
-          <ProductsGrid products={products} />
-        )}
-      </main>
+    <div className="bg-[var(--color-bg)]" style={themeStyle}>
+      {activeRenderer === "puck" ? (
+        <PuckRenderer store={store} products={products} />
+      ) : (
+        <TemplateComponent store={store} products={products} />
+      )}
     </div>
   );
 }

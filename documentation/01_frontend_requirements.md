@@ -193,14 +193,31 @@ Una feature esta "done" solo cuando:
 - Codigo es modular y entendible por un agente AI
 - Se usan iconos de Lucide, NUNCA emojis
 
-## Sistema de templates
+## Sistema de templates y renderers
 
 ### Arquitectura
 
-El catalogo publico de cada tienda se renderiza usando un sistema de templates:
+El catalogo publico se renderiza segun `activeRenderer`:
+
+- `template` → JSX template usando `templateId`
+- `puck` → pagina generada desde `puckData`
+
+Regla estricta de render publico:
 
 ```
-src/features/templates/
+if (store.activeRenderer === "template") {
+  render JSX template usando templateId
+}
+
+if (store.activeRenderer === "puck") {
+  render pagina desde puckData
+}
+```
+
+Estructura de templates (JSX-only):
+
+```
+src/templates/
 ├── registry.js              # Registro central de templates
 ├── components/              # Componentes reutilizables para templates
 │   ├── ProductCard.jsx
@@ -212,6 +229,19 @@ src/features/templates/
     ├── StorefrontTemplate.jsx
     ├── GalleryTemplate.jsx
     └── index.js
+```
+
+Estructura de Puck (bloques funcionales):
+
+```
+src/features/editor/
+├── pages/
+│   └── PuckEditorPage.jsx      # Editor visual
+├── components/
+│   ├── CatalogBlocks.jsx       # StoreHeaderBlock, ProductCatalogBlock
+│   └── PuckRenderer.jsx        # Render publico de Puck
+└── configs/
+    └── catalogConfig.jsx       # Config unica para Puck
 ```
 
 ### Template registry pattern
@@ -226,7 +256,6 @@ export const TEMPLATES = {
     description: 'Tipografia simple, fondo limpio, lista directa',
     component: MinimalTemplate,
     thumbnail: '/templates/minimal-thumb.png',
-    puckConfig: minimalPuckConfig,
   },
   storefront: { ... },
   gallery: { ... },
@@ -244,39 +273,32 @@ Cada template recibe las mismas props:
  * @param {Object} props
  * @param {Object} props.store - Datos de la tienda
  * @param {Array} props.products - Lista de productos
- * @param {Object|null} props.puckData - Configuracion de Puck (si existe)
  */
-function TemplateComponent({ store, products, puckData }) { ... }
+function TemplateComponent({ store, products }) { ... }
 ```
 
-### Integracion con Puck Editor
+### Controles de catalogo (templates)
 
-Puck (@puckeditor/core) permite edicion visual drag-and-drop:
+Todos los templates JSX deben incluir controles locales:
 
-- Cada template define un `puckConfig` con los componentes permitidos
+- Buscador de productos (nombre y descripcion).
+- Filtro por categorias propias de la tienda.
+- Rango de precios (min/max).
+- Boton de compartir por producto (link a `/product/:id`).
+- Seccion de instrucciones de compra si existe `purchaseInstructions` o `paymentLink`.
+
+### Integracion con Puck Editor (bloques)
+
+Puck (@puckeditor/core) permite edicion visual drag-and-drop sin templates:
+
+- Solo ofrece bloques funcionales (StoreHeaderBlock, ProductCatalogBlock)
 - El resultado se guarda como JSON en `store.puckData`
-- Si `puckData` existe, el template lo usa para renderizar el layout personalizado
-- Si `puckData` es null, el template usa su layout default
+- `templateId` y `puckData` pueden coexistir sin sobrescribirse
 
-Estructura del editor:
+### Flujo de seleccion de render
 
-```
-src/features/editor/
-├── pages/
-│   └── PuckEditorPage.jsx   # Wrapper del editor
-├── components/
-│   └── EditorToolbar.jsx    # Acciones (guardar, publicar, etc)
-└── configs/
-    ├── minimalConfig.js     # Componentes disponibles para minimal
-    ├── storefrontConfig.js
-    └── galleryConfig.js
-```
-
-### Flujo de seleccion de template
-
-1. Usuario crea tienda → templateId = 'minimal' (default)
-2. En Store Settings, usuario puede cambiar template
-3. Al cambiar template, puckData se resetea a null
-4. Usuario puede personalizar via Editor (/app/editor)
-5. El editor guarda el JSON en puckData
-6. CatalogPage usa el registry para obtener el componente y renderizar
+1. Usuario crea tienda → `templateId = 'minimal'`, `activeRenderer = 'template'`
+2. En Store Settings, usuario puede cambiar template (solo actualiza `templateId`)
+3. Usuario puede personalizar via Editor (/app/editor) y guardar `puckData`
+4. En Store Settings, usuario elige si mostrar template o pagina del editor
+5. Cambiar `activeRenderer` no borra ni sobrescribe datos
