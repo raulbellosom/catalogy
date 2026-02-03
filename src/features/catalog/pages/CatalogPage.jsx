@@ -95,7 +95,7 @@ export function CatalogPage({ previewSlug }) {
   return (
     <div className="bg-[var(--color-bg)]">
       {/* Hero section for store info */}
-      <div className="bg-[var(--color-card)] border-b border-[var(--color-card-border)] py-8 sm:py-12">
+      <div className="bg-(--color-card) border-b border-[var(--color-card-border)] py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
             {logoUrl ? (
