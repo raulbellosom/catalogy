@@ -19,6 +19,7 @@ import {
   Users,
   User,
   Sparkles,
+  Tag,
 } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { useIsAdmin, useUserStore } from "@/shared/hooks";
@@ -39,7 +40,18 @@ import { motion, AnimatePresence } from "motion/react";
 /** @type {NavItem[]} */
 const NAV_ITEMS = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/app/store", label: "Mi tienda", icon: Store, exact: true },
+  {
+    to: "/app/store?tab=general",
+    label: "Mi tienda",
+    icon: Store,
+    exact: false,
+  },
+  {
+    to: "/app/store?tab=categories",
+    label: "Categorías",
+    icon: Tag,
+    exact: false,
+  },
   {
     to: "/app/store?tab=products",
     label: "Productos",

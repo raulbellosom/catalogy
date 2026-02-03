@@ -116,11 +116,14 @@ export function StoreSettingsPage() {
     const tabFromUrl = searchParams.get("tab");
     if (
       tabFromUrl &&
-      ["general", "appearance", "products"].includes(tabFromUrl)
+      ["general", "appearance", "categories", "products"].includes(tabFromUrl)
     ) {
       setActiveTab(tabFromUrl);
+    } else if (!tabFromUrl) {
+      // If no tab is specified, redirect to general tab
+      navigate("/app/store?tab=general", { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   // Update URL on tab change (optional, but good for navigation)
   const handleTabChange = (tab) => {
@@ -416,6 +419,12 @@ export function StoreSettingsPage() {
           label="Apariencia"
         />
         <TabButton
+          active={activeTab === "categories"}
+          onClick={() => handleTabChange("categories")}
+          icon={Tag}
+          label="Categorías"
+        />
+        <TabButton
           active={activeTab === "products"}
           onClick={() => handleTabChange("products")}
           icon={Package}
@@ -680,82 +689,82 @@ export function StoreSettingsPage() {
           <form
             onSubmit={handleSaveStore}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-            >
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-(--color-fg) mb-1">
-                      Render público
-                    </h3>
-                    <p className="text-sm text-(--color-fg-secondary)">
-                      Decide qué se muestra en tu catálogo público. Cambiar esta
-                      opción no borra ni sobrescribe datos.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3">
-                    <label
-                      className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
-                        activeRenderer === "template"
-                          ? "border-(--color-primary) bg-(--color-primary)/5"
-                          : "border-(--color-border) hover:border-(--color-border-hover)"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="activeRenderer"
-                        value="template"
-                        checked={activeRenderer === "template"}
-                        onChange={() => setActiveRenderer("template")}
-                        className="mt-1"
-                      />
-                      <div>
-                        <p className="font-semibold text-(--color-fg)">
-                          Mostrar template
-                        </p>
-                        <p className="text-xs text-(--color-fg-secondary) mt-1">
-                          Usa el template seleccionado para la vista pública.
-                        </p>
-                      </div>
-                    </label>
-
-                    <label
-                      className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
-                        activeRenderer === "puck"
-                          ? "border-(--color-primary) bg-(--color-primary)/5"
-                          : "border-(--color-border) hover:border-(--color-border-hover)"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="activeRenderer"
-                        value="puck"
-                        checked={activeRenderer === "puck"}
-                        onChange={() => setActiveRenderer("puck")}
-                        className="mt-1"
-                      />
-                      <div>
-                        <p className="font-semibold text-(--color-fg)">
-                          Mostrar página del editor
-                        </p>
-                        <p className="text-xs text-(--color-fg-secondary) mt-1">
-                          Publica el layout creado en el editor Puck.
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-
-                  <div className="text-xs text-(--color-fg-secondary)">
-                    Actualmente visible:{" "}
-                    <span className="font-semibold text-(--color-fg)">
-                      {rendererLabel}
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-lg font-bold text-(--color-fg) mb-4">
-                    Plantilla
+          >
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                    Render público
                   </h3>
+                  <p className="text-sm text-(--color-fg-secondary)">
+                    Decide qué se muestra en tu catálogo público. Cambiar esta
+                    opción no borra ni sobrescribe datos.
+                  </p>
+                </div>
+
+                <div className="grid gap-3">
+                  <label
+                    className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                      activeRenderer === "template"
+                        ? "border-(--color-primary) bg-(--color-primary)/5"
+                        : "border-(--color-border) hover:border-(--color-border-hover)"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="activeRenderer"
+                      value="template"
+                      checked={activeRenderer === "template"}
+                      onChange={() => setActiveRenderer("template")}
+                      className="mt-1"
+                    />
+                    <div>
+                      <p className="font-semibold text-(--color-fg)">
+                        Mostrar template
+                      </p>
+                      <p className="text-xs text-(--color-fg-secondary) mt-1">
+                        Usa el template seleccionado para la vista pública.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+                      activeRenderer === "puck"
+                        ? "border-(--color-primary) bg-(--color-primary)/5"
+                        : "border-(--color-border) hover:border-(--color-border-hover)"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="activeRenderer"
+                      value="puck"
+                      checked={activeRenderer === "puck"}
+                      onChange={() => setActiveRenderer("puck")}
+                      className="mt-1"
+                    />
+                    <div>
+                      <p className="font-semibold text-(--color-fg)">
+                        Mostrar página del editor
+                      </p>
+                      <p className="text-xs text-(--color-fg-secondary) mt-1">
+                        Publica el layout creado en el editor Puck.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="text-xs text-(--color-fg-secondary)">
+                  Actualmente visible:{" "}
+                  <span className="font-semibold text-(--color-fg)">
+                    {rendererLabel}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-(--color-fg) mb-4">
+                  Plantilla
+                </h3>
                 <TemplateSelector value={templateId} onChange={setTemplateId} />
               </div>
             </div>
@@ -784,84 +793,94 @@ export function StoreSettingsPage() {
           </form>
         )}
 
-        {/* PRODUCTS TAB */}
-        {activeTab === "products" && (
-          <div className="space-y-6">
-            <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-(--color-fg) mb-1">
-                    Categorias de productos
-                  </h3>
-                  <p className="text-sm text-(--color-fg-secondary)">
-                    Crea categorias propias para filtrar tu catalogo.
-                  </p>
+        {/* CATEGORIES TAB */}
+        {activeTab === "categories" && (
+          <form
+            onSubmit={handleSaveStore}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                      Categorias de productos
+                    </h3>
+                    <p className="text-sm text-(--color-fg-secondary)">
+                      Crea categorias propias para filtrar tu catalogo.
+                    </p>
+                  </div>
+                  <Tag className="w-5 h-5 text-(--color-primary) opacity-60" />
                 </div>
-                <Tag className="w-5 h-5 text-(--color-primary) opacity-60" />
-              </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Input
-                  label="Nueva categoria"
-                  placeholder="Ej. Plantas de interior"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddCategory();
-                    }
-                  }}
-                  maxLength={50}
-                />
-                <Button
-                  type="button"
-                  className="mt-auto"
-                  onClick={handleAddCategory}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar
-                </Button>
-              </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Input
+                    label="Nueva categoria"
+                    placeholder="Ej. Plantas de interior"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCategory();
+                      }
+                    }}
+                    maxLength={50}
+                  />
+                  <Button
+                    type="button"
+                    className="mt-auto"
+                    onClick={handleAddCategory}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar
+                  </Button>
+                </div>
 
-              {categories.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => (
-                    <span
-                      key={category.id}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--color-bg-secondary) border border-(--color-border) text-sm text-(--color-fg)"
-                    >
-                      {category.name}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveCategory(category.id)}
-                        className="text-(--color-fg-muted) hover:text-(--color-error)"
-                        aria-label="Eliminar categoria"
+                {categories.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((category) => (
+                      <span
+                        key={category.id}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--color-bg-secondary) border border-(--color-border) text-sm text-(--color-fg)"
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-(--color-fg-secondary)">
-                  Aun no tienes categorias creadas.
-                </p>
-              )}
-
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSaveStore}
-                  isLoading={isSubmitting}
-                  disabled={!hasChanges}
-                >
-                  Guardar categorias
-                </Button>
+                        {category.name}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(category.id)}
+                          className="text-(--color-fg-muted) hover:text-(--color-error)"
+                          aria-label="Eliminar categoria"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-(--color-fg-secondary)">
+                    Aun no tienes categorias creadas.
+                  </p>
+                )}
               </div>
             </div>
 
+            <div className="lg:col-span-1 space-y-6">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                isLoading={isSubmitting}
+                disabled={!hasChanges}
+              >
+                <Save className="w-5 h-5 mr-2" /> Guardar Cambios
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* PRODUCTS TAB */}
+        {activeTab === "products" && (
+          <div className="space-y-6">
             {/* Toolbar */}
             <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="flex items-center gap-2 w-full md:w-auto">
