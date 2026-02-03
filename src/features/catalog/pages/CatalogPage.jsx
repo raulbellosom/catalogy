@@ -92,9 +92,16 @@ export function CatalogPage({ previewSlug }) {
     );
   }
 
+  // DEBUG: Log template selection
+  console.log("[CatalogPage] store.templateId:", store.templateId);
+  console.log("[CatalogPage] store object:", store);
+
   const template = getTemplate(store.templateId);
+  console.log("[CatalogPage] Selected template:", template.id, template.name);
+
   const TemplateComponent = template.component;
   const activeRenderer = store?.activeRenderer === "puck" ? "puck" : "template";
+  console.log("[CatalogPage] activeRenderer:", activeRenderer);
 
   // Theme override from store.settings (optional)
   const themeStyle = (() => {

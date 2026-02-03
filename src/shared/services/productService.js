@@ -19,12 +19,16 @@ import { Query, ID } from "appwrite";
  * @returns {Promise<Object>}
  */
 export async function listProducts(storeId, options = {}) {
-  const { includeDisabled = false } = options;
+  const { includeDisabled = false, includeInactive = false } = options;
 
   const queries = [Query.equal("storeId", storeId)];
 
   if (!includeDisabled) {
     queries.push(Query.equal("enabled", true));
+  }
+
+  if (!includeInactive) {
+    queries.push(Query.equal("status", true));
   }
 
   queries.push(Query.orderAsc("sortOrder"));
@@ -65,6 +69,7 @@ export async function createProduct(data) {
     imageFileIds,
     stock,
     categoryIds,
+    status,
   } = data;
 
   // Validate
@@ -90,6 +95,7 @@ export async function createProduct(data) {
       imageFileIds: Array.isArray(imageFileIds) ? imageFileIds : [],
       stock: parseInt(stock) || 0,
       categoryIds: Array.isArray(categoryIds) ? categoryIds : [],
+      status: status !== undefined ? status : true,
       enabled: true,
     },
   );

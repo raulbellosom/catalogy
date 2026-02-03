@@ -6,8 +6,9 @@
  */
 
 import { motion } from "motion/react";
-import { ImageOff, Tag, Share2 } from "lucide-react";
+import { Tag, Share2 } from "lucide-react";
 import { shareProduct } from "./catalogHooks";
+import { ProductImageCarousel } from "./ProductImageCarousel";
 
 /**
  * @typedef {Object} Product
@@ -72,12 +73,6 @@ export function ProductCard({
   onShare,
   shared = false,
 }) {
-  // Handle both new imageFileIds array and legacy imageFileId
-  const firstImageId =
-    Array.isArray(product.imageFileIds) && product.imageFileIds.length > 0
-      ? product.imageFileIds[0]
-      : product.imageFileId;
-  const imageUrl = getImageUrl(firstImageId);
   const handleShare = async (event) => {
     event.stopPropagation();
     if (onShare) {
@@ -86,6 +81,11 @@ export function ProductCard({
     }
     await shareProduct(product);
   };
+
+  const imageFileIds = Array.isArray(product.imageFileIds)
+    ? product.imageFileIds
+    : [];
+  const legacyImageFileId = product.imageFileId;
 
   return (
     <motion.div
@@ -102,7 +102,7 @@ export function ProductCard({
       onClick={onClick}
     >
       {/* Imagen */}
-      <div className="aspect-square bg-[var(--muted)] relative overflow-hidden">
+      <div className="aspect-square relative overflow-hidden">
         <button
           type="button"
           onClick={handleShare}
@@ -111,18 +111,13 @@ export function ProductCard({
         >
           <Share2 className="h-4 w-4" />
         </button>
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-[var(--muted-foreground)]">
-            <ImageOff className="w-12 h-12" />
-          </div>
-        )}
+        <ProductImageCarousel
+          imageFileIds={imageFileIds}
+          legacyImageFileId={legacyImageFileId}
+          alt={product.name}
+          className="w-full h-full bg-[var(--muted)]"
+          tone="light"
+        />
       </div>
 
       {/* Contenido */}

@@ -100,6 +100,7 @@ export function StoreSettingsPage() {
   // Products Data
   const { data: productsData, isLoading: loadingProducts } = useProducts(
     store?.$id,
+    { includeDisabled: true, includeInactive: true },
   );
   const products = productsData?.documents || [];
 
@@ -457,8 +458,8 @@ export function StoreSettingsPage() {
       filterEnabled === "all"
         ? true
         : filterEnabled === "active"
-          ? p.enabled
-          : !p.enabled;
+          ? p.status
+          : !p.status;
     return matchesSearch && matchesFilter;
   });
 
@@ -483,13 +484,43 @@ export function StoreSettingsPage() {
     try {
       await updateProduct.mutateAsync({
         productId: product.$id,
-        data: { enabled: !product.enabled },
+        data: { status: !product.status },
       });
     } catch (e) {
       console.error(e);
     } finally {
       setProductActionLoadingId(null);
       setProductActionType(null);
+    }
+  };
+
+  const handleProductReorder = async (product, direction) => {
+    const currentIndex = filteredProducts.findIndex(
+      (p) => p.$id === product.$id,
+    );
+    if (currentIndex === -1) return;
+
+    const swapIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (swapIndex < 0 || swapIndex >= filteredProducts.length) return;
+
+    const currentProduct = filteredProducts[currentIndex];
+    const swapProduct = filteredProducts[swapIndex];
+
+    try {
+      // Swap sortOrder values
+      await Promise.all([
+        updateProduct.mutateAsync({
+          productId: currentProduct.$id,
+          data: { sortOrder: swapProduct.sortOrder },
+        }),
+        updateProduct.mutateAsync({
+          productId: swapProduct.$id,
+          data: { sortOrder: currentProduct.sortOrder },
+        }),
+      ]);
+    } catch (e) {
+      console.error(e);
+      toast.error("Error al reordenar productos");
     }
   };
 
@@ -1129,7 +1160,7 @@ export function StoreSettingsPage() {
                   >
                     <option value="all">Todos</option>
                     <option value="active">Activos</option>
-                    <option value="hidden">Ocultos</option>
+                    <option value="hidden">Inactivos</option>
                   </select>
                   <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--color-fg-muted)" />
                 </div>
@@ -1169,6 +1200,7 @@ export function StoreSettingsPage() {
                 onEdit={handleOpenProductModal}
                 onDelete={handleProductDelete}
                 onToggleStatus={handleProductToggle}
+                onReorder={handleProductReorder}
                 actionLoadingId={productActionLoadingId}
                 actionType={productActionType}
               />

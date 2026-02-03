@@ -12,7 +12,11 @@ import {
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
-import { CatalogControls, StorePurchaseInfo } from "../components";
+import {
+  CatalogControls,
+  StorePurchaseInfo,
+  ProductImageCarousel,
+} from "../components";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 
 const resolveSettings = (settings) => {
@@ -198,15 +202,11 @@ export function NoirGridTemplate({ store, products }) {
 
             <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {filteredProducts?.map((product) => {
-                // Handle both new imageFileIds array and legacy imageFileId
-                const firstImageId =
-                  Array.isArray(product.imageFileIds) &&
-                  product.imageFileIds.length > 0
-                    ? product.imageFileIds[0]
-                    : product.imageFileId;
-                const imageUrl = firstImageId
-                  ? getProductImageUrl(firstImageId)
-                  : null;
+                // Get image file IDs for carousel
+                const imageFileIds = Array.isArray(product.imageFileIds)
+                  ? product.imageFileIds
+                  : [];
+                const legacyImageFileId = product.imageFileId;
 
                 return (
                   <article
@@ -217,23 +217,18 @@ export function NoirGridTemplate({ store, products }) {
                       <button
                         type="button"
                         onClick={() => handleShare(product)}
-                        className="absolute right-4 top-4 h-9 w-9 rounded-full bg-[var(--noir-surface-2)] border border-[var(--noir-border)] flex items-center justify-center text-[var(--noir-muted)] hover:text-[var(--noir-accent)]"
+                        className="absolute right-4 top-4 h-9 w-9 z-10 rounded-full bg-[var(--noir-surface-2)] border border-[var(--noir-border)] flex items-center justify-center text-[var(--noir-muted)] hover:text-[var(--noir-accent)]"
                         aria-label="Compartir producto"
                       >
                         <Share2 className="h-4 w-4" />
                       </button>
-                      <div className="aspect-square bg-[var(--noir-surface-2)] flex items-center justify-center">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={product.name}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <ImageIcon className="h-12 w-12 text-[var(--noir-muted)]" />
-                        )}
-                      </div>
+                      <ProductImageCarousel
+                        imageFileIds={imageFileIds}
+                        legacyImageFileId={legacyImageFileId}
+                        alt={product.name}
+                        className="aspect-square bg-[var(--noir-surface-2)]"
+                        tone="noir"
+                      />
                     </div>
 
                     <div className="p-5 space-y-2">

@@ -10,6 +10,8 @@ import {
   EyeOff,
   Package,
   Tag,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { ImageCarousel, ImageViewerModal } from "@/shared/ui/molecules";
@@ -28,6 +30,7 @@ export function ProductList({
   onEdit,
   onDelete,
   onToggleStatus,
+  onReorder,
   actionLoadingId = null, // ID of product currently being modified
   actionType = null, // 'delete' | 'toggle'
 }) {
@@ -60,13 +63,16 @@ export function ProductList({
                 <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Estado
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider w-[100px]">
+                  Orden
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-(--color-border)">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <ProductRow
                   key={product.$id}
                   product={product}
@@ -74,8 +80,12 @@ export function ProductList({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onToggleStatus={onToggleStatus}
+                  onReorder={onReorder}
                   isActionLoading={actionLoadingId === product.$id}
                   actionType={actionType}
+                  isFirst={index === 0}
+                  isLast={index === products.length - 1}
+                  totalProducts={products.length}
                 />
               ))}
             </tbody>
@@ -113,8 +123,12 @@ function ProductRow({
   onEdit,
   onDelete,
   onToggleStatus,
+  onReorder,
   isActionLoading,
   actionType,
+  isFirst,
+  isLast,
+  totalProducts,
 }) {
   // Handle both new imageFileIds array and legacy imageFileId
   const imageUrls = Array.isArray(product.imageFileIds)
@@ -198,14 +212,38 @@ function ProductRow({
           size="sm"
           onClick={() => onToggleStatus(product)}
           isLoading={isToggling}
-          className={`h-7 px-2 text-xs rounded-full border ${
-            product.enabled
-              ? "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
-              : "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
+          className={`h-7 px-3 text-xs font-medium rounded-full border transition-colors ${
+            product.status
+              ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/50"
+              : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-800"
           }`}
         >
-          {product.enabled ? "Activo" : "Oculto"}
+          {product.status ? "Activo" : "Inactivo"}
         </Button>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center justify-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReorder(product, "up")}
+            disabled={isFirst}
+            title="Subir"
+            className="h-8 w-8 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-(--color-bg-secondary)"
+          >
+            <ChevronUp className="w-4 h-4 text-(--color-fg-secondary)" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReorder(product, "down")}
+            disabled={isLast}
+            title="Bajar"
+            className="h-8 w-8 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-(--color-bg-secondary)"
+          >
+            <ChevronDown className="w-4 h-4 text-(--color-fg-secondary)" />
+          </Button>
+        </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right">
         <div className="flex justify-end gap-2">
@@ -214,6 +252,7 @@ function ProductRow({
             size="sm"
             onClick={() => onEdit(product)}
             title="Editar"
+            className="hover:bg-(--color-primary)/10"
           >
             <Edit className="w-4 h-4 text-(--color-primary)" />
           </Button>
@@ -223,7 +262,7 @@ function ProductRow({
             onClick={() => onDelete(product)}
             isLoading={isDeleting}
             title="Eliminar"
-            className="text-(--color-error) hover:bg-(--color-error-bg)"
+            className="text-(--color-error) hover:bg-(--color-error)/10"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -271,7 +310,7 @@ function ProductCard({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.3, delay: index * 0.05 }}
-        className={`bg-(--color-card) border border-(--color-card-border) rounded-2xl overflow-hidden hover:shadow-md transition-all group flex flex-col ${!product.enabled ? "opacity-75 grayscale-[0.5]" : ""}`}
+        className={`bg-(--color-card) border border-(--color-card-border) rounded-2xl overflow-hidden hover:shadow-md transition-all group flex flex-col ${!product.status ? "opacity-60" : ""}`}
       >
         {/* Image */}
         <div className="aspect-square bg-(--color-bg-secondary) relative overflow-hidden">
@@ -287,20 +326,20 @@ function ProductCard({
             <Button
               size="sm"
               variant="secondary"
-              className="h-10 w-10 p-0 rounded-full shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 dark:border-white/10"
+              className="h-10 w-10 p-0 rounded-full shadow-lg bg-white/95 hover:bg-white dark:bg-gray-900/95 dark:hover:bg-gray-900 backdrop-blur-md border border-gray-200/50 dark:border-white/10"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit(product);
               }}
             >
-              <Edit className="w-5 h-5" />
+              <Edit className="w-5 h-5 text-(--color-primary)" />
             </Button>
           </div>
 
           {/* Status Badge */}
-          {!product.enabled && (
-            <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 backdrop-blur-sm text-white text-xs font-bold rounded-md flex items-center gap-1 z-10">
-              <EyeOff className="w-3 h-3" /> Oculto
+          {!product.status && (
+            <div className="absolute top-2 left-2 px-2.5 py-1 bg-slate-900/70 dark:bg-slate-900/80 backdrop-blur-sm text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 z-10">
+              <EyeOff className="w-3 h-3" /> Inactivo
             </div>
           )}
         </div>
@@ -381,18 +420,18 @@ function ProductCard({
               size="sm"
               onClick={() => onToggleStatus(product)}
               isLoading={isToggling}
-              className={
-                product.enabled
-                  ? "text-(--color-fg-secondary) hover:text-(--color-fg)"
-                  : "text-(--color-primary)"
-              }
+              className={`${
+                product.status
+                  ? "text-(--color-fg-secondary) hover:text-(--color-fg) hover:bg-(--color-bg-secondary)"
+                  : "text-(--color-primary) hover:bg-(--color-primary)/10"
+              }`}
             >
-              {product.enabled ? (
+              {product.status ? (
                 <EyeOff className="w-4 h-4 mr-2" />
               ) : (
                 <Eye className="w-4 h-4 mr-2" />
               )}
-              {product.enabled ? "Ocultar" : "Mostrar"}
+              {product.status ? "Desactivar" : "Activar"}
             </Button>
 
             <Button
@@ -400,7 +439,7 @@ function ProductCard({
               size="sm"
               onClick={() => onDelete(product)}
               isLoading={isDeleting}
-              className="text-(--color-error) hover:bg-(--color-error-bg)"
+              className="text-(--color-error) hover:bg-(--color-error)/10"
             >
               <Trash2 className="w-4 h-4" />
             </Button>

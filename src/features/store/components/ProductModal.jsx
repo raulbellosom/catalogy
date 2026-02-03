@@ -53,6 +53,7 @@ export function ProductModal({
   const [stock, setStock] = useState("0");
   const [currency, setCurrency] = useState("MXN");
   const [categoryIds, setCategoryIds] = useState([]);
+  const [status, setStatus] = useState(true);
 
   // Category combobox state
   const [categorySearch, setCategorySearch] = useState("");
@@ -111,6 +112,7 @@ export function ProductModal({
         setCategoryIds(
           Array.isArray(product.categoryIds) ? product.categoryIds : [],
         );
+        setStatus(product.status !== undefined ? product.status : true);
 
         // Handle imageFileIds array (with backwards compatibility for imageFileId)
         const fileIds = Array.isArray(product.imageFileIds)
@@ -129,6 +131,7 @@ export function ProductModal({
         setStock("0");
         setCurrency("MXN");
         setCategoryIds([]);
+        setStatus(true);
         setImageFileIds([]);
         setInitialImageFileIds([]);
         setImageUrls([]);
@@ -242,6 +245,7 @@ export function ProductModal({
         currency,
         imageFileIds: imageFileIds,
         categoryIds,
+        status,
       };
 
       if (isEditMode) {
@@ -339,7 +343,7 @@ export function ProductModal({
               className="text-lg font-medium"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="relative group">
                 <Input
                   type="number"
@@ -364,6 +368,22 @@ export function ProductModal({
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-(--color-fg)">
+                  Moneda
+                </label>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-(--color-bg) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none"
+                >
+                  <option value="MXN">MXN - Peso Mexicano</option>
+                  <option value="USD">USD - Dólar</option>
+                  <option value="CAD">CAD - Dólar Canadiense</option>
+                </select>
+              </div>
+
               <div className="relative group">
                 <Input
                   type="number"
@@ -385,6 +405,33 @@ export function ProductModal({
                   <Package className="w-4 h-4" />
                 </div>
               </div>
+            </div>
+
+            {/* Status Toggle */}
+            <div className="flex items-center justify-between p-4 bg-(--color-bg-secondary) rounded-xl border border-(--color-border)">
+              <div className="flex-1">
+                <label className="block text-sm font-bold text-(--color-fg) mb-1">
+                  Estado de Publicación
+                </label>
+                <p className="text-xs text-(--color-fg-muted)">
+                  {status
+                    ? "Producto activo y visible en tu tienda"
+                    : "Producto inactivo, oculto para clientes"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatus(!status)}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  status ? "bg-(--color-primary)" : "bg-(--color-border)"
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                    status ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
             </div>
 
             {/* Categories Section */}

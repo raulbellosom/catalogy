@@ -228,31 +228,34 @@ Document ID:
 
 - Auto-generated
 
-| Attribute    | Type     | Required | Default | Constraint(s)   | Notes                                |
-| ------------ | -------- | -------- | ------- | --------------- | ------------------------------------ |
-| storeId      | string   | yes      |         | size=64         | FK -> stores.$id                     |
-| name         | string   | yes      |         | size=150        | nombre del producto                  |
-| description  | string   | no       |         | size=2000       | descripcion detallada                |
-| price        | float    | yes      |         | min=0           | precio (sin max por flexibilidad)    |
-| currency     | string   | no       | MXN     | size=3          | codigo de moneda ISO                 |
-| imageFileIds | string[] | no       | []      | size=64, max=4  | FK -> productImages bucket (hasta 4) |
-| categoryIds  | string[] | no       |         | size=50         | ids de categorias asignadas          |
-| stock        | integer  | no       | 0       | min=0           | cantidad en inventario               |
-| sortOrder    | integer  | no       | 0       | min=0, max=9999 | orden de display                     |
-| enabled      | boolean  | no       | true    |                 | soft delete                          |
+| Attribute    | Type     | Required | Default | Constraint(s)   | Notes                                   |
+| ------------ | -------- | -------- | ------- | --------------- | --------------------------------------- |
+| storeId      | string   | yes      |         | size=64         | FK -> stores.$id                        |
+| name         | string   | yes      |         | size=150        | nombre del producto                     |
+| description  | string   | no       |         | size=2000       | descripcion detallada                   |
+| price        | float    | yes      |         | min=0           | precio (sin max por flexibilidad)       |
+| currency     | string   | no       | MXN     | size=3          | codigo de moneda ISO                    |
+| imageFileIds | string[] | no       | []      | size=64, max=4  | FK -> productImages bucket (hasta 4)    |
+| categoryIds  | string[] | no       |         | size=50         | ids de categorias asignadas             |
+| stock        | integer  | no       | 0       | min=0           | cantidad en inventario                  |
+| sortOrder    | integer  | no       | 0       | min=0, max=9999 | orden de display                        |
+| status       | boolean  | no       | true    |                 | estado de publicación (activo/inactivo) |
+| enabled      | boolean  | no       | true    |                 | soft delete                             |
 
 Indexes:
 
-| Index Name              | Type | Attributes             | Notes                       |
-| ----------------------- | ---- | ---------------------- | --------------------------- |
-| key_products_storeid    | key  | storeId ↑              | queries por tienda          |
-| key_products_enabled    | key  | enabled ↑              | filtrar activos             |
-| key_products_store_enab | key  | storeId ↑, enabled ↑   | listar productos activos    |
-| key_products_store_sort | key  | storeId ↑, sortOrder ↑ | ordenar productos en tienda |
+| Index Name              | Type | Attributes             | Notes                             |
+| ----------------------- | ---- | ---------------------- | --------------------------------- |
+| key_products_storeid    | key  | storeId ↑              | queries por tienda                |
+| key_products_enabled    | key  | enabled ↑              | filtrar activos                   |
+| key_products_status     | key  | status ↑               | filtrar por estado de publicación |
+| key_products_store_enab | key  | storeId ↑, enabled ↑   | listar productos activos          |
+| key_products_store_stat | key  | storeId ↑, status ↑    | listar productos publicados       |
+| key_products_store_sort | key  | storeId ↑, sortOrder ↑ | ordenar productos en tienda       |
 
 Query patterns:
 
-- Listar productos de tienda: `storeId = ? AND enabled = true ORDER BY sortOrder ASC`
+- Listar productos de tienda: `storeId = ? AND enabled = true AND status = true ORDER BY sortOrder ASC`
 - Producto individual: `$id = ? AND enabled = true`
 
 Permissions:
