@@ -106,7 +106,6 @@ export function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     // Validations
     if (firstName.trim().length < 2) {

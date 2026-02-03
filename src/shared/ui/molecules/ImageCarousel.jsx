@@ -77,9 +77,7 @@ export function ImageCarousel({
           <button
             type="button"
             onClick={handlePrevious}
-            className={`absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-all ${
-              isHovered ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100`}
             aria-label="Imagen anterior"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -87,9 +85,7 @@ export function ImageCarousel({
           <button
             type="button"
             onClick={handleNext}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-all ${
-              isHovered ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100`}
             aria-label="Siguiente imagen"
           >
             <ChevronRight className="w-5 h-5" />
@@ -97,9 +93,9 @@ export function ImageCarousel({
         </>
       )}
 
-      {/* Dots Indicator */}
+      {/* Dots Indicator (hide on very small items if needed, but here fine) */}
       {hasMultiple && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-2 py-1.5">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/30 backdrop-blur-sm rounded-full px-2 py-1.5 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
           {validImages.map((_, index) => (
             <button
               key={index}
@@ -116,9 +112,9 @@ export function ImageCarousel({
         </div>
       )}
 
-      {/* Image Counter (visible on hover if multiple) */}
-      {hasMultiple && isHovered && (
-        <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium rounded-full">
+      {/* Image Counter (visible always if multiple, moved to bottom-right) */}
+      {hasMultiple && (
+        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold rounded-full z-10 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity flex items-center justify-center min-w-[32px]">
           {currentIndex + 1} / {validImages.length}
         </div>
       )}

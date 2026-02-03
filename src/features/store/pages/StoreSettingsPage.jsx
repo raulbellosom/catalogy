@@ -42,6 +42,7 @@ import {
   useProducts,
   useDeleteProduct,
   useUpdateProduct,
+  useReorderProducts,
 } from "@/shared/hooks";
 import {
   getStoreLogoUrl,
@@ -150,6 +151,16 @@ export function StoreSettingsPage() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [productActionLoadingId, setProductActionLoadingId] = useState(null);
   const [productActionType, setProductActionType] = useState(null); // 'delete' | 'toggle'
+  const [localProducts, setLocalProducts] = useState([]);
+
+  // Sync localProducts with productsData
+  useEffect(() => {
+    if (productsData?.documents) {
+      setLocalProducts(productsData.documents);
+    }
+  }, [productsData]);
+
+  const reorderProductsMutation = useReorderProducts(store?.$id);
 
   // General Form State
   const [name, setName] = useState("");
@@ -450,7 +461,7 @@ export function StoreSettingsPage() {
 
   // --- Handlers: Products ---
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = localProducts.filter((p) => {
     const matchesSearch = p.name
       .toLowerCase()
       .includes(productSearch.toLowerCase());
@@ -503,25 +514,66 @@ export function StoreSettingsPage() {
     const swapIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (swapIndex < 0 || swapIndex >= filteredProducts.length) return;
 
-    const currentProduct = filteredProducts[currentIndex];
-    const swapProduct = filteredProducts[swapIndex];
+    const newFiltered = [...filteredProducts];
+    const [moved] = newFiltered.splice(currentIndex, 1);
+    newFiltered.splice(swapIndex, 0, moved);
+
+    // Actualizar localmente primero para feedback instantáneo
+    handleProductReorderList(newFiltered);
+
+    // Al ser reordenamiento por flechas, sincronizamos inmediatamente
+    handleProductReorderSync(newFiltered);
+  };
+
+  const handleProductReorderSync = async (newOrderedList = null) => {
+    const listToSync = newOrderedList || filteredProducts;
+
+    // 1. Obtenemos todos los sortOrders actuales de los productos visibles (filtrados)
+    const sortOrders = filteredProducts
+      .map((p) => p.sortOrder)
+      .sort((a, b) => a - b);
+
+    // 2. Asignamos esos sortOrders a la nueva lista ordenada
+    const productsToUpdate = listToSync.map((prod, index) => ({
+      id: prod.$id,
+      sortOrder: sortOrders[index] !== undefined ? sortOrders[index] : index,
+    }));
 
     try {
-      // Swap sortOrder values
-      await Promise.all([
-        updateProduct.mutateAsync({
-          productId: currentProduct.$id,
-          data: { sortOrder: swapProduct.sortOrder },
-        }),
-        updateProduct.mutateAsync({
-          productId: swapProduct.$id,
-          data: { sortOrder: currentProduct.sortOrder },
-        }),
-      ]);
+      await reorderProductsMutation.mutateAsync(productsToUpdate);
+      toast.success("Orden actualizado");
     } catch (e) {
       console.error(e);
-      toast.error("Error al reordenar productos");
+      toast.error("Error al guardar el nuevo orden");
     }
+  };
+
+  const handleProductReorderList = (newOrderedList) => {
+    // Solo actualizamos el estado local para feedback visual fluido
+    setLocalProducts((prev) => {
+      const next = [...prev];
+      // Mapear los ids a sus nuevos objetos para preservar el estado completo
+      newOrderedList.forEach((prod, newIndex) => {
+        const foundIdx = next.findIndex((p) => p.$id === prod.$id);
+        if (foundIdx !== -1) {
+          // No necesitamos cambiar el sortOrder aquí todavía si solo es para Framer Motion,
+          // pero Reorder.Group de Framer Motion funciona mejor si el estado local
+          // refleja exactamente el orden de los componentes.
+        }
+      });
+
+      // La clave aquí es que filteredProducts se deriva de localProducts.
+      // Si reordenamos localProducts para que los elementos filtrados estén en el nuevo orden...
+
+      const filteredIds = filteredProducts.map((p) => p.$id);
+      const nonFilteredProducts = next.filter(
+        (p) => !filteredIds.includes(p.$id),
+      );
+
+      // Reinsertamos los filtrados en su nuevo orden entre los no filtrados
+      // Para simplificar: solo actualizamos el orden de localProducts basado en la visualización
+      return [...newOrderedList, ...nonFilteredProducts];
+    });
   };
 
   const handleOpenProductModal = (product = null) => {
@@ -664,7 +716,7 @@ export function StoreSettingsPage() {
                         Descripción
                       </label>
                       <textarea
-                        className="w-full mt-1 px-3 py-2 bg-[var(--color-bg)] border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none resize-none"
+                        className="w-full mt-1 px-3 py-2 bg-(--color-bg) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none resize-none"
                         rows={4}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -793,7 +845,7 @@ export function StoreSettingsPage() {
                       className={`p-2 rounded-lg ${
                         store?.published
                           ? "bg-green-500/10 text-green-600"
-                          : "bg-[var(--color-bg-tertiary)] text-(--color-fg-muted)"
+                          : "bg-(--color-bg-tertiary) text-(--color-fg-muted)"
                       }`}
                     >
                       <Globe className="w-6 h-6" />
@@ -872,7 +924,7 @@ export function StoreSettingsPage() {
                   <p className="font-medium text-(--color-fg) mb-1">
                     Link de tu tienda:
                   </p>
-                  <code className="block bg-[var(--color-bg)] p-2 rounded border border-(--color-border) select-all">
+                  <code className="block bg-(--color-bg) p-2 rounded border border-(--color-border) select-all">
                     https://{store?.slug}.{appConfig.baseDomain}
                   </code>
                 </div>
@@ -1201,6 +1253,8 @@ export function StoreSettingsPage() {
                 onDelete={handleProductDelete}
                 onToggleStatus={handleProductToggle}
                 onReorder={handleProductReorder}
+                onReorderList={handleProductReorderList}
+                onReorderEnd={handleProductReorderSync}
                 actionLoadingId={productActionLoadingId}
                 actionType={productActionType}
               />
