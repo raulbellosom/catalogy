@@ -56,7 +56,7 @@ export function AppRoutes() {
     return null; // Or a loading spinner
   }
 
-  // Store subdomain routes ({slug}.catalog.racoondevs.com)
+  // Store subdomain routes ({slug}.catalogy.racoondevs.com)
   if (isStoreDomain) {
     const { store, user } = useSubdomainContext();
 
@@ -97,7 +97,7 @@ export function AppRoutes() {
     );
   }
 
-  // Root domain routes (catalog.racoondevs.com)
+  // Root domain routes (catalogy.racoondevs.com)
   return (
     <>
       <ScrollToTop />

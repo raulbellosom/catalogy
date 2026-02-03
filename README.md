@@ -6,15 +6,15 @@ Plataforma que permite a usuarios crear y publicar su propio catalogo de product
 
 - **Frontend**: React + Vite + PWA + TailwindCSS + Motion
 - **Backend**: Appwrite (Auth, Databases, Storage, Functions, Sites)
-- **Multi-tenancy**: Wildcard subdomains (`*.catalog.racoondevs.com`)
+- **Multi-tenancy**: Wildcard subdomains (`*.catalogy.racoondevs.com`)
 
 ## Como funciona
 
-1. Usuario se registra en `catalog.racoondevs.com`
+1. Usuario se registra en `catalogy.racoondevs.com`
 2. Crea su tienda y elige un slug unico
 3. Agrega productos a su catalogo
 4. Publica el catalogo
-5. El catalogo queda accesible en `{slug}.catalog.racoondevs.com`
+5. El catalogo queda accesible en `{slug}.catalogy.racoondevs.com`
 
 ## Estructura del proyecto
 

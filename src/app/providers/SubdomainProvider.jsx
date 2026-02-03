@@ -5,8 +5,8 @@ import { useAuth } from "@/app/providers/AuthProvider";
 
 /**
  * @typedef {Object} SubdomainContextValue
- * @property {boolean} isRootDomain - True if on the main domain (catalog.racoondevs.com)
- * @property {boolean} isStoreDomain - True if on a store subdomain ({slug}.catalog.racoondevs.com)
+ * @property {boolean} isRootDomain - True if on the main domain (catalogy.racoondevs.com)
+ * @property {boolean} isStoreDomain - True if on a store subdomain ({slug}.catalogy.racoondevs.com)
  * @property {string | null} slug - The store slug from subdomain, or null if root domain
  * @property {boolean} isLoading - True while determining domain context
  */

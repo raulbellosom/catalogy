@@ -193,8 +193,8 @@ Requisitos:
 1. Detectar hostname actual (window.location.hostname)
 2. Extraer slug del subdominio si existe
 3. Determinar contexto:
-   - catalog.racoondevs.com -> Dominio raiz -> Mostrar landing/app
-   - {slug}.catalog.racoondevs.com -> Subdominio -> Consultar tienda por slug
+   - catalogy.racoondevs.com -> Dominio raiz -> Mostrar landing/app
+   - {slug}.catalogy.racoondevs.com -> Subdominio -> Consultar tienda por slug
 4. Crear hook useSubdomain() que retorne:
    - isRootDomain: boolean
    - slug: string | null

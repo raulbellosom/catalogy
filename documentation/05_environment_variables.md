@@ -37,7 +37,7 @@ Estas son safe para incluir en el bundle del frontend porque no son secretos.
 
 ### App-specific
 
-- VITE_APP_BASE_DOMAIN — dominio base para resolucion de subdominios (ej: catalog.racoondevs.com)
+- VITE_APP_BASE_DOMAIN — dominio base para resolucion de subdominios (ej: catalogy.racoondevs.com)
 - VITE_APP_BASE_URL — URL completa del frontend (ej: https://catalogy.com)
 
 ## Variables secretas (solo functions)
@@ -89,7 +89,7 @@ Estas variables son necesarias para el envío de correos de verificación:
 | VITE_APPWRITE_BUCKET_AVATARS_ID              | no        | frontend + functions | no      | avatars                         |
 | VITE_APPWRITE_BUCKET_PRODUCT_IMAGES_ID       | yes       | frontend + functions | no      | productImages                   |
 | VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID | no        | functions            | no      | (ID de la función)              |
-| VITE_APP_BASE_DOMAIN                         | yes       | frontend             | no      | catalog.racoondevs.com          |
+| VITE_APP_BASE_DOMAIN                         | yes       | frontend             | no      | catalogy.racoondevs.com         |
 | VITE_APP_BASE_URL                            | no        | frontend + functions | no      | https://catalogy.com            |
 | APPWRITE_FUNCTION_API_KEY                    | no        | functions            | yes     | (provisto por runtime)          |
 | APPWRITE_ADMIN_API_KEY                       | no        | functions            | yes     | (solo dev)                      |

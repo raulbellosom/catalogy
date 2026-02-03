@@ -9,7 +9,7 @@ Los agentes AI DEBEN tratar este archivo como autoritativo y NO DEBEN inventar r
 - Nombre del repo: catalogy
 - Categoria de la app: e-commerce / catalogos
 - Descripcion corta del producto:
-  Plataforma multi-tenant que permite a usuarios crear y publicar su propio catalogo de productos. Cada catalogo es accesible mediante un subdominio unico del tipo `{slug}.catalog.racoondevs.com`. Un solo Appwrite Site sirve todos los catalogos usando wildcard subdomains.
+  Plataforma multi-tenant que permite a usuarios crear y publicar su propio catalogo de productos. Cada catalogo es accesible mediante un subdominio unico del tipo `{slug}.catalogy.racoondevs.com`. Un solo Appwrite Site sirve todos los catalogos usando wildcard subdomains.
 - Usuarios objetivo: Pequenos comerciantes, emprendedores, vendedores independientes que necesitan un catalogo digital rapido
 - Dispositivos primarios: mobile-first (default)
 - Zona horaria default: America/Mexico_City
@@ -286,8 +286,8 @@ El frontend DEBE:
 1. Detectar el hostname actual (`window.location.hostname`)
 2. Extraer el slug del subdominio si existe
 3. Determinar el contexto:
-   - `catalog.racoondevs.com` → Dominio raiz → Mostrar landing/app
-   - `{slug}.catalog.racoondevs.com` → Subdominio → Consultar tienda por slug
+   - `catalogy.racoondevs.com` → Dominio raiz → Mostrar landing/app
+   - `{slug}.catalogy.racoondevs.com` → Subdominio → Consultar tienda por slug
 4. Renderizar segun el resultado:
    - Tienda encontrada y publicada → Catalogo
    - Tienda encontrada pero no publicada → "Catalogo no disponible"

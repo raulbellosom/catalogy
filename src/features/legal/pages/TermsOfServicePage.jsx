@@ -52,7 +52,7 @@ export function TermsOfServicePage() {
           <li>Creacion de catalogos digitales de productos</li>
           <li>
             Subdominio personalizado para cada catalogo (ejemplo:
-            tutienda.catalog.racoondevs.com)
+            tutienda.catalogy.racoondevs.com)
           </li>
           <li>Editor visual para personalizar la apariencia del catalogo</li>
           <li>Almacenamiento de imagenes de productos</li>

@@ -146,7 +146,7 @@ export function PuckEditorPage() {
   // Preview en nueva ventana
   const handlePreview = useCallback(() => {
     if (store?.slug) {
-      const previewUrl = `https://${store.slug}.catalog.racoondevs.com`;
+      const previewUrl = `https://${store.slug}.catalogy.racoondevs.com`;
       window.open(previewUrl, "_blank");
     }
   }, [store]);

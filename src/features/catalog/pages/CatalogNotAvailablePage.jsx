@@ -18,7 +18,7 @@ export function CatalogNotAvailablePage() {
         productos.
       </p>
       <a
-        href="https://catalog.racoondevs.com"
+        href="https://catalogy.racoondevs.com"
         className="inline-flex items-center gap-2 text-[var(--color-primary)] hover:underline"
       >
         <Store className="w-5 h-5" />

@@ -229,7 +229,7 @@ export function LandingPage() {
             <FeatureCard
               icon={Globe}
               title="Tu propio subdominio"
-              description="Obtén un enlace unico como tutienda.catalog.racoondevs.com"
+              description="Obtén un enlace unico como tutienda.catalogy.racoondevs.com"
             />
             <FeatureCard
               icon={Sparkles}

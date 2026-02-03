@@ -10,8 +10,8 @@ import { APP_CONFIG } from "@/shared/lib/env";
 
 /**
  * Extract slug from hostname
- * @param {string} hostname - Current hostname (e.g., 'mystore.catalog.racoondevs.com')
- * @param {string} baseDomain - Base domain (e.g., 'catalog.racoondevs.com')
+ * @param {string} hostname - Current hostname (e.g., 'mystore.catalogy.racoondevs.com')
+ * @param {string} baseDomain - Base domain (e.g., 'catalogy.racoondevs.com')
  * @returns {string | null} - Extracted slug or null if root domain
  */
 function extractSlugFromHostname(hostname, baseDomain) {
