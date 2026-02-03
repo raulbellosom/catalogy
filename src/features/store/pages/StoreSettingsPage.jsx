@@ -16,6 +16,8 @@ import {
   List,
   Filter,
   Copy,
+  Share2,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
@@ -25,6 +27,7 @@ import { Modal, ModalFooter } from "@/shared/ui/molecules/Modal";
 import { TemplateSelector } from "../components/TemplateSelector";
 import { ProductList } from "../components/ProductList";
 import { ProductModal } from "../components/ProductModal";
+import { ShareStoreModal } from "../components/ShareStoreModal";
 import { useToast } from "@/shared/ui/molecules";
 import {
   useUserStore,
@@ -70,6 +73,7 @@ export function StoreSettingsPage() {
     () => searchParams.get("tab") || "general",
   );
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync tab with URL
@@ -282,19 +286,29 @@ export function StoreSettingsPage() {
         </div>
         <div className="flex items-center gap-3 ml-11 md:ml-0">
           {store && (
-            <a
-              href={`https://${store.slug}.${appConfig.baseDomain}`}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <>
+              <a
+                href={`https://${store.slug}.${appConfig.baseDomain}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Button
+                  variant="outline"
+                  className="border-(--color-primary)/20 hover:bg-(--color-primary)/5"
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Ver Tienda
+                </Button>
+              </a>
               <Button
                 variant="outline"
                 className="border-(--color-primary)/20 hover:bg-(--color-primary)/5"
+                onClick={() => navigate(`/app/store/${store.slug}/preview`)}
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                {store.published ? "Ver Tienda" : "Vista Previa"}
+                <Eye className="w-4 h-4 mr-2" />
+                Vista Previa
               </Button>
-            </a>
+            </>
           )}
           <Button variant="primary" onClick={() => navigate("/app/editor")}>
             <LayoutTemplate className="w-4 h-4 mr-2" />
@@ -396,20 +410,32 @@ export function StoreSettingsPage() {
                         {slug}.{appConfig.baseDomain}
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-10 px-4 rounded-lg bg-(--color-card) shadow-sm hover:text-(--color-primary)"
-                      onClick={() => {
-                        const url = `https://${slug}.${appConfig.baseDomain}`;
-                        navigator.clipboard.writeText(url);
-                        toast.success("Link copiado al portapapeles");
-                      }}
-                    >
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copiar
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-10 px-4 rounded-lg bg-(--color-card) shadow-sm hover:text-(--color-primary)"
+                        onClick={() => {
+                          const url = `https://${slug}.${appConfig.baseDomain}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success("Link copiado al portapapeles");
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copiar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-10 px-4 rounded-lg bg-(--color-card) shadow-sm hover:text-(--color-primary)"
+                        onClick={() => setIsShareModalOpen(true)}
+                      >
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Compartir
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -647,6 +673,15 @@ export function StoreSettingsPage() {
           </div>
         )}
       </div>
+
+      {store && (
+        <ShareStoreModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          storeName={store.name}
+          storeUrl={`https://${store.slug}.${appConfig.baseDomain}`}
+        />
+      )}
     </div>
   );
 }

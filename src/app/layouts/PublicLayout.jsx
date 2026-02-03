@@ -1,5 +1,5 @@
-import { Outlet } from "react-router-dom";
 import { Navbar } from "@/shared/ui/organisms/Navbar";
+import { Footer } from "@/shared/ui/organisms/Footer";
 
 /**
  * Public layout for landing and catalog pages
