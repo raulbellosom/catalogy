@@ -26,6 +26,7 @@ import {
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
+import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
 
 // App pages (protected)
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
@@ -99,6 +100,9 @@ export function AppRoutes() {
           <Route path="auth/register" element={<RegisterPage />} />
           <Route path="auth/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
+
+        {/* Email verification route - public, no layout */}
+        <Route path="verify-email" element={<VerifyEmailPage />} />
 
         {/* Legal routes - accessible to everyone */}
         <Route path="legal" element={<LegalLayout />}>
