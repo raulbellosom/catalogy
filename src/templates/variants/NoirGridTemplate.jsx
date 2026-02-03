@@ -280,19 +280,25 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
           <div className="flex flex-col items-center gap-6 text-(--noir-muted)">
             <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-[10px] uppercase tracking-[0.2em] opacity-60">
               <a
-                href="#"
+                href={`${appConfig.baseUrl}/legal/privacy`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-(--noir-accent-soft) transition-colors"
               >
                 Aviso de Privacidad
               </a>
               <a
-                href="#"
+                href={`${appConfig.baseUrl}/legal/terms`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-(--noir-accent-soft) transition-colors"
               >
                 Términos y Condiciones
               </a>
               <a
-                href="#"
+                href={`${appConfig.baseUrl}/legal/disclaimer`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-(--noir-accent-soft) transition-colors"
               >
                 Deslinde Legal
