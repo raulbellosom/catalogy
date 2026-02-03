@@ -5,6 +5,9 @@ import {
   Share2,
   Package,
   CreditCard,
+  Search,
+  ZoomIn,
+  ZoomOut,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
@@ -30,6 +33,7 @@ export function ProductDetailModal({
   tone = "light",
 }) {
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const isNoir = tone === "noir";
 
   // Resolve settings for colors
@@ -44,6 +48,7 @@ export function ProductDetailModal({
   useEffect(() => {
     if (isOpen) {
       setCurrentIdx(0);
+      setZoom(1);
       // Lock scroll
       const scrollY = window.scrollY;
       document.body.style.position = "fixed";
@@ -79,14 +84,22 @@ export function ProductDetailModal({
     : [];
   const imageUrls = imageFileIds.map(getProductImageUrl).filter(Boolean);
 
-  const nextImg = () => setCurrentIdx((prev) => (prev + 1) % imageUrls.length);
-  const prevImg = () =>
+  const nextImg = () => {
+    setCurrentIdx((prev) => (prev + 1) % imageUrls.length);
+    setZoom(1);
+  };
+  const prevImg = () => {
     setCurrentIdx((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+    setZoom(1);
+  };
+
+  const handleZoomIn = () => setZoom((z) => Math.min(z + 0.5, 3));
+  const handleZoomOut = () => setZoom((z) => Math.max(z - 0.5, 1));
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 md:p-6">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -104,71 +117,40 @@ export function ProductDetailModal({
             style={{ "--modal-primary": primary }}
             className={`relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl border shadow-2xl flex flex-col md:flex-row ${panelBase}`}
           >
-            {/* Close Button - Red Circle */}
+            {/* Close Button - Subtle X */}
             <button
               onClick={onClose}
-              className="absolute right-4 top-4 z-[110] p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg transition-all hover:scale-110"
+              className={`absolute right-4 top-4 z-110 p-2 rounded-full transition-colors ${
+                isNoir
+                  ? "text-(--noir-muted) hover:text-(--noir-strong) hover:bg-white/10"
+                  : "text-gray-400 hover:text-gray-900 hover:bg-gray-100"
+              }`}
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
 
             {/* Left Column: Images (White Background Gallery) */}
-            <div className="w-full md:w-3/5 h-[50vh] md:h-auto flex flex-col bg-white p-4 md:p-10">
-              <div className="flex-1 relative flex items-center justify-center overflow-hidden rounded-2xl">
-                <AnimatePresence mode="wait">
-                  {imageUrls.length > 0 ? (
-                    <motion.img
-                      key={currentIdx}
-                      src={imageUrls[currentIdx]}
-                      alt={`${product.name} - ${currentIdx + 1}`}
-                      className="w-full h-full object-contain"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-4 text-gray-300">
-                      <Package className="w-20 h-20" />
-                      <span className="text-sm font-medium">Sin imágenes</span>
-                    </div>
-                  )}
-                </AnimatePresence>
-
-                {imageUrls.length > 1 && (
-                  <>
-                    <button
-                      onClick={prevImg}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-800 transition-colors"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={nextImg}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/5 hover:bg-black/10 text-gray-800 transition-colors"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  </>
-                )}
-              </div>
-
+            <div className="w-full md:w-3/5 min-h-[500px] md:h-[600px] flex flex-col md:flex-row bg-white p-4 md:p-10 relative gap-4 md:gap-6">
               {/* Thumbnails */}
               {imageUrls.length > 1 && (
-                <div className="flex gap-2 mt-6 overflow-x-auto pb-2 custom-scrollbar">
+                <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:overflow-x-hidden pb-2 md:pb-0 md:pr-2 custom-scrollbar w-full md:w-24 md:h-full shrink-0">
                   {imageUrls.map((url, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setCurrentIdx(idx)}
-                      className={`relative shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      onClick={() => {
+                        setCurrentIdx(idx);
+                        setZoom(1);
+                      }}
+                      className={`relative shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${
                         idx === currentIdx
                           ? isNoir
-                            ? "border-[var(--noir-accent)] shadow-md scale-105"
-                            : "shadow-md scale-105" // Removed class border color
-                          : "border-transparent opacity-50 hover:opacity-100"
+                            ? "border-(--noir-accent) shadow-md scale-95 md:scale-100 ring-2 ring-offset-1"
+                            : "shadow-md scale-95 md:scale-100 ring-2 ring-offset-1 ring-black/5"
+                          : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                       style={
                         idx === currentIdx && !isNoir
-                          ? { borderColor: primary }
+                          ? { borderColor: primary, ringColor: primary }
                           : {}
                       }
                     >
@@ -181,6 +163,73 @@ export function ProductDetailModal({
                   ))}
                 </div>
               )}
+
+              {/* Main Image Viewport */}
+              <div className="order-1 md:order-2 flex-1 relative flex items-center justify-center overflow-hidden rounded-2xl bg-gray-50 border border-slate-100 h-64 md:h-auto">
+                <AnimatePresence mode="wait">
+                  {imageUrls.length > 0 ? (
+                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                      <motion.img
+                        key={currentIdx}
+                        src={imageUrls[currentIdx]}
+                        alt={`${product.name} - ${currentIdx + 1}`}
+                        className="w-full h-full object-contain cursor-grab active:cursor-grabbing transition-transform duration-200"
+                        style={{ transform: `scale(${zoom})` }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        drag={zoom > 1}
+                        dragConstraints={{
+                          left: -100 * zoom,
+                          right: 100 * zoom,
+                          top: -100 * zoom,
+                          bottom: 100 * zoom,
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-4 text-gray-300">
+                      <Package className="w-20 h-20" />
+                      <span className="text-sm font-medium">Sin imágenes</span>
+                    </div>
+                  )}
+                </AnimatePresence>
+
+                {imageUrls.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImg}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white text-gray-800 transition-colors shadow-sm backdrop-blur-sm z-10"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={nextImg}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 hover:bg-white text-gray-800 transition-colors shadow-sm backdrop-blur-sm z-10"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+
+                {/* Zoom Controls */}
+                <div className="absolute bottom-4 right-4 flex gap-2 z-10">
+                  <button
+                    onClick={handleZoomOut}
+                    disabled={zoom <= 1}
+                    className="p-2 rounded-full bg-white/90 shadow-md border border-gray-100 text-gray-700 hover:text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleZoomIn}
+                    disabled={zoom >= 3}
+                    className="p-2 rounded-full bg-white/90 shadow-md border border-gray-100 text-gray-700 hover:text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white transition-all"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Right Column: Info */}
@@ -219,7 +268,7 @@ export function ProductDetailModal({
                     Descripción
                   </h3>
                   <p
-                    className={`text-sm leading-relaxed ${isNoir ? "text-[var(--noir-strong)]/90" : "text-slate-700"}`}
+                    className={`text-sm leading-relaxed ${isNoir ? "text-(--noir-strong)/90" : "text-slate-700"}`}
                   >
                     {product.description || "Sin descripción disponible."}
                   </p>
@@ -227,7 +276,7 @@ export function ProductDetailModal({
 
                 {/* Details Section - Premium Design */}
                 <div
-                  className={`pt-6 border-t ${isNoir ? "border-[var(--noir-border)]" : "border-slate-100"} flex flex-col gap-6`}
+                  className={`pt-6 border-t ${isNoir ? "border-(--noir-border)" : "border-slate-100"} flex flex-col gap-6`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-1">
@@ -270,7 +319,7 @@ export function ProductDetailModal({
               {/* Action Section */}
               {store?.paymentLink && (
                 <div
-                  className={`mt-8 pt-6 border-t ${isNoir ? "border-[var(--noir-border)]" : "border-slate-100"}`}
+                  className={`mt-8 pt-6 border-t ${isNoir ? "border-(--noir-border)" : "border-slate-100"}`}
                 >
                   <a
                     href={store.paymentLink}

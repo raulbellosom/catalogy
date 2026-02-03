@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Filter,
   ArrowRight,
+  Check,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -60,7 +61,7 @@ const formatPrice = (price, currency = "MXN") => {
 export function MinimalTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true); // Default open on desktop
 
   // Settings Resolution
   const settings = resolveSettings(store?.settings);
@@ -125,7 +126,8 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                 href={store.paymentLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-medium hover:text-(--minimal-accent) transition-colors"
+                className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+                style={{ backgroundColor: primary }}
               >
                 Proceder al pago
               </a>
@@ -205,7 +207,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         {/* Filter Toggle / Sort Bar */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-100 pb-4">
           <div>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 font-medium">
               Mostrando {filteredProducts?.length || 0} productos
             </span>
           </div>
@@ -213,10 +215,19 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all ${showFilters ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+              className={`group flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all border ${
+                showFilters
+                  ? "bg-gray-900 text-white border-gray-900"
+                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
+              }`}
+              style={
+                showFilters
+                  ? { backgroundColor: primary, borderColor: primary }
+                  : {}
+              }
             >
               <Filter className="w-4 h-4" />
-              Filtros
+              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
             </button>
           </div>
         </div>
@@ -224,27 +235,57 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Sidebar Filters */}
           <aside
-            className={`lg:w-64 space-y-8 ${showFilters ? "block" : "hidden lg:block"}`}
+            className={`lg:w-72 space-y-12 transition-all duration-300 ease-in-out ${
+              showFilters ? "block opacity-100" : "hidden opacity-0"
+            }`}
           >
             {/* Categories */}
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">
                 Categorías
               </h3>
-              <ul className="space-y-2">
-                {categories.map((cat) => (
-                  <li key={cat.id}>
-                    <button
-                      onClick={() => toggleCategory(cat.id)}
-                      className={`text-sm w-full text-left py-1 transition-colors ${activeCategoryIds.includes(cat.id) ? "font-bold text-(--minimal-accent)" : "text-gray-600 hover:text-black"}`}
-                    >
-                      {cat.name}
-                    </button>
-                  </li>
-                ))}
+              <ul className="space-y-3">
+                {categories.map((cat) => {
+                  const isActive = activeCategoryIds.includes(cat.id);
+                  return (
+                    <li key={cat.id}>
+                      <button
+                        onClick={() => toggleCategory(cat.id)}
+                        className="flex items-center gap-3 w-full text-left group"
+                      >
+                        <div
+                          className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                            isActive
+                              ? "bg-black border-black text-white"
+                              : "bg-white border-gray-300 group-hover:border-gray-400"
+                          }`}
+                          style={
+                            isActive
+                              ? {
+                                  backgroundColor: primary,
+                                  borderColor: primary,
+                                }
+                              : {}
+                          }
+                        >
+                          {isActive && <Check size={12} strokeWidth={3} />}
+                        </div>
+                        <span
+                          className={`text-sm transition-colors ${
+                            isActive
+                              ? "font-medium text-gray-900"
+                              : "text-gray-600 group-hover:text-gray-900"
+                          }`}
+                        >
+                          {cat.name}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
                 {categories.length === 0 && (
                   <li className="text-sm text-gray-400 italic">
-                    Sin categorías
+                    Sin categorías disponibles
                   </li>
                 )}
               </ul>
@@ -252,20 +293,20 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
 
             {/* Price Range */}
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">
                 Precio
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{formatPrice(minPrice)}</span>
-                  <span className="text-gray-300">-</span>
-                  <span>{formatPrice(maxPrice)}</span>
-                </div>
-                {/* Simple Slider Simulation using range inputs could go here, for now just text inputs or controls if desired, but we keep it minimal based on props */}
-                <div className="flex gap-2 text-xs">
-                  {/* Could be inputs if we want detailed control, relying on CatalogControls logic usually. 
-                            For this minimal template, maybe we simplify interaction or re-use inputs cleanly. 
-                        */}
+                <div className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(minPrice)}
+                  </span>
+                  <span className="text-gray-400 mx-2">
+                    <ArrowRight size={14} />
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(maxPrice)}
+                  </span>
                 </div>
               </div>
             </div>
