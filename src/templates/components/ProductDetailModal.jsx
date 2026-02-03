@@ -70,8 +70,9 @@ export function ProductDetailModal({
     : "bg-white text-slate-900 border-slate-200";
 
   const mutedText = isNoir ? "text-[var(--noir-muted)]" : "text-slate-500";
-  const accentColor = isNoir ? "text-[var(--noir-accent)]" : "text-blue-600";
-  const surface2 = isNoir ? "bg-[var(--noir-surface-2)]" : "bg-slate-100";
+  // Dynamic Accent Color
+  const accentColor = isNoir ? "text-(--noir-accent)" : "";
+  const surface2 = isNoir ? "bg-(--noir-surface-2)" : "bg-slate-100";
 
   const imageFileIds = Array.isArray(product.imageFileIds)
     ? product.imageFileIds
@@ -162,9 +163,14 @@ export function ProductDetailModal({
                         idx === currentIdx
                           ? isNoir
                             ? "border-[var(--noir-accent)] shadow-md scale-105"
-                            : "border-[var(--modal-primary)] shadow-md scale-105"
+                            : "shadow-md scale-105" // Removed class border color
                           : "border-transparent opacity-50 hover:opacity-100"
                       }`}
+                      style={
+                        idx === currentIdx && !isNoir
+                          ? { borderColor: primary }
+                          : {}
+                      }
                     >
                       <img
                         src={url}
@@ -196,7 +202,10 @@ export function ProductDetailModal({
                     {product.name}
                   </h2>
                   <div className="flex items-center gap-2 text-2xl font-bold">
-                    <span className={accentColor}>
+                    <span
+                      className={accentColor}
+                      style={!isNoir ? { color: primary } : {}}
+                    >
                       {formatPrice(product.price, product.currency)}
                     </span>
                   </div>
@@ -223,7 +232,10 @@ export function ProductDetailModal({
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
-                        <Package className={`w-4 h-4 ${accentColor}`} />
+                        <Package
+                          className={`w-4 h-4 ${accentColor}`}
+                          style={!isNoir ? { color: primary } : {}}
+                        />
                         <span
                           className={`text-[10px] font-bold uppercase tracking-widest ${mutedText}`}
                         >
@@ -237,12 +249,17 @@ export function ProductDetailModal({
 
                     <button
                       onClick={() => shareProduct(product)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${isNoir ? "border-(--noir-border) hover:border-(--noir-accent)" : "border-slate-200 hover:border-(--modal-primary)"} ${surface2} transition-all group`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${isNoir ? "border-(--noir-border) hover:border-(--noir-accent)" : "border-slate-200"} ${surface2} transition-all group`}
+                      style={!isNoir ? { borderColor: "rgba(0,0,0,0.1)" } : {}}
                     >
                       <Share2
-                        className={`w-4 h-4 ${accentColor} group-hover:scale-110 transition-transform`}
+                        className={`w-4 h-4 group-hover:scale-110 transition-transform ${accentColor}`}
+                        style={!isNoir ? { color: primary } : {}}
                       />
-                      <span className={`text-xs font-bold ${accentColor}`}>
+                      <span
+                        className={`text-xs font-bold ${accentColor}`}
+                        style={!isNoir ? { color: primary } : {}}
+                      >
                         Compartir
                       </span>
                     </button>

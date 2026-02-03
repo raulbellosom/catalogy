@@ -39,9 +39,13 @@ export function ImageViewerModal({
   showDownload = true,
   downloadFilename,
 }) {
-  // Determine if we're in gallery mode
-  const isGalleryMode = images.length > 1;
-  const imageList = isGalleryMode ? images : src ? [src] : [];
+  // Determine effective image list
+  const imageList = React.useMemo(() => {
+    if (images && images.length > 0) return images;
+    return src ? [src] : [];
+  }, [images, src]);
+
+  const isGalleryMode = imageList.length > 1;
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
@@ -126,8 +130,9 @@ export function ImageViewerModal({
     setScale(1);
     setRotation(0);
     setPosition({ x: 0, y: 0 });
-    setLoading(true);
-  }, [currentIndex, isOpen]);
+    // If we have an image, start loading. If not, stop loading.
+    setLoading(!!(imageList[currentIndex] || src));
+  }, [currentIndex, isOpen, src, imageList]);
 
   // Sync index when initialIndex changes externally
   useEffect(() => {
@@ -535,7 +540,7 @@ export function ImageViewerModal({
               </div>
             )}
 
-            {currentImageUrl && (
+            {currentImageUrl ? (
               <motion.img
                 ref={imageRef}
                 key={currentImageUrl}
@@ -566,6 +571,11 @@ export function ImageViewerModal({
                   userSelect: "none",
                 }}
               />
+            ) : (
+              <div className="text-white/50 flex flex-col items-center gap-2">
+                <Maximize2 size={48} className="opacity-50" />
+                <p>No Image Available</p>
+              </div>
             )}
           </motion.div>
         </div>
