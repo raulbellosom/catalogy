@@ -67,13 +67,19 @@ export function Modal({
   // Lock body scroll when open
   useEffect(() => {
     if (open) {
+      // Store original values
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+
+      // Lock scroll on both html and body
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "hidden";
+
+      return () => {
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [open]);
 
   const sizeClasses = {
@@ -97,7 +103,7 @@ export function Modal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 overflow-hidden">
           {/* Overlay */}
           <motion.div
             variants={overlayVariants}
@@ -105,7 +111,7 @@ export function Modal({
             animate="visible"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={handleOverlayClick}
           />
 

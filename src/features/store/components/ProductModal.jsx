@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
-import { ImageUpload, useToast } from "@/shared/ui/molecules";
+import { MultiImageUpload, useToast } from "@/shared/ui/molecules";
 import { useAuth } from "@/app/providers";
 import { Modal, ModalFooter } from "@/shared/ui/molecules/Modal";
 import {
@@ -23,7 +23,9 @@ import {
 } from "@/shared/hooks";
 import {
   getProductImageUrl,
+  getProductImageUrls,
   deleteProductImage,
+  deleteProductImages,
 } from "@/shared/services/productService";
 
 /**
@@ -86,10 +88,10 @@ export function ProductModal({
     }
   }, [isComboboxOpen]);
 
-  // Image management
-  const [initialImageFileId, setInitialImageFileId] = useState("");
-  const [imageFileId, setImageFileId] = useState("");
-  const [imageUrl, setImageUrl] = useState(null);
+  // Image management - now handles array of images
+  const [initialImageFileIds, setInitialImageFileIds] = useState([]);
+  const [imageFileIds, setImageFileIds] = useState([]);
+  const [imageUrls, setImageUrls] = useState([]);
 
   const { user } = useAuth();
   const toast = useToast();
@@ -110,15 +112,15 @@ export function ProductModal({
           Array.isArray(product.categoryIds) ? product.categoryIds : [],
         );
 
-        const fileId = product.imageFileId || "";
-        setImageFileId(fileId);
-        setInitialImageFileId(fileId);
-
-        if (fileId) {
-          setImageUrl(getProductImageUrl(fileId));
-        } else {
-          setImageUrl(null);
-        }
+        // Handle imageFileIds array (with backwards compatibility for imageFileId)
+        const fileIds = Array.isArray(product.imageFileIds)
+          ? product.imageFileIds
+          : product.imageFileId
+            ? [product.imageFileId]
+            : [];
+        setImageFileIds(fileIds);
+        setInitialImageFileIds([...fileIds]);
+        setImageUrls(getProductImageUrls(fileIds));
       } else {
         // Reset for new product
         setName("");
@@ -127,9 +129,9 @@ export function ProductModal({
         setStock("0");
         setCurrency("MXN");
         setCategoryIds([]);
-        setImageFileId("");
-        setInitialImageFileId("");
-        setImageUrl(null);
+        setImageFileIds([]);
+        setInitialImageFileIds([]);
+        setImageUrls([]);
       }
     }
   }, [isOpen, product]);
@@ -157,41 +159,32 @@ export function ProductModal({
   const handleImageUpload = async (file) => {
     try {
       const response = await uploadImage.mutateAsync(file);
+      const newFileId = response.$id;
 
-      // If we already uploaded a new image in this session without saving yet,
-      // we should delete THAT temporary one before replacing it with another new one.
-      // But if imageFileId is the initial one from the DB, we don't delete it yet (wait for Save).
-      if (
-        imageFileId &&
-        imageFileId !== initialImageFileId &&
-        imageFileId !== response.$id
-      ) {
-        try {
-          await deleteProductImage(imageFileId);
-        } catch (e) {
-          console.warn("Failed to delete temporary image", e);
-        }
-      }
-
-      setImageFileId(response.$id);
-      setImageUrl(getProductImageUrl(response.$id));
+      // Add new image to the arrays
+      setImageFileIds((prev) => [...prev, newFileId]);
+      setImageUrls((prev) => [...prev, getProductImageUrl(newFileId)]);
     } catch (err) {
       console.error("Image upload error:", err);
       toast.error("Error al subir la imagen");
     }
   };
 
-  const handleImageRemove = async () => {
-    // If we remove an image that was just uploaded in this session (temporary), delete it.
-    if (imageFileId && imageFileId !== initialImageFileId) {
+  const handleImageRemove = async (index) => {
+    const fileIdToRemove = imageFileIds[index];
+
+    // If this is a newly uploaded image (not in initial), delete from storage
+    if (fileIdToRemove && !initialImageFileIds.includes(fileIdToRemove)) {
       try {
-        await deleteProductImage(imageFileId);
+        await deleteProductImage(fileIdToRemove);
       } catch (err) {
         console.warn("Failed to delete temporary image", err);
       }
     }
-    setImageFileId("");
-    setImageUrl(null);
+
+    // Remove from state arrays
+    setImageFileIds((prev) => prev.filter((_, i) => i !== index));
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleToggleCategory = (categoryId) => {
@@ -203,10 +196,13 @@ export function ProductModal({
   };
 
   const handleClose = async () => {
-    // Cleanup: If the user cancels and we uploaded a new image, delete it.
-    if (imageFileId && imageFileId !== initialImageFileId) {
+    // Cleanup: Delete newly uploaded images that weren't saved
+    const newImageIds = imageFileIds.filter(
+      (id) => !initialImageFileIds.includes(id),
+    );
+    if (newImageIds.length > 0) {
       try {
-        await deleteProductImage(imageFileId);
+        await deleteProductImages(newImageIds);
       } catch (err) {
         console.warn("Cleanup failed on cancel", err);
       }
@@ -244,19 +240,22 @@ export function ProductModal({
         price: priceNum,
         stock: stockNum,
         currency,
-        imageFileId: imageFileId || null,
+        imageFileIds: imageFileIds,
         categoryIds,
       };
 
       if (isEditMode) {
         await updateProduct.mutateAsync({ productId: product.$id, data });
 
-        // Success: If we changed the image, delete the OLD initial one from DB
-        if (initialImageFileId && imageFileId !== initialImageFileId) {
+        // Success: Delete images that were removed (in initialImageFileIds but not in current imageFileIds)
+        const removedImageIds = initialImageFileIds.filter(
+          (id) => !imageFileIds.includes(id),
+        );
+        if (removedImageIds.length > 0) {
           try {
-            await deleteProductImage(initialImageFileId);
+            await deleteProductImages(removedImageIds);
           } catch (e) {
-            console.warn("Failed to cleanup old database image", e);
+            console.warn("Failed to cleanup removed images", e);
           }
         }
       } else {
@@ -316,106 +315,83 @@ export function ProductModal({
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
           {/* Top Left: Image Section */}
-          <div className="space-y-4">
-            <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
-              Imagen de Portada
-            </label>
-            <div className="aspect-square w-full">
-              <ImageUpload
-                currentImageUrl={imageUrl}
-                onUpload={handleImageUpload}
-                onRemove={handleImageRemove}
-                isUploading={uploadImage.isPending}
-                maxSizeMB={10}
-                aspectRatio="square"
-                className="h-full w-full"
-                label=""
-              />
-            </div>
-
-            {/* Tip de Diseño */}
-            <div className="p-5 bg-(--color-bg-secondary) rounded-2xl border border-(--color-border) border-dashed space-y-2">
-              <h4 className="text-xs font-bold text-(--color-fg) uppercase tracking-widest">
-                Tip de Diseño
-              </h4>
-              <p className="text-xs text-(--color-fg-secondary) leading-relaxed">
-                Usa fondos limpios y buena iluminación. Las fotos consistentes
-                aumentan la confianza del comprador hasta en un 40%.
-              </p>
-            </div>
+          <div>
+            <MultiImageUpload
+              currentImageUrls={imageUrls}
+              onUpload={handleImageUpload}
+              onRemove={handleImageRemove}
+              isUploading={uploadImage.isPending}
+              maxSizeMB={10}
+              label="Imágenes del Producto"
+            />
           </div>
 
           {/* Top Right: Core Details */}
-          <div className="flex flex-col justify-between space-y-6">
-            <div className="space-y-6">
-              <Input
-                label="Nombre del Producto"
-                placeholder="Ej. Sudadera Oversize Vintage Noir"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                minLength={3}
-                maxLength={150}
-                className="text-lg font-medium"
-              />
+          <div className="space-y-6">
+            <Input
+              label="Nombre del Producto"
+              placeholder="Ej. Sudadera Oversize Vintage Noir"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              minLength={3}
+              maxLength={150}
+              className="text-lg font-medium"
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="relative group">
-                  <Input
-                    type="number"
-                    label="Precio"
-                    placeholder="0.00"
-                    value={price}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || parseFloat(val) >= 0) {
-                        setPrice(val);
-                      }
-                    }}
-                    onBlur={() => {
-                      if (price) setPrice(parseFloat(price).toFixed(2));
-                    }}
-                    required
-                    min="0"
-                    step="0.01"
-                    className="pr-12"
-                  />
-                  <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
-                    <DollarSign className="w-4 h-4" />
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="relative group">
+                <Input
+                  type="number"
+                  label="Precio"
+                  placeholder="0.00"
+                  value={price}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || parseFloat(val) >= 0) {
+                      setPrice(val);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (price) setPrice(parseFloat(price).toFixed(2));
+                  }}
+                  required
+                  min="0"
+                  step="0.01"
+                  className="pr-12"
+                />
+                <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                  <DollarSign className="w-4 h-4" />
                 </div>
-                <div className="relative group">
-                  <Input
-                    type="number"
-                    label="Stock Disponible"
-                    placeholder="0"
-                    value={stock}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "" || parseInt(val) >= 0) {
-                        setStock(val);
-                      }
-                    }}
-                    required
-                    min="0"
-                    step="1"
-                    className="pr-12"
-                  />
-                  <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
-                    <Package className="w-4 h-4" />
-                  </div>
+              </div>
+              <div className="relative group">
+                <Input
+                  type="number"
+                  label="Stock Disponible"
+                  placeholder="0"
+                  value={stock}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || parseInt(val) >= 0) {
+                      setStock(val);
+                    }
+                  }}
+                  required
+                  min="0"
+                  step="1"
+                  className="pr-12"
+                />
+                <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                  <Package className="w-4 h-4" />
                 </div>
               </div>
             </div>
 
-            {/* Categories Combobox */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-(--color-primary)" />
-                <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
-                  Categorías
-                </label>
-              </div>
+            {/* Categories Section */}
+            <div className="space-y-3">
+              <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
+                Categorías
+              </label>
 
               {/* Combobox */}
               {categories && categories.length > 0 && (
@@ -476,59 +452,41 @@ export function ProductModal({
 
               {/* Selected Categories */}
               {categoryIds.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wide">
-                    Categorías seleccionadas ({categoryIds.length})
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {categoryIds.map((categoryId) => {
-                      const category = categories?.find(
-                        (cat) => cat.id === categoryId,
-                      );
-                      if (!category) return null;
-                      return (
-                        <span
-                          key={categoryId}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-(--color-primary) text-white rounded-full text-xs font-semibold"
+                <div className="flex flex-wrap gap-2">
+                  {categoryIds.map((categoryId) => {
+                    const category = categories?.find(
+                      (cat) => cat.id === categoryId,
+                    );
+                    if (!category) return null;
+                    return (
+                      <span
+                        key={categoryId}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-(--color-primary) text-white rounded-full text-xs font-semibold"
+                      >
+                        {category.name}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCategory(categoryId)}
+                          className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                          aria-label={`Remover ${category.name}`}
                         >
-                          {category.name}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleCategory(categoryId)}
-                            className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                            aria-label={`Remover ${category.name}`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
                 </div>
               )}
 
               {/* Empty state */}
               {(!categories || categories.length === 0) && (
-                <div className="text-center p-4 bg-(--color-bg-secondary) rounded-xl border border-dashed border-(--color-border)">
-                  <Tag className="w-6 h-6 text-(--color-fg-muted) mx-auto mb-2" />
-                  <p className="text-xs text-(--color-fg-secondary) font-medium">
-                    No hay categorías disponibles
-                  </p>
+                <div className="text-center p-3 bg-(--color-bg-secondary) rounded-xl border border-dashed border-(--color-border)">
+                  <Tag className="w-5 h-5 text-(--color-fg-muted) mx-auto mb-1" />
                   <p className="text-xs text-(--color-fg-muted)">
-                    Crea categorías en la configuración de la tienda
+                    Crea categorías en la sección de Tienda
                   </p>
                 </div>
               )}
-            </div>
-
-            <div className="p-5 bg-(--color-bg-secondary) rounded-2xl border border-(--color-border) border-dashed space-y-2">
-              <h4 className="text-xs font-bold text-(--color-fg) uppercase tracking-widest">
-                Tip de Diseño
-              </h4>
-              <p className="text-xs text-(--color-fg-secondary) leading-relaxed">
-                Usa fondos limpios y buena iluminación. Las fotos consistentes
-                aumentan la confianza del comprador hasta en un 40%.
-              </p>
             </div>
           </div>
 

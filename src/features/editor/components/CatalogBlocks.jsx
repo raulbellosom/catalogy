@@ -49,9 +49,12 @@ const formatPrice = (price, currency = "MXN") => {
 };
 
 const ProductCard = ({ product }) => {
-  const imageUrl = product.imageFileId
-    ? getProductImageUrl(product.imageFileId)
-    : null;
+  // Handle both new imageFileIds array and legacy imageFileId
+  const firstImageId =
+    Array.isArray(product.imageFileIds) && product.imageFileIds.length > 0
+      ? product.imageFileIds[0]
+      : product.imageFileId;
+  const imageUrl = firstImageId ? getProductImageUrl(firstImageId) : null;
 
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">

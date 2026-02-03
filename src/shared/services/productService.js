@@ -62,7 +62,7 @@ export async function createProduct(data) {
     price,
     currency,
     sortOrder,
-    imageFileId,
+    imageFileIds,
     stock,
     categoryIds,
   } = data;
@@ -87,7 +87,7 @@ export async function createProduct(data) {
       price: parseFloat(price),
       currency: currency || "MXN",
       sortOrder: sortOrder || 0,
-      imageFileId: imageFileId || null,
+      imageFileIds: Array.isArray(imageFileIds) ? imageFileIds : [],
       stock: parseInt(stock) || 0,
       categoryIds: Array.isArray(categoryIds) ? categoryIds : [],
       enabled: true,
@@ -130,6 +130,12 @@ export async function updateProduct(productId, data) {
   if (data.categoryIds !== undefined) {
     updateData.categoryIds = Array.isArray(data.categoryIds)
       ? data.categoryIds
+      : [];
+  }
+
+  if (data.imageFileIds !== undefined) {
+    updateData.imageFileIds = Array.isArray(data.imageFileIds)
+      ? data.imageFileIds
       : [];
   }
 
@@ -185,6 +191,35 @@ export async function deleteProductImage(fileId) {
 export function getProductImageUrl(fileId) {
   if (!fileId) return null;
   return storage.getFileView(BUCKETS.PRODUCT_IMAGES, fileId).href;
+}
+
+/**
+ * Get product image URLs from array of file IDs
+ * @param {string[]} fileIds - Array of file IDs
+ * @returns {string[]} Array of image URLs
+ */
+export function getProductImageUrls(fileIds) {
+  if (!Array.isArray(fileIds) || fileIds.length === 0) return [];
+  return fileIds.filter(Boolean).map((fileId) => getProductImageUrl(fileId));
+}
+
+/**
+ * Delete multiple product images
+ * @param {string[]} fileIds - Array of file IDs to delete
+ * @returns {Promise<void>}
+ */
+export async function deleteProductImages(fileIds) {
+  if (!Array.isArray(fileIds) || fileIds.length === 0) return;
+
+  const deletePromises = fileIds.filter(Boolean).map(async (fileId) => {
+    try {
+      await storage.deleteFile(BUCKETS.PRODUCT_IMAGES, fileId);
+    } catch (error) {
+      console.error(`Error deleting product image ${fileId}:`, error);
+    }
+  });
+
+  await Promise.all(deletePromises);
 }
 
 /**

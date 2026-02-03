@@ -94,8 +94,7 @@ export function CatalogPage({ previewSlug }) {
 
   const template = getTemplate(store.templateId);
   const TemplateComponent = template.component;
-  const activeRenderer =
-    store?.activeRenderer === "puck" ? "puck" : "template";
+  const activeRenderer = store?.activeRenderer === "puck" ? "puck" : "template";
 
   // Theme override from store.settings (optional)
   const themeStyle = (() => {
@@ -161,9 +160,12 @@ function ProductsGrid({ products }) {
  * Product card
  */
 function ProductCard({ product, index }) {
-  const imageUrl = product.imageFileId
-    ? getProductImageUrl(product.imageFileId)
-    : null;
+  // Handle both new imageFileIds array and legacy imageFileId
+  const firstImageId =
+    Array.isArray(product.imageFileIds) && product.imageFileIds.length > 0
+      ? product.imageFileIds[0]
+      : product.imageFileId;
+  const imageUrl = firstImageId ? getProductImageUrl(firstImageId) : null;
 
   return (
     <motion.div

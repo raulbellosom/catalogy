@@ -22,7 +22,8 @@ import {
   Tag,
 } from "lucide-react";
 import { useAuth } from "@/app/providers";
-import { useIsAdmin, useUserStore } from "@/shared/hooks";
+import { useIsAdmin, useUserStore, useProfile } from "@/shared/hooks";
+import { storage, BUCKETS } from "@/shared/lib/appwrite";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Logo } from "@/shared/ui/atoms/Logo";
 import { FullScreenLoader } from "@/shared/ui/molecules/FullScreenLoader";
@@ -201,9 +202,10 @@ function MobileNavItem({ to, icon: Icon, label }) {
  * User avatar component
  * @param {Object} props
  * @param {string} props.name
+ * @param {string} [props.avatarUrl] - URL of the avatar image
  * @param {string} [props.size]
  */
-function UserAvatar({ name, size = "md" }) {
+function UserAvatar({ name, avatarUrl, size = "md" }) {
   const sizeClasses = {
     sm: "h-8 w-8 text-xs",
     md: "h-10 w-10 text-sm",
@@ -218,6 +220,18 @@ function UserAvatar({ name, size = "md" }) {
       .toUpperCase()
       .slice(0, 2) || "?";
 
+  // If avatar URL exists, show image
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name || "Avatar"}
+        className={`${sizeClasses[size]} rounded-full object-cover ring-2 ring-[var(--color-card)] ring-offset-2 ring-offset-[var(--color-bg)]`}
+      />
+    );
+  }
+
+  // Fallback to initials
   return (
     <div
       className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-hover)] flex items-center justify-center font-bold text-white ring-2 ring-[var(--color-card)] ring-offset-2 ring-offset-[var(--color-bg)]`}
@@ -293,9 +307,15 @@ export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { data: store, isLoading: loadingStore } = useUserStore();
+  const { data: profile } = useProfile();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+  // Get avatar URL from profile
+  const avatarUrl = profile?.avatarFileId
+    ? storage.getFilePreview(BUCKETS.AVATARS, profile.avatarFileId).href
+    : null;
 
   // Sidebar collapsed state (persisted in localStorage)
   const [collapsed, setCollapsed] = useState(() => {
@@ -470,7 +490,7 @@ export function AppLayout() {
                   {user?.email}
                 </div>
               </div>
-              <UserAvatar name={displayName} size="md" />
+              <UserAvatar name={displayName} avatarUrl={avatarUrl} size="md" />
             </button>
 
             {/* Dropdown menu */}
@@ -656,7 +676,11 @@ export function AppLayout() {
               {/* User info */}
               <div className="p-4 border-b border-[var(--color-border)]">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-[var(--color-primary)]/10 to-[var(--color-primary)]/5">
-                  <UserAvatar name={displayName} size="lg" />
+                  <UserAvatar
+                    name={displayName}
+                    avatarUrl={avatarUrl}
+                    size="lg"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-[var(--color-fg)] truncate">
                       {displayName}

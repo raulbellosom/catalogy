@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Edit,
@@ -11,7 +12,11 @@ import {
   Tag,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
-import { getProductImageUrl } from "@/shared/services/productService";
+import { ImageCarousel, ImageViewerModal } from "@/shared/ui/molecules";
+import {
+  getProductImageUrl,
+  getProductImageUrls,
+} from "@/shared/services/productService";
 
 /**
  * Product List - Handles Grid and Table views
@@ -111,9 +116,14 @@ function ProductRow({
   isActionLoading,
   actionType,
 }) {
-  const imageUrl = product.imageFileId
-    ? getProductImageUrl(product.imageFileId)
-    : null;
+  // Handle both new imageFileIds array and legacy imageFileId
+  const imageUrls = Array.isArray(product.imageFileIds)
+    ? getProductImageUrls(product.imageFileIds)
+    : product.imageFileId
+      ? [getProductImageUrl(product.imageFileId)]
+      : [];
+
+  const firstImageUrl = imageUrls[0] || null;
 
   const isToggling = isActionLoading && actionType === "toggle";
   const isDeleting = isActionLoading && actionType === "delete";
@@ -124,9 +134,9 @@ function ProductRow({
     >
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="w-12 h-12 rounded-lg bg-(--color-bg-tertiary) overflow-hidden flex items-center justify-center border border-(--color-border)">
-          {imageUrl ? (
+          {firstImageUrl ? (
             <img
-              src={imageUrl}
+              src={firstImageUrl}
               alt={product.name}
               className="w-full h-full object-cover"
             />
@@ -233,160 +243,181 @@ function ProductCard({
   isActionLoading,
   actionType,
 }) {
-  const imageUrl = product.imageFileId
-    ? getProductImageUrl(product.imageFileId)
-    : null;
+  // Handle both new imageFileIds array and legacy imageFileId
+  const imageUrls = Array.isArray(product.imageFileIds)
+    ? getProductImageUrls(product.imageFileIds)
+    : product.imageFileId
+      ? [getProductImageUrl(product.imageFileId)]
+      : [];
 
   const isToggling = isActionLoading && actionType === "toggle";
   const isDeleting = isActionLoading && actionType === "delete";
 
+  // Image viewer state
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [viewerInitialIndex, setViewerInitialIndex] = useState(0);
+
+  const handleImageClick = (currentIndex) => {
+    if (imageUrls.length > 0) {
+      setViewerInitialIndex(currentIndex);
+      setIsViewerOpen(true);
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`bg-(--color-card) border border-(--color-card-border) rounded-2xl overflow-hidden hover:shadow-md transition-all group flex flex-col ${!product.enabled ? "opacity-75 grayscale-[0.5]" : ""}`}
-    >
-      {/* Image */}
-      <div className="aspect-square bg-(--color-bg-secondary) relative overflow-hidden">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.3, delay: index * 0.05 }}
+        className={`bg-(--color-card) border border-(--color-card-border) rounded-2xl overflow-hidden hover:shadow-md transition-all group flex flex-col ${!product.enabled ? "opacity-75 grayscale-[0.5]" : ""}`}
+      >
+        {/* Image */}
+        <div className="aspect-square bg-(--color-bg-secondary) relative overflow-hidden">
+          <ImageCarousel
+            images={imageUrls}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full"
+            onImageClick={handleImageClick}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="w-16 h-16 text-(--color-fg-muted)" />
+
+          {/* Quick Actions Overlay */}
+          <div className="absolute top-2 right-2 flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300 z-10">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-10 w-10 p-0 rounded-full shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 dark:border-white/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(product);
+              }}
+            >
+              <Edit className="w-5 h-5" />
+            </Button>
           </div>
-        )}
 
-        {/* Quick Actions Overlay */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-10 w-10 p-0 rounded-full shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 dark:border-white/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(product);
-            }}
-          >
-            <Edit className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Status Badge */}
-        {!product.enabled && (
-          <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 backdrop-blur-sm text-white text-xs font-bold rounded-md flex items-center gap-1">
-            <EyeOff className="w-3 h-3" /> Oculto
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex justify-between items-start mb-2 gap-2">
-          <h3
-            className="font-semibold text-(--color-fg) truncate flex-1"
-            title={product.name}
-          >
-            {product.name}
-          </h3>
-        </div>
-
-        <div className="flex items-center gap-1 mb-2">
-          <DollarSign className="w-4 h-4 text-(--color-fg-secondary)" />
-          <span className="text-xl font-bold text-(--color-primary)">
-            {product.price.toLocaleString("es-MX", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
-          <span className="text-xs text-(--color-fg-secondary) font-medium mt-1">
-            {product.currency || "MXN"}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 mb-4 text-sm text-(--color-fg-secondary)">
-          <Package className="w-4 h-4" />
-          <span>
-            Stock: <b>{product.stock || 0}</b>
-          </span>
-        </div>
-
-        {product.description && (
-          <p className="text-sm text-(--color-fg-secondary) line-clamp-2 mb-4 flex-1">
-            {product.description}
-          </p>
-        )}
-
-        {/* Categories */}
-        {product.categoryIds && product.categoryIds.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center gap-1 mb-2">
-              <Tag className="w-3 h-3 text-(--color-fg-muted)" />
-              <span className="text-xs font-medium text-(--color-fg-muted) uppercase tracking-wide">
-                Categorías
-              </span>
+          {/* Status Badge */}
+          {!product.enabled && (
+            <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 backdrop-blur-sm text-white text-xs font-bold rounded-md flex items-center gap-1 z-10">
+              <EyeOff className="w-3 h-3" /> Oculto
             </div>
-            <div className="flex flex-wrap gap-1">
-              {product.categoryIds.slice(0, 3).map((categoryId) => {
-                const category = categories.find(
-                  (cat) => cat.id === categoryId,
-                );
-                return category ? (
-                  <span
-                    key={categoryId}
-                    className="inline-block px-2 py-1 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium"
-                  >
-                    {category.name}
-                  </span>
-                ) : null;
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-5 flex-1 flex flex-col">
+          <div className="flex justify-between items-start mb-2 gap-2">
+            <h3
+              className="font-semibold text-(--color-fg) truncate flex-1"
+              title={product.name}
+            >
+              {product.name}
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-1 mb-2">
+            <DollarSign className="w-4 h-4 text-(--color-fg-secondary)" />
+            <span className="text-xl font-bold text-(--color-primary)">
+              {product.price.toLocaleString("es-MX", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
               })}
-              {product.categoryIds.length > 3 && (
-                <span className="inline-block px-2 py-1 bg-(--color-bg-secondary) text-(--color-fg-muted) rounded-full text-xs">
-                  +{product.categoryIds.length - 3}
-                </span>
-              )}
-            </div>
+            </span>
+            <span className="text-xs text-(--color-fg-secondary) font-medium mt-1">
+              {product.currency || "MXN"}
+            </span>
           </div>
-        )}
 
-        {/* Footer Actions */}
-        <div className="pt-4 border-t border-(--color-border) flex items-center justify-between gap-2 mt-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onToggleStatus(product)}
-            isLoading={isToggling}
-            className={
-              product.enabled
-                ? "text-(--color-fg-secondary) hover:text-(--color-fg)"
-                : "text-(--color-primary)"
-            }
-          >
-            {product.enabled ? (
-              <EyeOff className="w-4 h-4 mr-2" />
-            ) : (
-              <Eye className="w-4 h-4 mr-2" />
-            )}
-            {product.enabled ? "Ocultar" : "Mostrar"}
-          </Button>
+          <div className="flex items-center gap-2 mb-4 text-sm text-(--color-fg-secondary)">
+            <Package className="w-4 h-4" />
+            <span>
+              Stock: <b>{product.stock || 0}</b>
+            </span>
+          </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(product)}
-            isLoading={isDeleting}
-            className="text-(--color-error) hover:bg-(--color-error-bg)"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
+          {product.description && (
+            <p className="text-sm text-(--color-fg-secondary) line-clamp-2 mb-4 flex-1">
+              {product.description}
+            </p>
+          )}
+
+          {/* Categories */}
+          {product.categoryIds && product.categoryIds.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-1 mb-2">
+                <Tag className="w-3 h-3 text-(--color-fg-muted)" />
+                <span className="text-xs font-medium text-(--color-fg-muted) uppercase tracking-wide">
+                  Categorías
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {product.categoryIds.slice(0, 3).map((categoryId) => {
+                  const category = categories.find(
+                    (cat) => cat.id === categoryId,
+                  );
+                  return category ? (
+                    <span
+                      key={categoryId}
+                      className="inline-block px-2 py-1 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium"
+                    >
+                      {category.name}
+                    </span>
+                  ) : null;
+                })}
+                {product.categoryIds.length > 3 && (
+                  <span className="inline-block px-2 py-1 bg-(--color-bg-secondary) text-(--color-fg-muted) rounded-full text-xs">
+                    +{product.categoryIds.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Footer Actions */}
+          <div className="pt-4 border-t border-(--color-border) flex items-center justify-between gap-2 mt-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onToggleStatus(product)}
+              isLoading={isToggling}
+              className={
+                product.enabled
+                  ? "text-(--color-fg-secondary) hover:text-(--color-fg)"
+                  : "text-(--color-primary)"
+              }
+            >
+              {product.enabled ? (
+                <EyeOff className="w-4 h-4 mr-2" />
+              ) : (
+                <Eye className="w-4 h-4 mr-2" />
+              )}
+              {product.enabled ? "Ocultar" : "Mostrar"}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(product)}
+              isLoading={isDeleting}
+              className="text-(--color-error) hover:bg-(--color-error-bg)"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        images={imageUrls}
+        initialIndex={viewerInitialIndex}
+        alt={product.name}
+        showDownload={true}
+      />
+    </>
   );
 }
 

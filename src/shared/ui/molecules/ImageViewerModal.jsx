@@ -9,6 +9,8 @@ import {
   Download,
   Loader2,
   Maximize2,
+  Minimize2,
+  RotateCcw,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -47,6 +49,7 @@ export function ImageViewerModal({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const containerRef = useRef(null);
   const imageRef = useRef(null);
@@ -60,12 +63,35 @@ export function ImageViewerModal({
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
       document.body.style.overflow = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
     }
     return () => {
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
       document.body.style.overflow = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
     };
   }, [isOpen]);
 
@@ -120,10 +146,12 @@ export function ImageViewerModal({
     setCurrentIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
   }, [isGalleryMode, imageList.length]);
 
-  // Handle Wheel Zoom
+  // Handle Wheel Zoom - using native event listener for non-passive
   const handleWheel = useCallback((e) => {
     e.preventDefault();
-    const delta = -e.deltaY * 0.001;
+    e.stopPropagation();
+    // Support both regular wheel and trackpad pinch (ctrlKey indicates pinch gesture)
+    const delta = e.ctrlKey ? -e.deltaY * 0.01 : -e.deltaY * 0.002;
     setScale((s) => Math.min(5, Math.max(0.5, s + delta)));
   }, []);
 
@@ -131,18 +159,23 @@ export function ImageViewerModal({
   const handleTouchStart = useCallback(
     (e) => {
       if (e.touches.length === 2) {
+        // Pinch gesture start
+        e.preventDefault();
         const dist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY,
         );
         touchStartDistRef.current = dist;
         initialPinchScaleRef.current = scale;
-      } else if (e.touches.length === 1 && scale > 1) {
+      } else if (e.touches.length === 1) {
+        // Single touch - for panning when zoomed or swipe navigation
         lastTouchRef.current = {
           x: e.touches[0].clientX,
           y: e.touches[0].clientY,
         };
-        setIsDragging(true);
+        if (scale > 1) {
+          setIsDragging(true);
+        }
       }
     },
     [scale],
@@ -151,6 +184,7 @@ export function ImageViewerModal({
   const handleTouchMove = useCallback(
     (e) => {
       if (e.touches.length === 2 && touchStartDistRef.current) {
+        // Pinch zoom
         e.preventDefault();
         const dist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
@@ -163,6 +197,8 @@ export function ImageViewerModal({
         );
         setScale(newScale);
       } else if (e.touches.length === 1 && isDragging && scale > 1) {
+        // Pan when zoomed
+        e.preventDefault();
         const deltaX = e.touches[0].clientX - lastTouchRef.current.x;
         const deltaY = e.touches[0].clientY - lastTouchRef.current.y;
 
@@ -184,6 +220,28 @@ export function ImageViewerModal({
     touchStartDistRef.current = null;
     setIsDragging(false);
   }, []);
+
+  // Combined callback ref for wheel and touch events
+  const combinedContainerRef = useCallback((node) => {
+    // Remove listeners from previous node
+    if (containerRef.current) {
+      containerRef.current.removeEventListener("wheel", handleWheel);
+      containerRef.current.removeEventListener("touchstart", handleTouchStart);
+      containerRef.current.removeEventListener("touchmove", handleTouchMove);
+      containerRef.current.removeEventListener("touchend", handleTouchEnd);
+    }
+    
+    // Save the node
+    containerRef.current = node;
+    
+    // Attach listeners to new node
+    if (node) {
+      node.addEventListener("wheel", handleWheel, { passive: false });
+      node.addEventListener("touchstart", handleTouchStart, { passive: false });
+      node.addEventListener("touchmove", handleTouchMove, { passive: false });
+      node.addEventListener("touchend", handleTouchEnd, { passive: false });
+    }
+  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   // Mouse drag for desktop
   const handleMouseDown = useCallback(
@@ -240,6 +298,31 @@ export function ImageViewerModal({
     setPosition({ x: 0, y: 0 });
   }, []);
 
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  }, []);
+
+  // Listen for fullscreen changes (e.g., ESC key exits fullscreen)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   const handleClose = useCallback(() => {
     resetView();
     onClose();
@@ -281,7 +364,7 @@ export function ImageViewerModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
-          className="absolute inset-0 bg-black/95 backdrop-blur-md"
+          className="absolute inset-0 bg-black/70 backdrop-blur-2xl"
         />
 
         {/* Controls Layer */}
@@ -337,8 +420,40 @@ export function ImageViewerModal({
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
-            className="flex justify-center pointer-events-auto"
+            className="flex flex-col items-center gap-3 pointer-events-auto"
           >
+            {/* Thumbnails Strip */}
+            {isGalleryMode && (
+              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-2">
+                {imageList.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentIndex(index);
+                    }}
+                    className={cn(
+                      "relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden transition-all duration-200",
+                      "ring-2 ring-offset-1 ring-offset-black/50",
+                      currentIndex === index
+                        ? "ring-white scale-105"
+                        : "ring-transparent hover:ring-white/50 opacity-60 hover:opacity-100",
+                    )}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {currentIndex === index && (
+                      <div className="absolute inset-0 bg-white/10" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Tools */}
             <div className="flex items-center gap-1 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-1.5 sm:p-2 shadow-2xl">
               <ToolButton
                 icon={ZoomOut}
@@ -360,10 +475,15 @@ export function ImageViewerModal({
                 label="Rotate"
               />
               <ToolButton
-                icon={Maximize2}
+                icon={RotateCcw}
                 onClick={resetView}
-                label="Reset"
+                label="Reset View"
                 active={scale !== 1 || rotation !== 0}
+              />
+              <ToolButton
+                icon={isFullscreen ? Minimize2 : Maximize2}
+                onClick={toggleFullscreen}
+                label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               />
               {showDownload && (
                 <>
@@ -380,28 +500,27 @@ export function ImageViewerModal({
           </motion.div>
         </div>
 
-        {/* Image Layer */}
-        <motion.div
-          ref={containerRef}
+        {/* Image Layer - wrapper div for event handling */}
+        <div
+          ref={combinedContainerRef}
           className={cn(
-            "absolute inset-0 flex items-center justify-center p-4 sm:p-12 pointer-events-auto touch-none select-none",
+            "absolute inset-0 flex items-center justify-center p-4 pb-36 sm:p-12 sm:pb-40 pointer-events-auto select-none",
             scale > 1 ? "cursor-grab" : "cursor-default",
             isDragging && "cursor-grabbing",
           )}
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onWheel={handleWheel}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onClick={handleDoubleTap}
         >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center justify-center w-full h-full"
+          >
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center text-white/30">
               <Loader2 size={48} className="animate-spin" />
@@ -440,7 +559,8 @@ export function ImageViewerModal({
               }}
             />
           )}
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </AnimatePresence>
   );

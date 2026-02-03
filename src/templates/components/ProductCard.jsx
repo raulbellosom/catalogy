@@ -15,7 +15,8 @@ import { shareProduct } from "./catalogHooks";
  * @property {string} name - Nombre del producto
  * @property {string} description - Descripcion del producto
  * @property {number} price - Precio del producto
- * @property {string|null} imageFileId - ID del archivo de imagen
+ * @property {string[]|null} imageFileIds - IDs de archivos de imagen (array)
+ * @property {string|null} imageFileId - ID del archivo de imagen (legacy)
  * @property {string} currency - Moneda (default: USD)
  */
 
@@ -71,7 +72,12 @@ export function ProductCard({
   onShare,
   shared = false,
 }) {
-  const imageUrl = getImageUrl(product.imageFileId);
+  // Handle both new imageFileIds array and legacy imageFileId
+  const firstImageId =
+    Array.isArray(product.imageFileIds) && product.imageFileIds.length > 0
+      ? product.imageFileIds[0]
+      : product.imageFileId;
+  const imageUrl = getImageUrl(firstImageId);
   const handleShare = async (event) => {
     event.stopPropagation();
     if (onShare) {

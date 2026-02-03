@@ -4,7 +4,12 @@
  * Layout oscuro inspirado en catalogos premium.
  */
 
-import { Heart, Image as ImageIcon, Store as StoreIcon, Share2 } from "lucide-react";
+import {
+  Heart,
+  Image as ImageIcon,
+  Store as StoreIcon,
+  Share2,
+} from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { CatalogControls, StorePurchaseInfo } from "../components";
@@ -193,8 +198,14 @@ export function NoirGridTemplate({ store, products }) {
 
             <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {filteredProducts?.map((product) => {
-                const imageUrl = product.imageFileId
-                  ? getProductImageUrl(product.imageFileId)
+                // Handle both new imageFileIds array and legacy imageFileId
+                const firstImageId =
+                  Array.isArray(product.imageFileIds) &&
+                  product.imageFileIds.length > 0
+                    ? product.imageFileIds[0]
+                    : product.imageFileId;
+                const imageUrl = firstImageId
+                  ? getProductImageUrl(firstImageId)
                   : null;
 
                 return (
@@ -238,8 +249,14 @@ export function NoirGridTemplate({ store, products }) {
                         <span className="text-sm text-[var(--noir-muted)]">
                           {product.currency || "MXN"}
                         </span>
-                        <span className="text-lg font-semibold" style={{ color: "var(--noir-accent)" }}>
-                          {formatPrice(product.price, product.currency || "MXN")}
+                        <span
+                          className="text-lg font-semibold"
+                          style={{ color: "var(--noir-accent)" }}
+                        >
+                          {formatPrice(
+                            product.price,
+                            product.currency || "MXN",
+                          )}
                         </span>
                       </div>
                       {sharedProductId === product.$id && (
