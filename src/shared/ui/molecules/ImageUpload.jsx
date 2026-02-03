@@ -36,8 +36,6 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setError("");
-
     // Validate file size
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
@@ -64,7 +62,6 @@ export function ImageUpload({
 
   const handleRemove = () => {
     setPreview(null);
-    setError("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

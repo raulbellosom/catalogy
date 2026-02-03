@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   Package,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -17,6 +18,7 @@ import { getProductImageUrl } from "@/shared/services/productService";
  */
 export function ProductList({
   products,
+  categories = [],
   viewMode = "grid", // 'grid' | 'table'
   onEdit,
   onDelete,
@@ -48,6 +50,9 @@ export function ProductList({
                   Stock
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
+                  Categorías
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Estado
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
@@ -60,6 +65,7 @@ export function ProductList({
                 <ProductRow
                   key={product.$id}
                   product={product}
+                  categories={categories}
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onToggleStatus={onToggleStatus}
@@ -82,6 +88,7 @@ export function ProductList({
           <ProductCard
             key={product.$id}
             product={product}
+            categories={categories}
             index={index}
             onEdit={onEdit}
             onDelete={onDelete}
@@ -97,6 +104,7 @@ export function ProductList({
 
 function ProductRow({
   product,
+  categories,
   onEdit,
   onDelete,
   onToggleStatus,
@@ -148,6 +156,32 @@ function ProductRow({
           <span>{product.stock || 0}</span>
         </div>
       </td>
+      <td className="px-6 py-4">
+        {product.categoryIds && product.categoryIds.length > 0 ? (
+          <div className="flex flex-wrap gap-1 max-w-[200px]">
+            {product.categoryIds.slice(0, 2).map((categoryId) => {
+              const category = categories.find((cat) => cat.id === categoryId);
+              return category ? (
+                <span
+                  key={categoryId}
+                  className="inline-block px-2 py-1 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium"
+                >
+                  {category.name}
+                </span>
+              ) : null;
+            })}
+            {product.categoryIds.length > 2 && (
+              <span className="inline-block px-2 py-1 bg-(--color-bg-secondary) text-(--color-fg-muted) rounded-full text-xs">
+                +{product.categoryIds.length - 2}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs text-(--color-fg-muted)">
+            Sin categorías
+          </span>
+        )}
+      </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <Button
           variant="ghost"
@@ -191,6 +225,7 @@ function ProductRow({
 
 function ProductCard({
   product,
+  categories,
   index,
   onEdit,
   onDelete,
@@ -285,6 +320,38 @@ function ProductCard({
           <p className="text-sm text-(--color-fg-secondary) line-clamp-2 mb-4 flex-1">
             {product.description}
           </p>
+        )}
+
+        {/* Categories */}
+        {product.categoryIds && product.categoryIds.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center gap-1 mb-2">
+              <Tag className="w-3 h-3 text-(--color-fg-muted)" />
+              <span className="text-xs font-medium text-(--color-fg-muted) uppercase tracking-wide">
+                Categorías
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {product.categoryIds.slice(0, 3).map((categoryId) => {
+                const category = categories.find(
+                  (cat) => cat.id === categoryId,
+                );
+                return category ? (
+                  <span
+                    key={categoryId}
+                    className="inline-block px-2 py-1 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium"
+                  >
+                    {category.name}
+                  </span>
+                ) : null;
+              })}
+              {product.categoryIds.length > 3 && (
+                <span className="inline-block px-2 py-1 bg-(--color-bg-secondary) text-(--color-fg-muted) rounded-full text-xs">
+                  +{product.categoryIds.length - 3}
+                </span>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Footer Actions */}

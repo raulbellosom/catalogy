@@ -21,6 +21,7 @@ import {
   Tag,
   X,
   Link as LinkIcon,
+  Edit3,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
@@ -80,6 +81,15 @@ const slugifyCategory = (value) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 50);
+
+const isValidUrl = (string) => {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
 
 export function StoreSettingsPage() {
   const navigate = useNavigate();
@@ -157,6 +167,8 @@ export function StoreSettingsPage() {
   // Categories State
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCategory, setEditingCategory] = useState(null); // { id, originalId, name }
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
 
   // Load Store Data
   useEffect(() => {
@@ -188,7 +200,102 @@ export function StoreSettingsPage() {
     setLogoPreviewUrl(null);
   };
 
-  const handleAddCategory = () => {
+  const handleEditCategory = (category) => {
+    setEditingCategory({
+      id: category.id,
+      originalId: category.id,
+      name: category.name,
+    });
+    setIsEditingCategory(true);
+  };
+
+  const handleSaveEditCategory = async () => {
+    if (!editingCategory) return;
+
+    const newName = editingCategory.name.trim();
+    if (!newName) {
+      toast.error("El nombre no puede estar vacío");
+      return;
+    }
+
+    const newId = slugifyCategory(newName);
+    if (!newId) {
+      toast.error("Nombre de categoría inválido");
+      return;
+    }
+
+    // Verificar que el nuevo ID no exista (excepto si es el mismo)
+    if (
+      newId !== editingCategory.originalId &&
+      categories.some((cat) => cat.id === newId)
+    ) {
+      toast.error("Ya existe una categoría con ese nombre");
+      return;
+    }
+
+    try {
+      // Primero actualizar la tienda con las nuevas categorías
+      const updatedCategories = categories.map((cat) =>
+        cat.id === editingCategory.originalId
+          ? { id: newId, name: newName }
+          : cat,
+      );
+
+      const storeData = {
+        categoriesJson: JSON.stringify(updatedCategories),
+      };
+
+      await updateStore.mutateAsync({ storeId: store.$id, data: storeData });
+
+      // Actualizar estado local después de confirmar que se guardó en DB
+      setCategories(updatedCategories);
+
+      // Si el ID cambió, actualizar productos
+      if (newId !== editingCategory.originalId) {
+        const productsWithCategory = products.filter(
+          (product) =>
+            product.categoryIds &&
+            product.categoryIds.includes(editingCategory.originalId),
+        );
+
+        for (const product of productsWithCategory) {
+          const updatedCategoryIds = product.categoryIds.map((id) =>
+            id === editingCategory.originalId ? newId : id,
+          );
+          await updateProduct.mutateAsync({
+            productId: product.$id,
+            data: { categoryIds: updatedCategoryIds },
+          });
+        }
+
+        if (productsWithCategory.length > 0) {
+          toast.success(
+            `Categoría actualizada en ${productsWithCategory.length} producto(s)`,
+          );
+        } else {
+          toast.success("Categoría actualizada correctamente");
+        }
+      } else {
+        toast.success("Categoría actualizada correctamente");
+      }
+
+      setIsEditingCategory(false);
+      setEditingCategory(null);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      toast.error("Error al actualizar categoría");
+      // Revertir cambios locales en caso de error
+      setIsEditingCategory(false);
+      setEditingCategory(null);
+    }
+  };
+
+  const handleCancelEditCategory = () => {
+    setIsEditingCategory(false);
+    setEditingCategory(null);
+  };
+
+  const handleAddCategory = async () => {
     const name = newCategoryName.trim();
     if (!name) return;
     const id = slugifyCategory(name);
@@ -200,12 +307,72 @@ export function StoreSettingsPage() {
       toast.error("Esa categoria ya existe");
       return;
     }
-    setCategories((prev) => [...prev, { id, name }]);
-    setNewCategoryName("");
+
+    try {
+      // Crear nueva categoría
+      const newCategory = { id, name };
+      const updatedCategories = [...categories, newCategory];
+
+      const storeData = {
+        categoriesJson: JSON.stringify(updatedCategories),
+      };
+
+      await updateStore.mutateAsync({ storeId: store.$id, data: storeData });
+
+      // Actualizar estado local después de confirmar que se guardó en DB
+      setCategories(updatedCategories);
+      setNewCategoryName("");
+      toast.success("Categoría creada correctamente");
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast.error("Error al crear categoría");
+    }
   };
 
-  const handleRemoveCategory = (categoryId) => {
-    setCategories((prev) => prev.filter((item) => item.id !== categoryId));
+  const handleRemoveCategory = async (categoryId) => {
+    try {
+      // Primero actualizar la tienda removiendo la categoría
+      const updatedCategories = categories.filter(
+        (item) => item.id !== categoryId,
+      );
+
+      const storeData = {
+        categoriesJson: JSON.stringify(updatedCategories),
+      };
+
+      await updateStore.mutateAsync({ storeId: store.$id, data: storeData });
+
+      // Actualizar estado local después de confirmar que se guardó en DB
+      setCategories(updatedCategories);
+
+      // Actualizar todos los productos que tengan esta categoría
+      const productsWithCategory = products.filter(
+        (product) =>
+          product.categoryIds && product.categoryIds.includes(categoryId),
+      );
+
+      // Actualizar cada producto removiendo la categoría
+      for (const product of productsWithCategory) {
+        const updatedCategoryIds = product.categoryIds.filter(
+          (id) => id !== categoryId,
+        );
+        await updateProduct.mutateAsync({
+          productId: product.$id,
+          data: { categoryIds: updatedCategoryIds },
+        });
+      }
+
+      if (productsWithCategory.length > 0) {
+        toast.success(
+          `Categoría eliminada y removida de ${productsWithCategory.length} producto(s)`,
+        );
+      } else {
+        toast.success("Categoría eliminada correctamente");
+      }
+    } catch (error) {
+      console.error("Error removing category:", error);
+      toast.error("Error al eliminar categoría");
+    }
   };
 
   const handleSaveStore = async (e) => {
@@ -225,12 +392,16 @@ export function StoreSettingsPage() {
         slug: slug.trim().toLowerCase(),
         description: description.trim(),
         purchaseInstructions: purchaseInstructions.trim(),
-        paymentLink: paymentLink.trim(),
         templateId,
         activeRenderer,
         categoriesJson: JSON.stringify(categories),
         logoFileId: finalLogoId || null,
       };
+
+      // Solo incluir paymentLink si tiene un valor válido (campos URL en Appwrite no aceptan cadenas vacías)
+      if (paymentLink.trim()) {
+        data.paymentLink = paymentLink.trim();
+      }
 
       if (store) {
         await updateStore.mutateAsync({ storeId: store.$id, data });
@@ -551,6 +722,11 @@ export function StoreSettingsPage() {
                   placeholder="https://..."
                   value={paymentLink}
                   onChange={(e) => setPaymentLink(e.target.value)}
+                  error={
+                    paymentLink.trim() && !isValidUrl(paymentLink.trim())
+                      ? "Debe ser una URL válida (ej. https://ejemplo.com)"
+                      : undefined
+                  }
                 />
 
                 <div>
@@ -840,20 +1016,71 @@ export function StoreSettingsPage() {
                 {categories.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
-                      <span
+                      <div
                         key={category.id}
                         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-(--color-bg-secondary) border border-(--color-border) text-sm text-(--color-fg)"
                       >
-                        {category.name}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCategory(category.id)}
-                          className="text-(--color-fg-muted) hover:text-(--color-error)"
-                          aria-label="Eliminar categoria"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
+                        {isEditingCategory &&
+                        editingCategory?.originalId === category.id ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editingCategory.name}
+                              onChange={(e) =>
+                                setEditingCategory((prev) => ({
+                                  ...prev,
+                                  name: e.target.value,
+                                }))
+                              }
+                              className="bg-(--color-bg) border border-(--color-border) rounded px-2 py-0.5 text-xs min-w-24 max-w-32"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleSaveEditCategory();
+                                } else if (e.key === "Escape") {
+                                  handleCancelEditCategory();
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSaveEditCategory}
+                              className="text-(--color-success) hover:text-(--color-success-hover)"
+                              aria-label="Guardar edición"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEditCategory}
+                              className="text-(--color-fg-muted) hover:text-(--color-error)"
+                              aria-label="Cancelar edición"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <span>{category.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleEditCategory(category)}
+                              className="text-(--color-fg-muted) hover:text-(--color-primary)"
+                              aria-label="Editar categoria"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCategory(category.id)}
+                              className="text-(--color-fg-muted) hover:text-(--color-error)"
+                              aria-label="Eliminar categoria"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (
@@ -937,6 +1164,7 @@ export function StoreSettingsPage() {
             ) : (
               <ProductList
                 products={filteredProducts}
+                categories={categories}
                 viewMode={productViewMode}
                 onEdit={handleOpenProductModal}
                 onDelete={handleProductDelete}

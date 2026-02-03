@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Save, Loader2, DollarSign, Package } from "lucide-react";
+import {
+  Save,
+  Loader2,
+  DollarSign,
+  Package,
+  Tag,
+  Plus,
+  X,
+  Search,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { ImageUpload, useToast } from "@/shared/ui/molecules";
@@ -19,7 +29,13 @@ import {
 /**
  * Modal to create or edit a product
  */
-export function ProductModal({ isOpen, onClose, storeId, product, categories }) {
+export function ProductModal({
+  isOpen,
+  onClose,
+  storeId,
+  product,
+  categories,
+}) {
   const isEditMode = !!product;
 
   // Mutations
@@ -36,6 +52,40 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
   const [currency, setCurrency] = useState("MXN");
   const [categoryIds, setCategoryIds] = useState([]);
 
+  // Category combobox state
+  const [categorySearch, setCategorySearch] = useState("");
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+
+  // Filter categories based on search
+  useEffect(() => {
+    if (!categories) {
+      setFilteredCategories([]);
+      return;
+    }
+    const filtered = categories.filter(
+      (category) =>
+        !categoryIds.includes(category.id) &&
+        category.name.toLowerCase().includes(categorySearch.toLowerCase()),
+    );
+    setFilteredCategories(filtered);
+  }, [categories, categoryIds, categorySearch]);
+
+  // Close combobox when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".category-combobox")) {
+        setIsComboboxOpen(false);
+      }
+    };
+
+    if (isComboboxOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isComboboxOpen]);
+
   // Image management
   const [initialImageFileId, setInitialImageFileId] = useState("");
   const [imageFileId, setImageFileId] = useState("");
@@ -48,7 +98,6 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
   // Reset/Populate form on open
   useEffect(() => {
     if (isOpen) {
-      setError("");
       setIsSubmitting(false);
 
       if (product) {
@@ -57,7 +106,9 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
         setPrice(product.price != null ? product.price.toString() : "");
         setStock(product.stock != null ? product.stock.toString() : "0");
         setCurrency(product.currency || "MXN");
-        setCategoryIds(Array.isArray(product.categoryIds) ? product.categoryIds : []);
+        setCategoryIds(
+          Array.isArray(product.categoryIds) ? product.categoryIds : [],
+        );
 
         const fileId = product.imageFileId || "";
         setImageFileId(fileId);
@@ -83,9 +134,28 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
     }
   }, [isOpen, product]);
 
+  // Filter categories based on search
+  useEffect(() => {
+    if (!categories) {
+      setFilteredCategories([]);
+      return;
+    }
+
+    const available = categories.filter((cat) => !categoryIds.includes(cat.id));
+
+    if (!categorySearch.trim()) {
+      setFilteredCategories(available);
+    } else {
+      setFilteredCategories(
+        available.filter((cat) =>
+          cat.name.toLowerCase().includes(categorySearch.toLowerCase()),
+        ),
+      );
+    }
+  }, [categories, categoryIds, categorySearch]);
+
   const handleImageUpload = async (file) => {
     try {
-      setError("");
       const response = await uploadImage.mutateAsync(file);
 
       // If we already uploaded a new image in this session without saving yet,
@@ -107,7 +177,7 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
       setImageUrl(getProductImageUrl(response.$id));
     } catch (err) {
       console.error("Image upload error:", err);
-      setError("Error al subir la imagen");
+      toast.error("Error al subir la imagen");
     }
   };
 
@@ -146,7 +216,6 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    setError("");
 
     // Validations
     if (name.trim().length < 3) {
@@ -263,6 +332,17 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
                 label=""
               />
             </div>
+
+            {/* Tip de Diseño */}
+            <div className="p-5 bg-(--color-bg-secondary) rounded-2xl border border-(--color-border) border-dashed space-y-2">
+              <h4 className="text-xs font-bold text-(--color-fg) uppercase tracking-widest">
+                Tip de Diseño
+              </h4>
+              <p className="text-xs text-(--color-fg-secondary) leading-relaxed">
+                Usa fondos limpios y buena iluminación. Las fotos consistentes
+                aumentan la confianza del comprador hasta en un 40%.
+              </p>
+            </div>
           </div>
 
           {/* Top Right: Core Details */}
@@ -328,34 +408,116 @@ export function ProductModal({ isOpen, onClose, storeId, product, categories }) 
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
-                Categorias
-              </label>
-              {categories?.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category) => {
-                    const isActive = categoryIds.includes(category.id);
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onClick={() => handleToggleCategory(category.id)}
-                        className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
-                          isActive
-                            ? "bg-(--color-primary) text-white border-(--color-primary)"
-                            : "bg-(--color-bg-secondary) text-(--color-fg-secondary) border-(--color-border)"
+            {/* Categories Combobox */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-(--color-primary)" />
+                <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
+                  Categorías
+                </label>
+              </div>
+
+              {/* Combobox */}
+              {categories && categories.length > 0 && (
+                <div className="relative category-combobox">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-(--color-fg-muted)" />
+                    <input
+                      type="text"
+                      placeholder="Buscar categorías..."
+                      value={categorySearch}
+                      onChange={(e) => setCategorySearch(e.target.value)}
+                      onFocus={() => setIsComboboxOpen(true)}
+                      className="w-full pl-10 pr-10 py-2.5 bg-(--color-bg) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsComboboxOpen(!isComboboxOpen)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-(--color-fg-muted) hover:text-(--color-fg)"
+                    >
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          isComboboxOpen ? "rotate-180" : ""
                         }`}
-                      >
-                        {category.name}
-                      </button>
-                    );
-                  })}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Dropdown */}
+                  {isComboboxOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-(--color-card) border border-(--color-card-border) rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                      {filteredCategories.length > 0 ? (
+                        filteredCategories.map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => {
+                              handleToggleCategory(category.id);
+                              setCategorySearch("");
+                              setIsComboboxOpen(false);
+                            }}
+                            className="w-full px-4 py-2.5 text-left hover:bg-(--color-bg-secondary) transition-colors text-sm text-(--color-fg) flex items-center gap-2"
+                          >
+                            <Plus className="w-3 h-3 text-(--color-primary)" />
+                            {category.name}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2.5 text-sm text-(--color-fg-muted) italic">
+                          {categorySearch
+                            ? "No se encontraron categorías"
+                            : "Todas las categorías ya están seleccionadas"}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-xs text-(--color-fg-secondary)">
-                  Crea categorias en la configuracion de la tienda.
-                </p>
+              )}
+
+              {/* Selected Categories */}
+              {categoryIds.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wide">
+                    Categorías seleccionadas ({categoryIds.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {categoryIds.map((categoryId) => {
+                      const category = categories?.find(
+                        (cat) => cat.id === categoryId,
+                      );
+                      if (!category) return null;
+                      return (
+                        <span
+                          key={categoryId}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-(--color-primary) text-white rounded-full text-xs font-semibold"
+                        >
+                          {category.name}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCategory(categoryId)}
+                            className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                            aria-label={`Remover ${category.name}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state */}
+              {(!categories || categories.length === 0) && (
+                <div className="text-center p-4 bg-(--color-bg-secondary) rounded-xl border border-dashed border-(--color-border)">
+                  <Tag className="w-6 h-6 text-(--color-fg-muted) mx-auto mb-2" />
+                  <p className="text-xs text-(--color-fg-secondary) font-medium">
+                    No hay categorías disponibles
+                  </p>
+                  <p className="text-xs text-(--color-fg-muted)">
+                    Crea categorías en la configuración de la tienda
+                  </p>
+                </div>
               )}
             </div>
 
