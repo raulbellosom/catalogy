@@ -12,15 +12,15 @@
 
 ## Requiere env vars
 
-| Variable                                  | Descripción                          | Default           |
-| ----------------------------------------- | ------------------------------------ | ----------------- |
-| `APPWRITE_FUNCTION_ENDPOINT`              | Endpoint de Appwrite (system)        |                   |
-| `APPWRITE_FUNCTION_PROJECT_ID`            | Project ID (system)                  |                   |
-| `APPWRITE_FUNCTION_API_KEY`               | API Key (ver permisos)               |                   |
-| `APPWRITE_DATABASE_ID`                    | ID de la BD                          | `main`            |
-| `APPWRITE_PROFILES_COLLECTION_ID`         | Colección `profiles`                 | `profiles`        |
-| `APPWRITE_USER_PREFERENCES_COLLECTION_ID` | Colección `userPreferences`          | `userPreferences` |
-| `APPWRITE_FN_EMAIL_VERIFICATION`          | ID de la función `emailVerification` |                   |
+| Variable                                       | Descripción                          | Default           |
+| ---------------------------------------------- | ------------------------------------ | ----------------- |
+| `APPWRITE_FUNCTION_ENDPOINT`                   | Endpoint de Appwrite (system)        |                   |
+| `APPWRITE_FUNCTION_PROJECT_ID`                 | Project ID (system)                  |                   |
+| `APPWRITE_FUNCTION_API_KEY`                    | API Key (ver permisos)               |                   |
+| `VITE_APPWRITE_DATABASE_ID`                    | ID de la BD                          | `main`            |
+| `VITE_APPWRITE_COLLECTION_PROFILES_ID`         | Colección `profiles`                 | `profiles`        |
+| `VITE_APPWRITE_COLLECTION_USER_PREFERENCES_ID` | Colección `userPreferences`          | `userPreferences` |
+| `VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID` | ID de la función `emailVerification` |                   |
 
 ## Permisos de API Key
 

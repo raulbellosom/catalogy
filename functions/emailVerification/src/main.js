@@ -339,13 +339,39 @@ export default async ({ req, res, log, error }) => {
     // ACCIÓN 1: ENVIAR EMAIL DE VERIFICACIÓN
     // ============================================
     if (action === "send") {
-      const { userAuthId, email } = body;
+      let { userAuthId, email } = body;
 
-      if (!userAuthId || !email) {
+      if (!email) {
         return json(res, 400, {
           ok: false,
-          error: "Missing required fields: userAuthId, email",
+          error: "Missing required field: email",
         });
+      }
+
+      // Si no se proporciona userAuthId, buscar por email
+      if (!userAuthId) {
+        const profilesByEmail = await listDocuments({
+          log,
+          endpoint,
+          projectId,
+          apiKey: API_KEY,
+          dbId: DB_ID,
+          collId: PROFILES_COLL_ID,
+          queries: [
+            { method: "equal", attribute: "email", values: [email] },
+            { method: "limit", values: [1] },
+          ],
+        });
+
+        if (!profilesByEmail?.documents?.length) {
+          return json(res, 404, {
+            ok: false,
+            error: "User profile not found",
+          });
+        }
+
+        userAuthId = profilesByEmail.documents[0].$id;
+        log(`Found userAuthId from email: ${userAuthId}`);
       }
 
       // Verificar que el usuario existe (Buscar por ID, ya que docId = userId)

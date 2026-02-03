@@ -1,10 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { useAuth } from "@/app/providers";
-import { account } from "@/shared/lib/appwrite";
+import { account, databases, functions } from "@/shared/lib/appwrite";
+import { DATABASE_ID, COLLECTION_PROFILES_ID } from "@/shared/lib/env";
+import { functions as functionIds } from "@/shared/lib/env";
+import { useToast } from "@/shared/ui/molecules";
 
 /**
  * Login page with modern design and animations
@@ -19,6 +30,10 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+  const toast = useToast();
 
   // Get redirect destination from state or default to /app
   const from = location.state?.from?.pathname || "/app";
@@ -29,14 +44,82 @@ export function LoginPage() {
     setIsLoading(true);
 
     try {
-      await account.createEmailPasswordSession(email, password);
+      // First, create session
+      const session = await account.createEmailPasswordSession(email, password);
+
+      // Check if email is verified
+      const profile = await databases.getDocument(
+        DATABASE_ID,
+        COLLECTION_PROFILES_ID,
+        session.userId,
+      );
+
+      if (!profile.emailVerified) {
+        // Logout the session we just created
+        await account.deleteSession("current");
+
+        setUnverifiedEmail(email);
+        setResendCountdown(120); // 2 minutes
+        setError(
+          "Tu correo aún no está verificado. " +
+            "Por favor revisa tu bandeja de entrada y verifica tu correo antes de iniciar sesión.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      // Email is verified, proceed with login
       await refreshUser();
       navigate(from, { replace: true });
     } catch (err) {
       console.error("Login error:", err);
-      setError("Credenciales invalidas. Verifica tu correo y contrasena.");
+      if (err.code === 401) {
+        setError("Credenciales invalidas. Verifica tu correo y contrasena.");
+      } else {
+        setError("Error al iniciar sesión. Intenta de nuevo.");
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Countdown timer for resend email
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => {
+        setResendCountdown(resendCountdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+
+  const handleResendEmail = async () => {
+    if (resendCountdown > 0 || !unverifiedEmail) return;
+
+    setIsResending(true);
+    try {
+      await functions.createExecution(
+        functionIds.emailVerification,
+        JSON.stringify({
+          action: "send",
+          email: unverifiedEmail,
+        }),
+        false,
+      );
+
+      toast.success(
+        "Correo de verificación reenviado. Revisa tu bandeja de entrada.",
+        "Email enviado",
+      );
+      setResendCountdown(120); // Reset countdown
+    } catch (err) {
+      console.error("Resend email error:", err);
+      toast.error(
+        "No se pudo reenviar el correo. Intenta de nuevo más tarde.",
+        "Error",
+      );
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -68,11 +151,66 @@ export function LoginPage() {
 
       {/* Error con animación */}
       {error && (
-        <div className="mb-4 p-3 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-sm backdrop-blur-sm animate-shake">
-          <div className="flex items-start gap-2">
-            <span className="text-lg">⚠️</span>
-            <p>{error}</p>
+        <div className="mb-4 space-y-3">
+          <div className="p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl backdrop-blur-sm animate-shake">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 text-red-500 dark:text-red-400" />
+              <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
+                {error}
+              </p>
+            </div>
           </div>
+
+          {/* Resend email verification card */}
+          {unverifiedEmail && (
+            <div className="relative overflow-hidden p-4 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/30 rounded-xl backdrop-blur-sm">
+              {/* Decorative element */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+
+              <div className="relative space-y-3">
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 shrink-0 text-blue-500 dark:text-blue-400 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[var(--color-fg)] mb-1">
+                      ¿No recibiste el correo de verificación?
+                    </p>
+                    <p className="text-xs text-[var(--color-fg-secondary)]">
+                      Revisa tu carpeta de spam o solicita un nuevo correo
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={resendCountdown > 0 || isResending}
+                  variant="outline"
+                  size="sm"
+                  className="w-full relative overflow-hidden group transition-all hover:border-blue-500/50"
+                >
+                  {isResending ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      Enviando...
+                    </span>
+                  ) : resendCountdown > 0 ? (
+                    <span className="flex items-center gap-2">
+                      <span className="text-xs opacity-70">Disponible en</span>
+                      <span className="font-mono font-semibold text-blue-500">
+                        {Math.floor(resendCountdown / 60)}:
+                        {String(resendCountdown % 60).padStart(2, "0")}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      Reenviar correo de verificación
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

@@ -167,7 +167,7 @@ export function NotFoundPage({ code = 404, message = null }) {
       </div>
 
       {/* CSS animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%,
           100% {

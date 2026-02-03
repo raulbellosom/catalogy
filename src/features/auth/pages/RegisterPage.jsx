@@ -11,11 +11,14 @@ import {
   CheckCircle2,
   AlertCircle,
   Shield,
+  Info,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { useAuth } from "@/app/providers";
-import { account } from "@/shared/lib/appwrite";
+import { account, functions } from "@/shared/lib/appwrite";
+import { functions as functionIds } from "@/shared/lib/env";
+import { Modal, ModalFooter, useToast } from "@/shared/ui/molecules";
 import { ID } from "appwrite";
 
 /**
@@ -94,6 +97,8 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const toast = useToast();
 
   const passwordStrength = getPasswordStrength(password);
   const isEmailValid = isValidEmail(email);
@@ -140,12 +145,29 @@ export function RegisterPage() {
 
     try {
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
       // Create account
-      await account.create(ID.unique(), email, password, fullName);
-      // Create session
-      await account.createEmailPasswordSession(email, password);
-      await refreshUser();
-      navigate("/app", { replace: true });
+      const user = await account.create(ID.unique(), email, password, fullName);
+
+      // Manually trigger onUserCreated function (since it's not configured as event trigger)
+      // This creates the profile and sends verification email
+      try {
+        await functions.createExecution(
+          functionIds.onUserCreated,
+          JSON.stringify({ userId: user.$id }),
+          false, // wait for response
+        );
+      } catch (fnErr) {
+        console.error("Error triggering onUserCreated:", fnErr);
+        // Continue anyway - user can login and profile will be created on first login
+      }
+
+      // DO NOT create session automatically
+      // User must verify email first
+
+      // Show success modal
+      setShowSuccessModal(true);
+      setIsLoading(false);
     } catch (err) {
       console.error("Register error:", err);
       if (err.code === 409) {
@@ -478,6 +500,46 @@ export function RegisterPage() {
           animation: shake 0.3s ease-in-out;
         }
       `}</style>
+
+      {/* Success Modal */}
+      <Modal
+        open={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate("/auth/login", { replace: true });
+        }}
+        title="¡Cuenta creada exitosamente!"
+        description="Te hemos enviado un correo de verificación."
+        size="md"
+        footer={
+          <ModalFooter>
+            <Button
+              onClick={() => {
+                setShowSuccessModal(false);
+                navigate("/auth/login", { replace: true });
+              }}
+              className="w-full sm:w-auto"
+            >
+              Ir a iniciar sesión
+            </Button>
+          </ModalFooter>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-[var(--color-fg-secondary)]">
+              Por favor verifica tu correo antes de iniciar sesión. Revisa tu
+              bandeja de entrada y haz clic en el enlace de verificación.
+            </p>
+          </div>
+
+          <p className="text-sm text-[var(--color-fg-muted)]">
+            Si no recibes el correo en los próximos minutos, revisa tu carpeta
+            de spam.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }

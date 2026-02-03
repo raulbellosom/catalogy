@@ -132,6 +132,9 @@ export const APP_CONFIG = appConfig;
 // ============================================================
 
 export const DATABASE_ID = appwriteConfig.databaseId;
+export const COLLECTION_PROFILES_ID = collections.profiles;
+export const COLLECTION_STORES_ID = collections.stores;
+export const COLLECTION_PRODUCTS_ID = collections.products;
 
 // ============================================================
 // Validation
