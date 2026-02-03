@@ -32,6 +32,15 @@ export function ProductDetailModal({
   const [currentIdx, setCurrentIdx] = useState(0);
   const isNoir = tone === "noir";
 
+  // Resolve settings for colors
+  const settings = store?.settings
+    ? typeof store.settings === "string"
+      ? JSON.parse(store.settings)
+      : store.settings
+    : {};
+  const primary = settings?.colors?.primary || "#3b82f6"; // Default blue-600
+  // const secondary = settings?.colors?.secondary || "#eff6ff";
+
   useEffect(() => {
     if (isOpen) {
       setCurrentIdx(0);
@@ -57,14 +66,12 @@ export function ProductDetailModal({
   if (!product) return null;
 
   const panelBase = isNoir
-    ? "bg-(--noir-surface) text-(--noir-strong) border-(--noir-border)"
-    : "bg-(--card) text-(--foreground) border-(--border)";
+    ? "bg-[var(--noir-surface)] text-[var(--noir-strong)] border-[var(--noir-border)]"
+    : "bg-white text-slate-900 border-slate-200";
 
-  const mutedText = isNoir
-    ? "text-(--noir-muted)"
-    : "text-(--muted-foreground)";
-  const accentColor = isNoir ? "text-(--noir-accent)" : "text-(--primary)";
-  const surface2 = isNoir ? "bg-(--noir-surface-2)" : "bg-(--muted)";
+  const mutedText = isNoir ? "text-[var(--noir-muted)]" : "text-slate-500";
+  const accentColor = isNoir ? "text-[var(--noir-accent)]" : "text-blue-600";
+  const surface2 = isNoir ? "bg-[var(--noir-surface-2)]" : "bg-slate-100";
 
   const imageFileIds = Array.isArray(product.imageFileIds)
     ? product.imageFileIds
@@ -93,6 +100,7 @@ export function ProductDetailModal({
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
+            style={{ "--modal-primary": primary }}
             className={`relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl border shadow-2xl flex flex-col md:flex-row ${panelBase}`}
           >
             {/* Close Button - Red Circle */}
@@ -153,8 +161,8 @@ export function ProductDetailModal({
                       className={`relative shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                         idx === currentIdx
                           ? isNoir
-                            ? "border-(--noir-accent) shadow-md scale-105"
-                            : "border-(--primary) shadow-md scale-105"
+                            ? "border-[var(--noir-accent)] shadow-md scale-105"
+                            : "border-[var(--modal-primary)] shadow-md scale-105"
                           : "border-transparent opacity-50 hover:opacity-100"
                       }`}
                     >
@@ -202,14 +210,16 @@ export function ProductDetailModal({
                     Descripción
                   </h3>
                   <p
-                    className={`text-sm leading-relaxed ${isNoir ? "text-(--noir-strong)/90" : "text-(--foreground)/90"}`}
+                    className={`text-sm leading-relaxed ${isNoir ? "text-[var(--noir-strong)]/90" : "text-slate-700"}`}
                   >
                     {product.description || "Sin descripción disponible."}
                   </p>
                 </div>
 
                 {/* Details Section - Premium Design */}
-                <div className="pt-6 border-t border-(--noir-border) flex flex-col gap-6">
+                <div
+                  className={`pt-6 border-t ${isNoir ? "border-[var(--noir-border)]" : "border-slate-100"} flex flex-col gap-6`}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
@@ -227,7 +237,7 @@ export function ProductDetailModal({
 
                     <button
                       onClick={() => shareProduct(product)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border border-(--noir-border) ${surface2} hover:border-(--noir-accent) transition-all group`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${isNoir ? "border-(--noir-border) hover:border-(--noir-accent)" : "border-slate-200 hover:border-(--modal-primary)"} ${surface2} transition-all group`}
                     >
                       <Share2
                         className={`w-4 h-4 ${accentColor} group-hover:scale-110 transition-transform`}
@@ -242,7 +252,9 @@ export function ProductDetailModal({
 
               {/* Action Section */}
               {store?.paymentLink && (
-                <div className="mt-8 pt-6 border-t border-(--border)">
+                <div
+                  className={`mt-8 pt-6 border-t ${isNoir ? "border-[var(--noir-border)]" : "border-slate-100"}`}
+                >
                   <a
                     href={store.paymentLink}
                     target="_blank"
@@ -250,7 +262,7 @@ export function ProductDetailModal({
                     className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                       isNoir
                         ? "bg-(--noir-accent) text-black hover:bg-white"
-                        : "bg-(--primary) text-white"
+                        : "bg-(--modal-primary) text-white hover:opacity-90"
                     }`}
                   >
                     Comprar ahora

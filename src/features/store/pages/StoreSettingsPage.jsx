@@ -460,6 +460,7 @@ export function StoreSettingsPage() {
         description: description.trim(),
         purchaseInstructions: purchaseInstructions.trim(),
         activeRenderer,
+        templateId,
         categoriesJson: JSON.stringify(categories),
         logoFileId: finalLogoId || null,
         settings: {

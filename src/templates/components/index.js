@@ -6,3 +6,4 @@ export * from "./StoreFooter";
 export * from "./CatalogControls";
 export * from "./ProductDetailModal";
 export * from "./StorePurchaseInfo";
+export * from "./StoreNavbar";

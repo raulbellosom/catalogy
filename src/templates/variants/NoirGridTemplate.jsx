@@ -1,22 +1,18 @@
 import { useState } from "react";
 import {
-  Heart,
   Image as ImageIcon,
   Store as StoreIcon,
-  Share2,
   ExternalLink,
-  Tag,
-  Package,
   Info,
   CreditCard,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
-import { getProductImageUrl } from "@/shared/services/productService";
 import {
   CatalogControls,
-  ProductImageCarousel,
   ProductDetailModal,
-  ProductCard, // Assuming ProductCard is also imported or defined elsewhere
+  ProductCard,
+  StoreNavbar,
+  StoreFooter,
 } from "../components";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -48,16 +44,6 @@ const resolveFontFamily = (settings) => {
     montserrat: "'Montserrat', sans-serif",
   };
   return map[id] || "'Inter', sans-serif";
-};
-
-const formatPrice = (price, currency = "MXN") => {
-  if (typeof price !== "number") return "";
-  return price.toLocaleString("es-MX", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 };
 
 export function NoirGridTemplate({ store, products, isPreview = false }) {
@@ -108,31 +94,21 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
         "--noir-accent-soft": secondary,
       }}
     >
-      {/* Navbar Minimalista Integrado */}
-      <nav
-        className={`fixed ${isPreview ? "top-10" : "top-0"} left-0 right-0 z-50 bg-(--noir-bg)/80 backdrop-blur-md border-b border-(--noir-border)`}
-      >
-        <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={store?.name}
-                className="h-8 w-8 rounded-lg object-cover border border-(--noir-border)"
-              />
-            ) : (
-              <Logo className="h-6 w-auto" />
-            )}
-            <span className="font-bold tracking-tight">
-              {store?.name || "Catalogy"}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Espacio para acciones futuras del template */}
-          </div>
-        </div>
-      </nav>
+      <StoreNavbar
+        store={store}
+        isPreview={isPreview}
+        config={{
+          bg: "bg-(--noir-bg)/80",
+          text: "text-(--noir-strong)",
+          border: "border-(--noir-border)",
+          accent: "text-(--noir-accent)",
+          glass: true,
+        }}
+        search={{
+          query: searchQuery,
+          onQueryChange: setSearchQuery,
+        }}
+      />
 
       <div
         className={`mx-auto max-w-6xl px-4 py-8 ${isPreview ? "pt-32" : "pt-24"} flex-1 w-full`}
@@ -201,7 +177,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                       href={store.paymentLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-(--noir-accent) text-black font-bold transition-all duration-300 shadow-xl hover:shadow-2xl hover:bg-white hover:-translate-y-1"
+                      className="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-(--noir-accent) text-black font-bold transition-all duration-300 shadow-xl hover:shadow-2xl hover:bg-(--noir-accent-soft) hover:-translate-y-1"
                     >
                       Pagar ahora
                       <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -251,15 +227,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
       </div>
 
       {/* Footer Personalizado */}
-      <footer className="mt-12 bg-(--noir-surface) border-t border-(--noir-border) py-12">
-        <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-8 text-center">
-          <div className="space-y-2">
-            <h4 className="text-xl font-bold">{store?.name}</h4>
-            <p className="text-sm text-(--noir-muted) max-w-md">
-              Gracias por visitar nuestro catálogo oficial.
-            </p>
-          </div>
-
+      <div className="bg-(--noir-surface) pt-12">
+        <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-8 text-center pb-8 text-(--noir-strong)">
+          {/* CTA Reubicado antes del footer */}
           <div className="p-8 rounded-3xl bg-(--noir-surface-2) border border-(--noir-border) max-w-lg w-full">
             <h5 className="font-semibold mb-2">
               ¿Quieres crear tu propio catálogo?
@@ -276,63 +246,19 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>
-
-          <div className="flex flex-col items-center gap-6 text-(--noir-muted)">
-            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-[10px] uppercase tracking-[0.2em] opacity-60">
-              <a
-                href={`${appConfig.baseUrl}/legal/privacy`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-(--noir-accent-soft) transition-colors"
-              >
-                Aviso de Privacidad
-              </a>
-              <a
-                href={`${appConfig.baseUrl}/legal/terms`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-(--noir-accent-soft) transition-colors"
-              >
-                Términos y Condiciones
-              </a>
-              <a
-                href={`${appConfig.baseUrl}/legal/disclaimer`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-(--noir-accent-soft) transition-colors"
-              >
-                Deslinde Legal
-              </a>
-            </div>
-
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <span className="opacity-60 font-medium">Powered by</span>
-              <a
-                href={appConfig.baseUrl}
-                className="group/brand transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="flex items-center gap-2">
-                  <Logo
-                    variant="icon"
-                    asLink={false}
-                    forcePlatform={true}
-                    className="grayscale brightness-200 group-hover/brand:grayscale-0 group-hover/brand:brightness-100 transition-all duration-300"
-                  />
-                  <span className="font-bold tracking-tight text-white/90 group-hover/brand:text-(--noir-accent-soft) transition-colors duration-300">
-                    Catalogy
-                  </span>
-                </div>
-              </a>
-            </div>
-            <p className="text-[10px] uppercase tracking-[0.2em] opacity-40">
-              © {new Date().getFullYear()} Catalogy. Todos los derechos
-              reservados.
-            </p>
-          </div>
         </div>
-      </footer>
+
+        <StoreFooter
+          store={store}
+          config={{
+            bg: "bg-(--noir-surface)",
+            text: "text-(--noir-muted)",
+            border: "border-(--noir-border)",
+            muted: "text-(--noir-muted)",
+            accent: "text-(--noir-accent-soft)",
+          }}
+        />
+      </div>
 
       <ImageViewerModal
         isOpen={viewer.isOpen}
