@@ -364,19 +364,19 @@ export function ProductModal({
                   step="0.01"
                   className="pr-12"
                 />
-                <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                <div className="absolute right-4 top-[38px] text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
                   <DollarSign className="w-4 h-4" />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-(--color-fg)">
+              <div className="flex flex-col">
+                <label className="block text-sm font-medium text-(--color-fg) mb-1.5">
                   Moneda
                 </label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-(--color-bg) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none"
+                  className="w-full px-4 py-3 bg-(--color-bg-secondary) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary)/20 focus:border-(--color-border-focus) outline-none transition-colors duration-200"
                 >
                   <option value="MXN">MXN - Peso Mexicano</option>
                   <option value="USD">USD - Dólar</option>
@@ -401,7 +401,7 @@ export function ProductModal({
                   step="1"
                   className="pr-12"
                 />
-                <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                <div className="absolute right-4 top-[38px] text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
                   <Package className="w-4 h-4" />
                 </div>
               </div>
@@ -451,7 +451,7 @@ export function ProductModal({
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
                       onFocus={() => setIsComboboxOpen(true)}
-                      className="w-full pl-10 pr-10 py-2.5 bg-(--color-bg) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none"
+                      className="w-full pl-10 pr-10 py-3 bg-(--color-bg-secondary) border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary)/20 focus:border-(--color-border-focus) outline-none transition-colors duration-200"
                     />
                     <button
                       type="button"

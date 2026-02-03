@@ -8,18 +8,7 @@
 import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-
-/**
- * URL base para imágenes de productos
- * @param {string} fileId
- * @returns {string}
- */
-const getImageUrl = (fileId) => {
-  if (!fileId) return null;
-  const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
-  const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
-  return `${endpoint}/storage/buckets/productImages/files/${fileId}/view?project=${projectId}`;
-};
+import { getProductImageUrl } from "@/shared/services/productService";
 
 /**
  * @param {Object} props
@@ -46,10 +35,10 @@ export function ProductImageCarousel({
   // Build image URLs from IDs - handle both array and legacy single ID
   const imageUrls = (() => {
     if (Array.isArray(imageFileIds) && imageFileIds.length > 0) {
-      return imageFileIds.map(getImageUrl).filter(Boolean);
+      return imageFileIds.map(getProductImageUrl).filter(Boolean);
     }
     if (legacyImageFileId) {
-      const url = getImageUrl(legacyImageFileId);
+      const url = getProductImageUrl(legacyImageFileId);
       return url ? [url] : [];
     }
     return [];

@@ -9,6 +9,8 @@ import { AuthLayout } from "@/app/layouts/AuthLayout";
 import { PublicLayout } from "@/app/layouts/PublicLayout";
 import { LegalLayout } from "@/app/layouts/LegalLayout";
 
+import { CatalogLayout } from "@/app/layouts/CatalogLayout";
+
 // Public pages
 import { LandingPage } from "@/features/landing/pages/LandingPage";
 import { CatalogPage } from "@/features/catalog/pages/CatalogPage";
@@ -75,7 +77,7 @@ export function AppRoutes() {
     if (!store.published && !isOwner) {
       return (
         <Routes>
-          <Route element={<PublicLayout />}>
+          <Route element={<CatalogLayout />}>
             <Route path="*" element={<CatalogNotAvailablePage />} />
           </Route>
         </Routes>
@@ -86,7 +88,7 @@ export function AppRoutes() {
       <>
         <ScrollToTop />
         <Routes>
-          <Route element={<PublicLayout />}>
+          <Route element={<CatalogLayout />}>
             <Route index element={<CatalogPage />} />
             <Route path="product/:productId" element={<ProductDetailPage />} />
             <Route path="not-available" element={<CatalogNotAvailablePage />} />

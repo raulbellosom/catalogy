@@ -528,16 +528,32 @@ export function StoreSettingsPage() {
   const handleProductReorderSync = async (newOrderedList = null) => {
     const listToSync = newOrderedList || filteredProducts;
 
-    // 1. Obtenemos todos los sortOrders actuales de los productos visibles (filtrados)
-    const sortOrders = filteredProducts
-      .map((p) => p.sortOrder)
+    // 1. Get existing sortOrder values from the visible products
+    // We filter out nulls and default to 0
+    let sortOrders = filteredProducts
+      .map((p) => p.sortOrder ?? 0)
       .sort((a, b) => a - b);
 
-    // 2. Asignamos esos sortOrders a la nueva lista ordenada
+    // 2. Determine if the current sequence is "invalid" for reordering
+    // If all are 0 or there are duplicates, we can't meaningfully redistribute them
+    const isBrokenSequence =
+      sortOrders.length > 0 &&
+      (sortOrders.every((s) => s === 0) ||
+        new Set(sortOrders).size < sortOrders.length);
+
+    if (isBrokenSequence) {
+      // Generate a fresh sequence: 10, 20, 30... to ensure they are distinct
+      // and provide buffer for future insertions if needed
+      sortOrders = listToSync.map((_, i) => (i + 1) * 10);
+    }
+
+    // 3. Assign the sorted values to the new order
     const productsToUpdate = listToSync.map((prod, index) => ({
       id: prod.$id,
-      sortOrder: sortOrders[index] !== undefined ? sortOrders[index] : index,
+      sortOrder: sortOrders[index],
     }));
+
+    if (productsToUpdate.length === 0) return;
 
     try {
       await reorderProductsMutation.mutateAsync(productsToUpdate);

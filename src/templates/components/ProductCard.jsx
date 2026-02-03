@@ -8,43 +8,10 @@
 import { motion } from "motion/react";
 import { Tag, Share2 } from "lucide-react";
 import { shareProduct } from "./catalogHooks";
-import { ProductImageCarousel } from "./ProductImageCarousel";
+import { getProductImageUrl } from "@/shared/services/productService";
 
 /**
  * @typedef {Object} Product
- * @property {string} $id - ID del producto
- * @property {string} name - Nombre del producto
- * @property {string} description - Descripcion del producto
- * @property {number} price - Precio del producto
- * @property {string[]|null} imageFileIds - IDs de archivos de imagen (array)
- * @property {string|null} imageFileId - ID del archivo de imagen (legacy)
- * @property {string} currency - Moneda (default: USD)
- */
-
-/**
- * Formatea un precio con su moneda
- * @param {number} price
- * @param {string} currency
- * @returns {string}
- */
-const formatPrice = (price, currency = "USD") => {
-  return new Intl.NumberFormat("es-MX", {
-    style: "currency",
-    currency,
-  }).format(price);
-};
-
-/**
- * URL base para imagenes de productos
- * @param {string} fileId
- * @returns {string}
- */
-const getImageUrl = (fileId) => {
-  if (!fileId) return null;
-  const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT;
-  const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
-  return `${endpoint}/storage/buckets/productImages/files/${fileId}/view?project=${projectId}`;
-};
 
 /**
  * Variantes de tamano para la tarjeta
@@ -91,8 +58,8 @@ export function ProductCard({
     <motion.div
       className={`
         ${sizeVariants[size]}
-        bg-[var(--card)] rounded-xl overflow-hidden
-        border border-[var(--border)]
+        bg-(--card) rounded-xl overflow-hidden
+        border border-(--border)
         shadow-sm hover:shadow-md
         transition-shadow duration-200
         cursor-pointer
@@ -106,7 +73,7 @@ export function ProductCard({
         <button
           type="button"
           onClick={handleShare}
-          className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-[var(--card)]/80 border border-[var(--border)] flex items-center justify-center text-[var(--muted-foreground)] hover:text-[var(--primary)]"
+          className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-(--card)/80 border border-(--border) flex items-center justify-center text-(--muted-foreground) hover:text-(--primary)"
           aria-label="Compartir producto"
         >
           <Share2 className="h-4 w-4" />
@@ -115,31 +82,31 @@ export function ProductCard({
           imageFileIds={imageFileIds}
           legacyImageFileId={legacyImageFileId}
           alt={product.name}
-          className="w-full h-full bg-[var(--muted)]"
+          className="w-full h-full bg-(--muted)"
           tone="light"
         />
       </div>
 
       {/* Contenido */}
       <div className="p-3 space-y-1">
-        <h3 className="font-medium text-[var(--foreground)] line-clamp-1">
+        <h3 className="font-medium text-(--foreground) line-clamp-1">
           {product.name}
         </h3>
 
         {showDescription && product.description && (
-          <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">
+          <p className="text-sm text-(--muted-foreground) line-clamp-2">
             {product.description}
           </p>
         )}
 
         <div className="flex items-center gap-1.5 pt-1">
-          <Tag className="w-3.5 h-3.5 text-[var(--primary)]" />
-          <span className="font-semibold text-[var(--primary)]">
+          <Tag className="w-3.5 h-3.5 text-(--primary)" />
+          <span className="font-semibold text-(--primary)">
             {formatPrice(product.price, product.currency)}
           </span>
         </div>
         {shared && (
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted-foreground)]">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-(--muted-foreground)">
             Copiado
           </span>
         )}
