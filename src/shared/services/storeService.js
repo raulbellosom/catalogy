@@ -95,7 +95,7 @@ export async function getStoreBySlug(slug) {
  * @returns {Promise<Object>}
  */
 export async function createStore(data) {
-  const { slug, name, description, templateId, profileId } = data;
+  const { slug, name, description, templateId, profileId, logoFileId } = data;
 
   // Validate slug using Appwrite function (format + availability)
   const validation = await validateSlugRemote(slug);
@@ -113,6 +113,7 @@ export async function createStore(data) {
       slug: validation.slug, // Slug normalizado por la validación
       name: name.trim(),
       description: description?.trim() || "",
+      logoFileId: logoFileId || null,
       templateId: templateId || "minimal",
       settings: data.settings ? JSON.stringify(data.settings) : "{}",
       published: false,

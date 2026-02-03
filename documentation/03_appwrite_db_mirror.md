@@ -227,6 +227,7 @@ Document ID:
 | price       | float   | yes      |         | min=0           | precio (sin max por flexibilidad) |
 | currency    | string  | no       | MXN     | size=3          | codigo de moneda ISO              |
 | imageFileId | string  | no       |         | size=64         | FK -> productImages bucket        |
+| stock       | integer | no       | 0       | min=0           | cantidad en inventario            |
 | sortOrder   | integer | no       | 0       | min=0, max=9999 | orden de display                  |
 | enabled     | boolean | no       | true    |                 | soft delete                       |
 
