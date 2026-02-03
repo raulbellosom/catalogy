@@ -222,26 +222,34 @@ export function ImageViewerModal({
   }, []);
 
   // Combined callback ref for wheel and touch events
-  const combinedContainerRef = useCallback((node) => {
-    // Remove listeners from previous node
-    if (containerRef.current) {
-      containerRef.current.removeEventListener("wheel", handleWheel);
-      containerRef.current.removeEventListener("touchstart", handleTouchStart);
-      containerRef.current.removeEventListener("touchmove", handleTouchMove);
-      containerRef.current.removeEventListener("touchend", handleTouchEnd);
-    }
-    
-    // Save the node
-    containerRef.current = node;
-    
-    // Attach listeners to new node
-    if (node) {
-      node.addEventListener("wheel", handleWheel, { passive: false });
-      node.addEventListener("touchstart", handleTouchStart, { passive: false });
-      node.addEventListener("touchmove", handleTouchMove, { passive: false });
-      node.addEventListener("touchend", handleTouchEnd, { passive: false });
-    }
-  }, [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  const combinedContainerRef = useCallback(
+    (node) => {
+      // Remove listeners from previous node
+      if (containerRef.current) {
+        containerRef.current.removeEventListener("wheel", handleWheel);
+        containerRef.current.removeEventListener(
+          "touchstart",
+          handleTouchStart,
+        );
+        containerRef.current.removeEventListener("touchmove", handleTouchMove);
+        containerRef.current.removeEventListener("touchend", handleTouchEnd);
+      }
+
+      // Save the node
+      containerRef.current = node;
+
+      // Attach listeners to new node
+      if (node) {
+        node.addEventListener("wheel", handleWheel, { passive: false });
+        node.addEventListener("touchstart", handleTouchStart, {
+          passive: false,
+        });
+        node.addEventListener("touchmove", handleTouchMove, { passive: false });
+        node.addEventListener("touchend", handleTouchEnd, { passive: false });
+      }
+    },
+    [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd],
+  );
 
   // Mouse drag for desktop
   const handleMouseDown = useCallback(
@@ -521,44 +529,44 @@ export function ImageViewerModal({
             transition={{ duration: 0.2 }}
             className="flex items-center justify-center w-full h-full"
           >
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center text-white/30">
-              <Loader2 size={48} className="animate-spin" />
-            </div>
-          )}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center text-white/30">
+                <Loader2 size={48} className="animate-spin" />
+              </div>
+            )}
 
-          {currentImageUrl && (
-            <motion.img
-              ref={imageRef}
-              key={currentImageUrl}
-              src={currentImageUrl}
-              alt={alt}
-              onLoad={() => setLoading(false)}
-              onError={() => setLoading(false)}
-              animate={{
-                scale,
-                rotate: rotation,
-                x: position.x,
-                y: position.y,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 30,
-                mass: 0.8,
-              }}
-              draggable={false}
-              className={cn(
-                "max-w-full max-h-full object-contain shadow-2xl rounded-sm",
-                loading ? "opacity-0" : "opacity-100",
-                "transition-opacity duration-200",
-              )}
-              style={{
-                pointerEvents: "none",
-                userSelect: "none",
-              }}
-            />
-          )}
+            {currentImageUrl && (
+              <motion.img
+                ref={imageRef}
+                key={currentImageUrl}
+                src={currentImageUrl}
+                alt={alt}
+                onLoad={() => setLoading(false)}
+                onError={() => setLoading(false)}
+                animate={{
+                  scale,
+                  rotate: rotation,
+                  x: position.x,
+                  y: position.y,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                  mass: 0.8,
+                }}
+                draggable={false}
+                className={cn(
+                  "max-w-full max-h-full object-contain shadow-2xl rounded-sm",
+                  loading ? "opacity-0" : "opacity-100",
+                  "transition-opacity duration-200",
+                )}
+                style={{
+                  pointerEvents: "none",
+                  userSelect: "none",
+                }}
+              />
+            )}
           </motion.div>
         </div>
       </motion.div>
