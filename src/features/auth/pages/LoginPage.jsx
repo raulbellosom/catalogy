@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Sparkles,
-  AlertCircle,
-} from "lucide-react";
+import { Mail, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { useAuth } from "@/app/providers";
@@ -16,6 +8,7 @@ import { account, databases, functions } from "@/shared/lib/appwrite";
 import { DATABASE_ID, COLLECTION_PROFILES_ID } from "@/shared/lib/env";
 import { functions as functionIds } from "@/shared/lib/env";
 import { useToast } from "@/shared/ui/molecules";
+import { ResendVerificationCard } from "../components/ResendVerificationCard";
 
 /**
  * Login page with modern design and animations
@@ -127,78 +120,35 @@ export function LoginPage() {
       {/* Header con gradiente y efecto brillante */}
       <div className="mb-5 sm:mb-6 relative overflow-hidden">
         {/* Efectos de fondo decorativos responsivos */}
-        <div className="absolute -top-10 left-4 sm:-left-10 w-20 sm:w-40 h-20 sm:h-40 bg-[var(--color-primary)] opacity-20 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -top-10 left-4 sm:-left-10 w-20 sm:w-40 h-20 sm:h-40 bg-(--color-primary) opacity-20 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"></div>
         <div
-          className="absolute -top-5 right-4 sm:-right-10 w-16 sm:w-32 h-16 sm:h-32 bg-[var(--color-accent)] opacity-20 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"
+          className="absolute -top-5 right-4 sm:-right-10 w-16 sm:w-32 h-16 sm:h-32 bg-(--color-accent) opacity-20 rounded-full blur-2xl sm:blur-3xl animate-pulse-slow"
           style={{ animationDelay: "1s" }}
         ></div>
 
         <div className="relative">
           <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-primary)] animate-pulse" />
-            <span className="text-xs sm:text-sm font-medium text-[var(--color-primary)] uppercase tracking-wide">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-(--color-primary) animate-pulse" />
+            <span className="text-xs sm:text-sm font-medium text-(--color-primary) uppercase tracking-wide">
               Acceso
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-fg)] mb-2 bg-gradient-to-r from-[var(--color-fg)] to-[var(--color-fg-secondary)] bg-clip-text">
+          <h1 className="text-2xl sm:text-3xl font-bold text-(--color-fg) mb-2 bg-linear-to-r from-(--color-fg) to-(--color-fg-secondary) bg-clip-text">
             Bienvenido de vuelta
           </h1>
-          <p className="text-[var(--color-fg-secondary)] text-sm sm:text-base">
+          <p className="text-(--color-fg-secondary) text-sm sm:text-base">
             Inicia sesion para acceder a tu catalogo
           </p>
         </div>
       </div>
 
       {/* Resend email verification card */}
-      {unverifiedEmail && (
-        <div className="mb-4 relative overflow-hidden p-4 bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/30 rounded-xl backdrop-blur-sm">
-          {/* Decorative element */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-
-          <div className="relative space-y-3">
-            <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 shrink-0 text-blue-500 dark:text-blue-400 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-[var(--color-fg)] mb-1">
-                  ¿No recibiste el correo de verificación?
-                </p>
-                <p className="text-xs text-[var(--color-fg-secondary)]">
-                  Revisa tu carpeta de spam o solicita un nuevo correo
-                </p>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              onClick={handleResendEmail}
-              disabled={resendCountdown > 0 || isResending}
-              variant="outline"
-              size="sm"
-              className="w-full relative overflow-hidden group transition-all hover:border-blue-500/50"
-            >
-              {isResending ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  Enviando...
-                </span>
-              ) : resendCountdown > 0 ? (
-                <span className="flex items-center gap-2">
-                  <span className="text-xs opacity-70">Disponible en</span>
-                  <span className="font-mono font-semibold text-blue-500">
-                    {Math.floor(resendCountdown / 60)}:
-                    {String(resendCountdown % 60).padStart(2, "0")}
-                  </span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Reenviar correo de verificación
-                </span>
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
+      <ResendVerificationCard
+        email={unverifiedEmail}
+        onResend={handleResendEmail}
+        countdown={resendCountdown}
+        isResending={isResending}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email input con efecto hover mejorado */}
@@ -211,9 +161,9 @@ export function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="transition-all duration-300 group-hover:border-[var(--color-primary)]/50"
+            className="transition-all duration-300 group-hover:border-(--color-primary)/50"
           />
-          <Mail className="absolute right-4 top-[38px] w-5 h-5 text-[var(--color-fg-muted)] transition-colors group-hover:text-[var(--color-primary)]" />
+          <Mail className="absolute right-4 top-[38px] w-5 h-5 text-(--color-fg-muted) transition-colors group-hover:text-(--color-primary)" />
         </div>
 
         {/* Password input con efecto hover mejorado */}
@@ -226,12 +176,12 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            className="transition-all duration-300 group-hover:border-[var(--color-primary)]/50"
+            className="transition-all duration-300 group-hover:border-(--color-primary)/50"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-[38px] text-[var(--color-fg-muted)] hover:text-[var(--color-primary)] transition-all duration-300 hover:scale-110"
+            className="absolute right-4 top-[38px] text-(--color-fg-muted) hover:text-(--color-primary) transition-all duration-300 hover:scale-110"
             aria-label={
               showPassword ? "Ocultar contrasena" : "Mostrar contrasena"
             }
@@ -247,7 +197,7 @@ export function LoginPage() {
         <div className="text-right">
           <Link
             to="/auth/forgot-password"
-            className="text-sm text-[var(--color-primary)] hover:underline hover:text-[var(--color-primary-hover)] transition-all inline-flex items-center gap-1 group"
+            className="text-sm text-(--color-primary) hover:underline hover:text-(--color-primary-hover) transition-all inline-flex items-center gap-1 group"
           >
             Olvidaste tu contrasena?
             <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -258,7 +208,7 @@ export function LoginPage() {
         <Button
           type="submit"
           isLoading={isLoading}
-          className="w-full relative overflow-hidden group bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-hover)] hover:shadow-lg hover:shadow-[var(--color-primary)]/30 transition-all duration-300 hover:scale-[1.02]"
+          className="w-full relative overflow-hidden group bg-linear-to-r from-(--color-primary) to-(--color-primary-hover) hover:shadow-lg hover:shadow-(--color-primary)/30 transition-all duration-300 hover:scale-[1.02]"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             {!isLoading && "Iniciar sesion"}
@@ -266,7 +216,7 @@ export function LoginPage() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             )}
           </span>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+          <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         </Button>
       </form>
 
@@ -274,20 +224,20 @@ export function LoginPage() {
       <div className="mt-5 sm:mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-[var(--color-border)]"></div>
+            <div className="w-full border-t border-(--color-border)"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[var(--color-card)] px-3 text-[var(--color-fg-muted)]">
+            <span className="bg-(--color-card) px-3 text-(--color-fg-muted)">
               o
             </span>
           </div>
         </div>
 
-        <p className="mt-4 text-center text-sm text-[var(--color-fg-secondary)]">
+        <p className="mt-4 text-center text-sm text-(--color-fg-secondary)">
           No tienes cuenta?{" "}
           <Link
             to="/auth/register"
-            className="text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] font-semibold hover:underline transition-all inline-flex items-center gap-1 group"
+            className="text-(--color-primary) hover:text-(--color-primary-hover) font-semibold hover:underline transition-all inline-flex items-center gap-1 group"
           >
             Registrate aqui
             <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />

@@ -1,11 +1,10 @@
 import { Package, Store, TrendingUp, ExternalLink } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useAuth } from "@/app/providers";
-import { Button } from "@/shared/ui/atoms/Button";
 import { StoreOnboardingWizard } from "@/features/onboarding/components/StoreOnboardingWizard";
 import { useUserStore } from "@/shared/hooks";
 import { appConfig } from "@/shared/lib/env";
-import { motion } from "motion/react";
+import { QuickActionCard } from "../components/QuickActionCard";
+import { StatCard } from "../components/StatCard";
 
 /**
  * Dashboard page - Main app landing after login
@@ -77,64 +76,5 @@ export function DashboardPage() {
         />
       </div>
     </div>
-  );
-}
-
-/**
- * Quick action card
- */
-function QuickActionCard({
-  icon: Icon,
-  title,
-  description,
-  to,
-  external,
-  delay,
-}) {
-  const content = (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
-      className="p-6 bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl hover:border-[var(--color-primary)] transition-colors group cursor-pointer"
-    >
-      <div className="w-12 h-12 bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[var(--color-primary)]/20 transition-colors">
-        <Icon className="w-6 h-6 text-[var(--color-primary)]" />
-      </div>
-      <h3 className="font-semibold text-[var(--color-fg)] mb-1">{title}</h3>
-      <p className="text-sm text-[var(--color-fg-secondary)]">{description}</p>
-    </motion.div>
-  );
-
-  if (external) {
-    return (
-      <a href={to} target="_blank" rel="noopener noreferrer">
-        {content}
-      </a>
-    );
-  }
-
-  return <Link to={to}>{content}</Link>;
-}
-
-/**
- * Stat card
- */
-function StatCard({ icon: Icon, label, value, delay }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
-      className="p-6 bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl"
-    >
-      <div className="flex items-center gap-3 mb-2">
-        <Icon className="w-5 h-5 text-[var(--color-fg-muted)]" />
-        <span className="text-sm text-[var(--color-fg-secondary)]">
-          {label}
-        </span>
-      </div>
-      <p className="text-2xl font-bold text-[var(--color-fg)]">{value}</p>
-    </motion.div>
   );
 }

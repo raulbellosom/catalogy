@@ -9,15 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Puck } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
-import { motion } from "motion/react";
-import {
-  Save,
-  Eye,
-  ArrowLeft,
-  Loader2,
-  Check,
-  AlertCircle,
-} from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -32,16 +24,7 @@ import {
   catalogPuckConfig,
   catalogDefaultData,
 } from "../configs/catalogConfig";
-
-/**
- * Estados posibles del guardado
- */
-const SAVE_STATES = {
-  IDLE: "idle",
-  SAVING: "saving",
-  SAVED: "saved",
-  ERROR: "error",
-};
+import { EditorHeader, SAVE_STATES } from "../components/EditorHeader";
 
 /**
  * @returns {JSX.Element}
@@ -183,55 +166,13 @@ export function PuckEditorPage() {
 
   return (
     <div className="h-screen flex flex-col bg-(--background)">
-      {/* Header del editor */}
-      <header className="h-14 border-b border-(--border) bg-(--card) flex items-center justify-between px-4">
-        {/* Left: Back */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/app/store")}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
-          <div className="h-6 w-px bg-(--border)" />
-          <span className="text-sm font-medium text-(--foreground)">
-            Editando: {store.name}
-          </span>
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePreview}>
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={saveState === SAVE_STATES.SAVING}
-          >
-            {saveState === SAVE_STATES.SAVING ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : saveState === SAVE_STATES.SAVED ? (
-              <Check className="w-4 h-4 mr-2" />
-            ) : saveState === SAVE_STATES.ERROR ? (
-              <AlertCircle className="w-4 h-4 mr-2" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            {saveState === SAVE_STATES.SAVING
-              ? "Guardando..."
-              : saveState === SAVE_STATES.SAVED
-                ? "Guardado"
-                : saveState === SAVE_STATES.ERROR
-                  ? "Error"
-                  : "Guardar"}
-          </Button>
-        </div>
-      </header>
+      <EditorHeader
+        storeName={store.name}
+        saveState={saveState}
+        onBack={() => navigate("/app/store")}
+        onSave={handleSave}
+        onPreview={handlePreview}
+      />
 
       {/* Puck Editor */}
       <div className="flex-1 overflow-hidden puck-editor-theme-fix">

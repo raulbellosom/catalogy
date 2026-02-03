@@ -8,7 +8,7 @@ import { useToast } from "@/shared/ui/molecules/Toast";
 /**
  * Modal to share the store link and show QR code
  */
-export function ShareStoreModal({ isOpen, onClose, storeName, storeUrl }) {
+export function ShareStoreModal({ isOpen, onClose, storeName, storeUrl = "" }) {
   const [copied, setCopied] = useState(false);
   const toast = useToast();
 

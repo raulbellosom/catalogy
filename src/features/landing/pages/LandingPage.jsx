@@ -13,6 +13,10 @@ import {
 import { Button } from "@/shared/ui/atoms/Button";
 import { Footer } from "@/shared/ui/organisms/Footer";
 import { motion } from "motion/react";
+import { FeatureCard } from "../components/FeatureCard";
+import { StepCard } from "../components/StepCard";
+import { ShowcaseCard } from "../components/ShowcaseCard";
+import { TestimonialCard } from "../components/TestimonialCard";
 
 // Stock images from Unsplash (free to use)
 const MOCK_IMAGES = {
@@ -381,110 +385,5 @@ export function LandingPage() {
       {/* Footer */}
       <Footer />
     </div>
-  );
-}
-
-/**
- * Feature card component
- */
-function FeatureCard({ icon: Icon, title, description }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="p-6 bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl hover:border-[var(--color-primary)]/30 transition-colors"
-    >
-      <div className="w-12 h-12 bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center mb-4">
-        <Icon className="w-6 h-6 text-[var(--color-primary)]" />
-      </div>
-      <h3 className="text-lg font-semibold text-[var(--color-fg)] mb-2">
-        {title}
-      </h3>
-      <p className="text-[var(--color-fg-secondary)]">{description}</p>
-    </motion.div>
-  );
-}
-
-/**
- * Step card component
- */
-function StepCard({ number, title, description, image }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-center"
-    >
-      <div className="relative mb-6">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-48 object-cover rounded-2xl"
-        />
-        <div className="absolute -top-4 -left-4 w-12 h-12 bg-[var(--color-primary)] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
-          {number}
-        </div>
-      </div>
-      <h3 className="text-xl font-semibold text-[var(--color-fg)] mb-2">
-        {title}
-      </h3>
-      <p className="text-[var(--color-fg-secondary)]">{description}</p>
-    </motion.div>
-  );
-}
-
-/**
- * Showcase card component
- */
-function ShowcaseCard({ image, title, category }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="group cursor-pointer"
-    >
-      <div className="relative overflow-hidden rounded-2xl mb-4">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4">
-          <p className="text-sm text-white/80">{category}</p>
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/**
- * Testimonial card component
- */
-function TestimonialCard({ quote, author, role }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="p-6 bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl"
-    >
-      <div className="flex gap-1 mb-4">
-        {[...Array(5)].map((_, i) => (
-          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-        ))}
-      </div>
-      <p className="text-[var(--color-fg-secondary)] mb-6 italic">
-        &quot;{quote}&quot;
-      </p>
-      <div>
-        <p className="font-semibold text-[var(--color-fg)]">{author}</p>
-        <p className="text-sm text-[var(--color-fg-muted)]">{role}</p>
-      </div>
-    </motion.div>
   );
 }

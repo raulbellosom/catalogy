@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Mail,
-  Lock,
   Eye,
   EyeOff,
   User,
@@ -11,15 +10,20 @@ import {
   CheckCircle2,
   AlertCircle,
   Shield,
-  Info,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { useAuth } from "@/app/providers";
 import { account, functions } from "@/shared/lib/appwrite";
 import { functions as functionIds } from "@/shared/lib/env";
-import { Modal, ModalFooter, useToast } from "@/shared/ui/molecules";
+import { useToast } from "@/shared/ui/molecules";
 import { ID } from "appwrite";
+import {
+  PasswordStrengthIndicator,
+  getPasswordStrength,
+  PasswordMatchIndicator,
+} from "../components/PasswordStrengthIndicator";
+import { RegisterSuccessModal } from "../components/RegisterSuccessModal";
 
 /**
  * Validate email format
@@ -30,61 +34,12 @@ function isValidEmail(email) {
 }
 
 /**
- * Check password strength
- */
-function getPasswordStrength(password) {
-  if (!password) return { score: 0, text: "", color: "" };
-
-  let score = 0;
-  const checks = {
-    length: password.length >= 8,
-    lowercase: /[a-z]/.test(password),
-    uppercase: /[A-Z]/.test(password),
-    number: /[0-9]/.test(password),
-    special: /[^A-Za-z0-9]/.test(password),
-  };
-
-  if (checks.length) score++;
-  if (checks.lowercase) score++;
-  if (checks.uppercase) score++;
-  if (checks.number) score++;
-  if (checks.special) score++;
-
-  if (score <= 2)
-    return {
-      score,
-      text: "Debil",
-      color: "text-red-500",
-      bgColor: "bg-red-500",
-    };
-  if (score === 3)
-    return {
-      score,
-      text: "Media",
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-500",
-    };
-  if (score === 4)
-    return {
-      score,
-      text: "Buena",
-      color: "text-blue-500",
-      bgColor: "bg-blue-500",
-    };
-  return {
-    score,
-    text: "Excelente",
-    color: "text-green-500",
-    bgColor: "bg-green-500",
-  };
-}
-
-/**
  * Register page with enhanced validation and modern design
  */
 export function RegisterPage() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+  const toast = useToast();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -97,7 +52,6 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const toast = useToast();
 
   const passwordStrength = getPasswordStrength(password);
   const isEmailValid = isValidEmail(email);
@@ -176,6 +130,11 @@ export function RegisterPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNavigateSuccess = () => {
+    setShowSuccessModal(false);
+    navigate("/auth/login", { replace: true });
   };
 
   return (
@@ -299,26 +258,7 @@ export function RegisterPage() {
             )}
           </button>
 
-          {/* Password strength indicator */}
-          {password && (
-            <div className="mt-2 space-y-2">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((level) => (
-                  <div
-                    key={level}
-                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                      level <= passwordStrength.score
-                        ? passwordStrength.bgColor
-                        : "bg-gray-200 dark:bg-gray-700"
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className={`text-xs font-medium ${passwordStrength.color}`}>
-                Fortaleza: {passwordStrength.text}
-              </p>
-            </div>
-          )}
+          <PasswordStrengthIndicator password={password} />
         </div>
 
         {/* Confirm Password */}
@@ -355,22 +295,7 @@ export function RegisterPage() {
             )}
           </button>
 
-          {confirmPassword && (
-            <p
-              className={`mt-2 text-xs font-medium ${passwordsMatch ? "text-green-500" : "text-red-500"}`}
-            >
-              {passwordsMatch ? (
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Las contrasenas coinciden
-                </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Las contrasenas no
-                  coinciden
-                </span>
-              )}
-            </p>
-          )}
+          {confirmPassword && <PasswordMatchIndicator match={passwordsMatch} />}
         </div>
 
         {/* Términos y condiciones */}
@@ -490,45 +415,11 @@ export function RegisterPage() {
         }
       `}</style>
 
-      {/* Success Modal */}
-      <Modal
-        open={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-          navigate("/auth/login", { replace: true });
-        }}
-        title="¡Cuenta creada exitosamente!"
-        description="Te hemos enviado un correo de verificación."
-        size="md"
-        footer={
-          <ModalFooter>
-            <Button
-              onClick={() => {
-                setShowSuccessModal(false);
-                navigate("/auth/login", { replace: true });
-              }}
-              className="w-full sm:w-auto"
-            >
-              Ir a iniciar sesión
-            </Button>
-          </ModalFooter>
-        }
-      >
-        <div className="space-y-4">
-          <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-[var(--color-fg-secondary)]">
-              Por favor verifica tu correo antes de iniciar sesión. Revisa tu
-              bandeja de entrada y haz clic en el enlace de verificación.
-            </p>
-          </div>
-
-          <p className="text-sm text-[var(--color-fg-muted)]">
-            Si no recibes el correo en los próximos minutos, revisa tu carpeta
-            de spam.
-          </p>
-        </div>
-      </Modal>
+      <RegisterSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleNavigateSuccess}
+        onNavigate={handleNavigateSuccess}
+      />
     </div>
   );
 }
