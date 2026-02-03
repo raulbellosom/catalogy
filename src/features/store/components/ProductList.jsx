@@ -142,133 +142,160 @@ function ProductRow({
   const isToggling = isActionLoading && actionType === "toggle";
   const isDeleting = isActionLoading && actionType === "delete";
 
+  // Image viewer state
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  const handleImageClick = () => {
+    if (imageUrls.length > 0) {
+      setIsViewerOpen(true);
+    }
+  };
+
   return (
-    <tr
-      className={`hover:bg-(--color-bg-secondary) transition-colors ${!product.enabled ? "opacity-60 bg-(--color-bg-secondary)/30" : ""}`}
-    >
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="w-12 h-12 rounded-lg bg-(--color-bg-tertiary) overflow-hidden flex items-center justify-center border border-(--color-border)">
-          {firstImageUrl ? (
-            <img
-              src={firstImageUrl}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <ImageIcon className="w-6 h-6 text-(--color-fg-muted)" />
-          )}
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="text-sm font-medium text-(--color-fg)">
-          {product.name}
-        </div>
-        {product.description && (
-          <div className="text-xs text-(--color-fg-secondary) truncate max-w-[200px]">
-            {product.description}
-          </div>
-        )}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-semibold text-(--color-fg)">
-          ${product.price.toFixed(2)} {product.currency}
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center gap-1.5 text-sm text-(--color-fg-secondary)">
-          <Package className="w-4 h-4" />
-          <span>{product.stock || 0}</span>
-        </div>
-      </td>
-      <td className="px-6 py-4">
-        {product.categoryIds && product.categoryIds.length > 0 ? (
-          <div className="flex flex-wrap gap-1 max-w-[200px]">
-            {product.categoryIds.slice(0, 2).map((categoryId) => {
-              const category = categories.find((cat) => cat.id === categoryId);
-              return category ? (
-                <span
-                  key={categoryId}
-                  className="inline-block px-2 py-1 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium"
-                >
-                  {category.name}
-                </span>
-              ) : null;
-            })}
-            {product.categoryIds.length > 2 && (
-              <span className="inline-block px-2 py-1 bg-(--color-bg-secondary) text-(--color-fg-muted) rounded-full text-xs">
-                +{product.categoryIds.length - 2}
-              </span>
+    <>
+      <tr
+        className={`hover:bg-(--color-bg-secondary) transition-colors ${!product.enabled ? "opacity-60 bg-(--color-bg-secondary)/30" : ""}`}
+      >
+        <td className="px-6 py-4 whitespace-nowrap">
+          <button
+            type="button"
+            onClick={handleImageClick}
+            className="w-12 h-12 rounded-lg bg-(--color-bg-tertiary) overflow-hidden flex items-center justify-center border border-(--color-border) hover:ring-2 hover:ring-(--color-primary) transition-all cursor-pointer"
+            disabled={!firstImageUrl}
+          >
+            {firstImageUrl ? (
+              <img
+                src={firstImageUrl}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ImageIcon className="w-6 h-6 text-(--color-fg-muted)" />
             )}
+          </button>
+        </td>
+        <td className="px-6 py-4">
+          <div className="text-sm font-medium text-(--color-fg)">
+            {product.name}
           </div>
-        ) : (
-          <span className="text-xs text-(--color-fg-muted)">
-            Sin categorías
-          </span>
-        )}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onToggleStatus(product)}
-          isLoading={isToggling}
-          className={`h-7 px-3 text-xs font-medium rounded-full border transition-colors ${
-            product.status
-              ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800 dark:hover:bg-green-900/50"
-              : "bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-800"
-          }`}
-        >
-          {product.status ? "Activo" : "Inactivo"}
-        </Button>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center justify-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onReorder(product, "up")}
-            disabled={isFirst}
-            title="Subir"
-            className="h-8 w-8 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-(--color-bg-secondary)"
+          {product.description && (
+            <div className="text-xs text-(--color-fg-secondary) truncate max-w-[200px]">
+              {product.description}
+            </div>
+          )}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-sm font-semibold text-(--color-fg)">
+            ${product.price.toFixed(2)} {product.currency}
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="flex items-center gap-1.5 text-sm text-(--color-fg-secondary)">
+            <Package className="w-4 h-4" />
+            <span>{product.stock || 0}</span>
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          {product.categoryIds && product.categoryIds.length > 0 ? (
+            <div className="flex flex-col gap-1 max-w-[200px]">
+              {product.categoryIds.slice(0, 2).map((categoryId) => {
+                const category = categories.find(
+                  (cat) => cat.id === categoryId,
+                );
+                return category ? (
+                  <span
+                    key={categoryId}
+                    className="inline-block px-2 py-1 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium whitespace-nowrap"
+                  >
+                    {category.name}
+                  </span>
+                ) : null;
+              })}
+              {product.categoryIds.length > 2 && (
+                <span className="inline-block px-2 py-1 bg-(--color-bg-secondary) text-(--color-fg-muted) rounded-full text-xs whitespace-nowrap">
+                  +{product.categoryIds.length - 2}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-(--color-fg-muted)">
+              Sin categorías
+            </span>
+          )}
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <button
+            type="button"
+            onClick={() => onToggleStatus(product)}
+            disabled={isToggling}
+            className={`h-7 px-3 text-xs font-semibold rounded-full transition-all ${
+              product.status
+                ? "bg-emerald-500 text-white hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+                : "bg-slate-400 text-white hover:bg-slate-500 dark:bg-slate-600 dark:hover:bg-slate-700"
+            } ${isToggling ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
           >
-            <ChevronUp className="w-4 h-4 text-(--color-fg-secondary)" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onReorder(product, "down")}
-            disabled={isLast}
-            title="Bajar"
-            className="h-8 w-8 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-(--color-bg-secondary)"
-          >
-            <ChevronDown className="w-4 h-4 text-(--color-fg-secondary)" />
-          </Button>
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right">
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(product)}
-            title="Editar"
-            className="hover:bg-(--color-primary)/10"
-          >
-            <Edit className="w-4 h-4 text-(--color-primary)" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(product)}
-            isLoading={isDeleting}
-            title="Eliminar"
-            className="text-(--color-error) hover:bg-(--color-error)/10"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
-      </td>
-    </tr>
+            {product.status ? "Activo" : "Inactivo"}
+          </button>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="flex items-center justify-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onReorder(product, "up")}
+              disabled={isFirst}
+              title="Subir"
+              className="h-9 w-9 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-(--color-bg-secondary)"
+            >
+              <ChevronUp className="w-6 h-6 text-(--color-fg-secondary)" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onReorder(product, "down")}
+              disabled={isLast}
+              title="Bajar"
+              className="h-9 w-9 p-0 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-(--color-bg-secondary)"
+            >
+              <ChevronDown className="w-6 h-6 text-(--color-fg-secondary)" />
+            </Button>
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap text-right">
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(product)}
+              title="Editar"
+              className="hover:bg-(--color-primary)/10"
+            >
+              <Edit className="w-4 h-4 text-(--color-primary)" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(product)}
+              isLoading={isDeleting}
+              title="Eliminar"
+              className="text-(--color-error) hover:bg-(--color-error)/10"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        images={imageUrls}
+        initialIndex={0}
+        alt={product.name}
+        showDownload={true}
+      />
+    </>
   );
 }
 
