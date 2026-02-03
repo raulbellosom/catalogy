@@ -77,6 +77,7 @@ export function StoreFooter({ store, config = {} }) {
               <Logo
                 variant="icon"
                 asLink={false}
+                forcePlatform={true}
                 className={`h-4 w-auto grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all`}
               />
               <span className="font-bold tracking-tight opacity-80 group-hover:opacity-100">
