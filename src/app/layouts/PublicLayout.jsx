@@ -7,9 +7,12 @@ import { Navbar } from "@/shared/ui/organisms/Navbar";
  */
 export function PublicLayout() {
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
+    <div className="min-h-screen bg-[var(--color-bg)] flex flex-col">
       <Navbar showAuthButtons={true} />
-      <Outlet />
+      <main className="flex-1 pt-14 sm:pt-16">
+        <Outlet />
+      </main>
+      <Footer />
     </div>
   );
 }

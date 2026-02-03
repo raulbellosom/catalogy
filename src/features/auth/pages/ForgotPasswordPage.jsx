@@ -4,19 +4,19 @@ import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { account } from "@/shared/lib/appwrite";
+import { useToast } from "@/shared/ui/molecules";
 
 /**
  * Forgot password page
  */
 export function ForgotPasswordPage() {
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
     try {
@@ -28,7 +28,7 @@ export function ForgotPasswordPage() {
       setIsSuccess(true);
     } catch (err) {
       console.error("Recovery error:", err);
-      setError(
+      toast.error(
         "Error al enviar el correo. Verifica tu direccion e intenta de nuevo.",
       );
     } finally {
@@ -68,12 +68,6 @@ export function ForgotPasswordPage() {
         Ingresa tu correo y te enviaremos instrucciones para restablecer tu
         contrasena.
       </p>
-
-      {error && (
-        <div className="mb-4 p-3 bg-[var(--color-error-bg)] border border-[var(--color-error)] rounded-lg text-[var(--color-error)] text-sm">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="relative">

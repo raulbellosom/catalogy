@@ -17,7 +17,11 @@ import { motion } from "motion/react";
  * Renders store catalog for public viewing via subdomain
  */
 export function CatalogPage({ previewSlug }) {
-  const { slug: subdomainSlug, store: subdomainStore } = useSubdomainContext();
+  const {
+    slug: subdomainSlug,
+    store: subdomainStore,
+    user,
+  } = useSubdomainContext();
   const slug = previewSlug || subdomainSlug;
 
   // Use store from context if on subdomain, otherwise fetch (for preview)
@@ -52,10 +56,10 @@ export function CatalogPage({ previewSlug }) {
           <div className="w-16 h-16 bg-[var(--color-error-bg)] rounded-full flex items-center justify-center mx-auto mb-4">
             <StoreIcon className="w-8 h-8 text-[var(--color-error)]" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-fg)] mb-2">
+          <h1 className="text-2xl font-bold text-(--color-fg) mb-2">
             Catálogo no encontrado
           </h1>
-          <p className="text-[var(--color-fg-secondary)]">
+          <p className="text-(--color-fg-secondary)">
             Esta tienda no existe o no está disponible públicamente.
           </p>
         </div>
@@ -63,44 +67,63 @@ export function CatalogPage({ previewSlug }) {
     );
   }
 
+  // Security check: If not published and not the owner, don't show products
+  // (AppRoutes should prevent this, but this is an extra layer)
+  const isOwner = user?.$id === store.profileId;
+  const isAvailable = store.published || isOwner || !!previewSlug;
+
+  if (!isAvailable) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 bg-(--color-warning-bg) rounded-full flex items-center justify-center mb-6">
+          <Clock className="w-10 h-10 text-(--color-warning)" />
+        </div>
+        <h1 className="text-3xl font-bold text-(--color-fg) mb-2">
+          Catálogo no disponible
+        </h1>
+        <p className="text-(--color-fg-secondary) mb-8 max-w-md">
+          Este catálogo aún no ha sido publicado. Vuelve pronto para ver los
+          productos.
+        </p>
+      </div>
+    );
+  }
+
   const logoUrl = store.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      {/* Header */}
-      <header className="bg-[var(--color-card)]/90 backdrop-blur-md border-b border-[var(--color-card-border)] sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={store.name}
-                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[var(--color-primary)]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <StoreIcon className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--color-primary)]" />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-2xl font-bold text-[var(--color-fg)] truncate">
-                  {store.name}
-                </h1>
-                {store.description && (
-                  <p className="text-sm sm:text-base text-[var(--color-fg-secondary)] mt-1 line-clamp-1 sm:line-clamp-2">
-                    {store.description}
-                  </p>
-                )}
+    <div className="bg-[var(--color-bg)]">
+      {/* Hero section for store info */}
+      <div className="bg-[var(--color-card)] border-b border-[var(--color-card-border)] py-8 sm:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt={store.name}
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl object-cover shadow-lg"
+              />
+            ) : (
+              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-[var(--color-primary)]/10 rounded-3xl flex items-center justify-center">
+                <StoreIcon className="w-12 h-12 text-[var(--color-primary)]" />
               </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-fg)] mb-3">
+                {store.name}
+              </h1>
+              {store.description && (
+                <p className="text-lg text-[var(--color-fg-secondary)] max-w-2xl">
+                  {store.description}
+                </p>
+              )}
             </div>
-            <ThemeToggle />
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Products */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 safe-bottom">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 safe-bottom">
         {loadingProducts ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
@@ -111,24 +134,6 @@ export function CatalogPage({ previewSlug }) {
           <ProductsGrid products={products} />
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="bg-[var(--color-card)] border-t border-[var(--color-card-border)] mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-sm text-[var(--color-fg-secondary)]">
-            Powered by{" "}
-            <a
-              href="https://catalogy.racoondevs.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
-            >
-              Catalogy
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

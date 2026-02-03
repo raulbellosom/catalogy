@@ -25,6 +25,7 @@ import { Modal, ModalFooter } from "@/shared/ui/molecules/Modal";
 import { TemplateSelector } from "../components/TemplateSelector";
 import { ProductList } from "../components/ProductList";
 import { ProductModal } from "../components/ProductModal";
+import { useToast } from "@/shared/ui/molecules";
 import {
   useUserStore,
   useCreateStore,
@@ -64,13 +65,12 @@ export function StoreSettingsPage() {
 
   // UI State
   const [searchParams] = useSearchParams();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState(
     () => searchParams.get("tab") || "general",
   );
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
 
   // Sync tab with URL
   useEffect(() => {
@@ -138,8 +138,6 @@ export function StoreSettingsPage() {
   const handleSaveStore = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError("");
-    setSuccess("");
 
     try {
       let finalLogoId = currentLogoId;
@@ -170,17 +168,16 @@ export function StoreSettingsPage() {
           }
         }
 
-        setSuccess("Tienda actualizada correctamente");
+        toast.success("Tienda actualizada correctamente");
       } else {
         await createStore.mutateAsync(data);
-        setSuccess("Tienda creada correctamente");
+        toast.success("Tienda creada correctamente");
       }
 
       setPendingLogoFile(null);
-      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error(err);
-      setError("Error al guardar la tienda");
+      toast.error("Error al guardar la tienda");
     } finally {
       setIsSubmitting(false);
     }
@@ -193,11 +190,12 @@ export function StoreSettingsPage() {
         storeId: store.$id,
         published: !store.published,
       });
-      setSuccess(store.published ? "Tienda despublicada" : "Tienda publicada");
-      setTimeout(() => setSuccess(""), 3000);
+      toast.success(
+        store.published ? "Tienda despublicada" : "Tienda publicada",
+      );
       setIsPublishModalOpen(false);
     } catch (e) {
-      setError("Error al cambiar estado de publicación");
+      toast.error("Error al cambiar estado de publicación");
     }
   };
 
@@ -305,25 +303,6 @@ export function StoreSettingsPage() {
         </div>
       </div>
 
-      {/* Notifications */}
-      <AnimatePresence>
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-4 py-3 rounded-xl flex items-center gap-2"
-          >
-            <Check className="w-4 h-4" /> {success}
-          </motion.div>
-        )}
-        {error && (
-          <div className="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-4 py-3 rounded-xl">
-            {error}
-          </div>
-        )}
-      </AnimatePresence>
-
       {/* Tabs */}
       <div className="border-b border-(--color-border) flex gap-1 items-end overflow-x-auto">
         <TabButton
@@ -425,8 +404,7 @@ export function StoreSettingsPage() {
                       onClick={() => {
                         const url = `https://${slug}.${appConfig.baseDomain}`;
                         navigator.clipboard.writeText(url);
-                        setSuccess("Link copiado al portapapeles");
-                        setTimeout(() => setSuccess(""), 2000);
+                        toast.success("Link copiado al portapapeles");
                       }}
                     >
                       <Copy className="w-4 h-4 mr-2" />

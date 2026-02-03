@@ -14,28 +14,18 @@ export function ProductDetailPage() {
   // Placeholder for now
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-card)]/90 backdrop-blur-md border-b border-[var(--color-card-border)]">
-        <div className="max-w-6xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
+    <div className="bg-[var(--color-bg)]">
+      {/* Product detail */}
+      <main className="max-w-6xl mx-auto px-4 py-8 safe-bottom">
+        <div className="mb-8">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[var(--color-fg-secondary)] hover:text-[var(--color-fg)] transition-colors"
+            className="inline-flex items-center gap-2 text-[var(--color-fg-secondary)] hover:text-[var(--color-fg)] transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Volver al catalogo</span>
-            <span className="sm:hidden">Volver</span>
+            <span>Volver al catalogo</span>
           </Link>
-
-          <div className="flex items-center gap-3">
-            <Logo />
-            <ThemeToggle />
-          </div>
         </div>
-      </header>
-
-      {/* Product detail */}
-      <main className="max-w-4xl mx-auto px-4 py-8 pt-20 sm:pt-24 safe-bottom">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Image */}
           <div className="aspect-square bg-[var(--color-bg-tertiary)] rounded-2xl flex items-center justify-center">

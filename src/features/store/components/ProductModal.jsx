@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Save, Loader2, DollarSign, Package } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
-import { ImageUpload } from "@/shared/ui/molecules/ImageUpload";
+import { ImageUpload, useToast } from "@/shared/ui/molecules";
+import { useAuth } from "@/app/providers";
 import { Modal, ModalFooter } from "@/shared/ui/molecules/Modal";
 import {
   useCreateProduct,
@@ -39,8 +40,9 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
   const [imageFileId, setImageFileId] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
 
+  const { user } = useAuth();
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
   // Reset/Populate form on open
   useEffect(() => {
@@ -137,19 +139,19 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
 
     // Validations
     if (name.trim().length < 3) {
-      setError("El nombre debe tener al menos 3 caracteres");
+      toast.error("El nombre debe tener al menos 3 caracteres");
       return;
     }
 
     const priceNum = parseFloat(price);
     if (isNaN(priceNum) || priceNum < 0) {
-      setError("El precio debe ser un número válido mayor o igual a 0");
+      toast.error("El precio debe ser un número válido mayor o igual a 0");
       return;
     }
 
     const stockNum = parseInt(stock);
     if (isNaN(stockNum) || stockNum < 0) {
-      setError("El stock debe ser un número entero mayor o igual a 0");
+      toast.error("El stock debe ser un número entero mayor o igual a 0");
       return;
     }
 
@@ -180,10 +182,13 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
         await createProduct.mutateAsync(data);
       }
 
+      toast.success(
+        isEditMode ? "Producto actualizado" : "Producto creado correctamente",
+      );
       onClose();
     } catch (err) {
       console.error("Product save error:", err);
-      setError(err.message || "Error al guardar el producto");
+      toast.error(err.message || "Error al guardar el producto");
     } finally {
       setIsSubmitting(false);
     }
@@ -228,21 +233,6 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
         onSubmit={handleSubmit}
         className="space-y-8 py-4"
       >
-        {/* Error message */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="p-4 bg-(--color-error-bg) border border-(--color-error) rounded-2xl text-(--color-error) text-sm flex items-start gap-3 overflow-hidden"
-            >
-              <span className="shrink-0 mt-0.5">⚠️</span>
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
           {/* Top Left: Image Section */}
           <div className="space-y-4">

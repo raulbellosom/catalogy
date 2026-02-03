@@ -389,3 +389,21 @@ html {
 .prose .not-prose * {
   all: revert;
 }
+
+/* ===========================================
+   Puck Editor Theme Fixes
+   =========================================== */
+
+/* Ensure Puck Editor UI uses dark text even in global dark mode */
+.puck-editor-theme-fix {
+  --color-fg: #0f172a !important;
+  --color-fg-secondary: #475569 !important;
+  --color-fg-muted: #94a3b8 !important;
+  color: var(--color-fg) !important;
+}
+
+/* Specific Puck overrides if needed */
+.puck-editor-theme-fix [class*="Puck"] {
+  --puck-color-white: #ffffff;
+  --puck-color-black: #000000;
+}

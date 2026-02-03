@@ -2,12 +2,36 @@ import { Link } from "react-router-dom";
 import { Mail, MapPin, ExternalLink, Shield } from "lucide-react";
 import { Logo } from "@/shared/ui/atoms/Logo";
 
+import { useSubdomainContext } from "@/app/providers/SubdomainProvider";
+
 /**
  * Footer component
  * Shared footer for all public pages
  */
 export function Footer() {
+  const { isStoreDomain } = useSubdomainContext();
   const currentYear = new Date().getFullYear();
+
+  if (isStoreDomain) {
+    return (
+      <footer className="bg-[var(--color-bg)] border-t border-[var(--color-border)] py-8">
+        <div className="max-w-6xl mx-auto px-4">
+          <p className="text-center text-sm text-[var(--color-fg-secondary)] flex items-center justify-center gap-1">
+            Powered by{" "}
+            <a
+              href="https://catalogy.racoondevs.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-primary)] font-semibold hover:underline inline-flex items-center gap-1"
+            >
+              Catalogy
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </p>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className="bg-[var(--color-bg-tertiary)] border-t border-[var(--color-border)]">

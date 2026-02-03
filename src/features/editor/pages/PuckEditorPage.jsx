@@ -24,6 +24,7 @@ import {
   databases,
   DATABASE_ID,
   COLLECTIONS,
+  Query,
 } from "../../../shared/lib/appwrite";
 import { useAuth } from "../../../app/providers/AuthProvider";
 import { getTemplate } from "../../templates/registry";
@@ -57,7 +58,7 @@ export function PuckEditorPage() {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.STORES,
-        [`equal("profileId", "${user.$id}")`],
+        [Query.equal("profileId", user.$id)],
       );
       return response.documents[0] || null;
     },
@@ -71,7 +72,7 @@ export function PuckEditorPage() {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.PRODUCTS,
-        [`equal("storeId", "${store.$id}")`, `equal("enabled", true)`],
+        [Query.equal("storeId", store.$id), Query.equal("enabled", true)],
       );
       return response.documents;
     },
@@ -239,7 +240,7 @@ export function PuckEditorPage() {
       </header>
 
       {/* Puck Editor */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden puck-editor-theme-fix">
         <Puck
           config={puckConfig}
           data={{

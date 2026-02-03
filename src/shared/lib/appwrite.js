@@ -1,4 +1,11 @@
-import { Client, Account, Databases, Storage, Functions } from "appwrite";
+import {
+  Client,
+  Account,
+  Databases,
+  Storage,
+  Functions,
+  Query,
+} from "appwrite";
 import {
   appwriteConfig,
   collections,
@@ -31,6 +38,7 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
 export const functions = new Functions(client);
+export { Query };
 
 // Re-export from env.js for backward compatibility
 export { DATABASE_ID, COLLECTIONS, BUCKETS, APP_CONFIG };

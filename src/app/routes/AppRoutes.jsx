@@ -75,7 +75,9 @@ export function AppRoutes() {
     if (!store.published && !isOwner) {
       return (
         <Routes>
-          <Route path="*" element={<CatalogNotAvailablePage />} />
+          <Route element={<PublicLayout />}>
+            <Route path="*" element={<CatalogNotAvailablePage />} />
+          </Route>
         </Routes>
       );
     }

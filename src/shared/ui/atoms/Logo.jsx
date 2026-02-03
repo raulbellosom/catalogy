@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Store } from "lucide-react";
 import { useSubdomainContext } from "@/app/providers/SubdomainProvider";
-import { useUserStore, useStoreBySlug } from "@/shared/hooks/useStore";
+import { useStoreBySlug } from "@/shared/hooks/useStore";
+import { getStoreLogoUrl } from "@/shared/services/storeService";
 
 /**
  * Logo component
@@ -23,7 +24,9 @@ export function Logo({
 
   // Logic for Logo Source
   const logoSrc =
-    isStoreDomain && storeBySlug?.logoUrl ? storeBySlug.logoUrl : "/icon.png"; // Default platform logo
+    isStoreDomain && storeBySlug?.logoFileId
+      ? getStoreLogoUrl(storeBySlug.logoFileId)
+      : "/icon.png"; // Default platform logo
 
   const showText = variant === "full";
   const brandName =

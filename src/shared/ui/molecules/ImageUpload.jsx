@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
+import { useToast } from "./Toast";
 
 /**
  * Image upload component
@@ -23,8 +24,8 @@ export function ImageUpload({
   maxSizeMB = 5,
   onImageClick,
 }) {
+  const toast = useToast();
   const [preview, setPreview] = useState(currentImageUrl || null);
-  const [error, setError] = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -40,13 +41,13 @@ export function ImageUpload({
     // Validate file size
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
-      setError(`El archivo no debe superar ${maxSizeMB}MB`);
+      toast.error(`El archivo no debe superar ${maxSizeMB}MB`);
       return;
     }
 
     // Validate file type
     if (!accept.split(",").some((type) => file.type === type.trim())) {
-      setError("Formato de archivo no válido");
+      toast.error("Formato de archivo no válido");
       return;
     }
 
@@ -158,10 +159,6 @@ export function ImageUpload({
         className="hidden"
         disabled={isUploading}
       />
-
-      {error && (
-        <p className="mt-2 text-sm text-[var(--color-error)]">{error}</p>
-      )}
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { ImageUpload } from "@/shared/ui/molecules/ImageUpload";
 import { useCreateStore, useUploadStoreLogo } from "@/shared/hooks";
 import { extractColorsFromImage } from "@/shared/utils/colorExtraction";
 import { appConfig } from "@/shared/lib/env";
+import { useToast } from "@/shared/ui/molecules";
 
 const STEPS = [
   { id: "welcome", title: "Bienvenida", icon: Store },
@@ -154,9 +155,8 @@ export function StoreOnboardingWizard() {
   const [extractedColors, setExtractedColors] = useState([]);
   const [selectedFont, setSelectedFont] = useState(FONTS[0].id);
   const [selectedTemplate, setSelectedTemplate] = useState("minimal");
-
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
   // Mutations
   const createStore = useCreateStore();
@@ -225,7 +225,9 @@ export function StoreOnboardingWizard() {
       // Redirect handled by parent component or effect on success (store created -> access granted)
     } catch (err) {
       console.error("Error creating store:", err);
-      setError("Hubo un error al crear tu tienda. Por favor intenta de nuevo.");
+      toast.error(
+        "Hubo un error al crear tu tienda. Por favor intenta de nuevo.",
+      );
       setIsSubmitting(false);
     }
   };
@@ -615,12 +617,6 @@ export function StoreOnboardingWizard() {
                 </div>
               </div>
             </div>
-
-            {error && (
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl text-sm text-center">
-                {error}
-              </div>
-            )}
           </div>
         );
 

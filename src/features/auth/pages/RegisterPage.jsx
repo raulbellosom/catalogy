@@ -95,7 +95,6 @@ export function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const toast = useToast();
@@ -111,33 +110,33 @@ export function RegisterPage() {
 
     // Validations
     if (firstName.trim().length < 2) {
-      setError("El nombre debe tener al menos 2 caracteres.");
+      toast.error("El nombre debe tener al menos 2 caracteres.");
       return;
     }
     if (lastName.trim().length < 2) {
-      setError("El apellido debe tener al menos 2 caracteres.");
+      toast.error("El apellido debe tener al menos 2 caracteres.");
       return;
     }
     if (!isEmailValid) {
-      setError("Por favor ingresa un correo electronico valido.");
+      toast.error("Por favor ingresa un correo electronico valido.");
       return;
     }
     if (password.length < 8) {
-      setError("La contrasena debe tener al menos 8 caracteres.");
+      toast.error("La contrasena debe tener al menos 8 caracteres.");
       return;
     }
     if (passwordStrength.score < 3) {
-      setError(
+      toast.error(
         "La contrasena es muy debil. Incluye mayusculas, numeros y caracteres especiales.",
       );
       return;
     }
     if (password !== confirmPassword) {
-      setError("Las contrasenas no coinciden.");
+      toast.error("Las contrasenas no coinciden.");
       return;
     }
     if (!acceptTerms) {
-      setError("Debes aceptar los terminos y condiciones para continuar.");
+      toast.error("Debes aceptar los terminos y condiciones para continuar.");
       return;
     }
 
@@ -171,9 +170,9 @@ export function RegisterPage() {
     } catch (err) {
       console.error("Register error:", err);
       if (err.code === 409) {
-        setError("Ya existe una cuenta con este correo electronico.");
+        toast.error("Ya existe una cuenta con este correo electronico.");
       } else {
-        setError("Error al crear la cuenta. Intenta de nuevo.");
+        toast.error("Error al crear la cuenta. Intenta de nuevo.");
       }
     } finally {
       setIsLoading(false);
@@ -206,16 +205,6 @@ export function RegisterPage() {
           </p>
         </div>
       </div>
-
-      {/* Error con animación */}
-      {error && (
-        <div className="mb-4 p-3 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 rounded-xl text-red-600 dark:text-red-400 text-sm backdrop-blur-sm animate-shake">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <p>{error}</p>
-          </div>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
         {/* Nombre y Apellido */}
