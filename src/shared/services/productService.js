@@ -55,7 +55,16 @@ export async function getProduct(productId) {
  * @returns {Promise<Object>}
  */
 export async function createProduct(data) {
-  const { storeId, name, description, price, currency, sortOrder } = data;
+  const {
+    storeId,
+    name,
+    description,
+    price,
+    currency,
+    sortOrder,
+    imageFileId,
+    stock,
+  } = data;
 
   // Validate
   if (!name || name.trim().length < 3) {
@@ -77,6 +86,8 @@ export async function createProduct(data) {
       price: parseFloat(price),
       currency: currency || "MXN",
       sortOrder: sortOrder || 0,
+      imageFileId: imageFileId || null,
+      stock: parseInt(stock) || 0,
       enabled: true,
     },
   );

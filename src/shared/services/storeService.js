@@ -75,11 +75,7 @@ export async function getStoreBySlug(slug) {
     const response = await databases.listDocuments(
       DATABASE_ID,
       COLLECTIONS.STORES,
-      [
-        Query.equal("slug", slug),
-        Query.equal("published", true),
-        Query.equal("enabled", true),
-      ],
+      [Query.equal("slug", slug), Query.equal("enabled", true)],
     );
 
     return response.documents[0] || null;
@@ -131,15 +127,30 @@ export async function createStore(data) {
 export async function updateStore(storeId, data) {
   const updateData = { ...data };
 
-  // If slug is being updated, validate it using Appwrite function
+  // If slug is being updated, check if it's different from current one
   if (data.slug) {
-    const validation = await validateSlugRemote(data.slug);
-    if (!validation.valid) {
-      throw new Error(validation.error || "Slug inválido");
-    }
+    try {
+      const currentStore = await databases.getDocument(
+        DATABASE_ID,
+        COLLECTIONS.STORES,
+        storeId,
+      );
 
-    // Use normalized slug from validation
-    updateData.slug = validation.slug;
+      // Only validate if slug is actually changing
+      if (currentStore.slug !== data.slug.toLowerCase().trim()) {
+        const validation = await validateSlugRemote(data.slug);
+        if (!validation.valid) {
+          throw new Error(validation.error || "Slug inválido");
+        }
+        updateData.slug = validation.slug;
+      } else {
+        // If it's the same, just remove it from updateData or use the normalized version
+        delete updateData.slug;
+      }
+    } catch (e) {
+      if (e.message.includes("Slug")) throw e;
+      console.warn("Could not fetch current store for slug validation skip", e);
+    }
   }
 
   // Trim text fields

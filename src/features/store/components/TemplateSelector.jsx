@@ -13,31 +13,27 @@ import { getTemplateList } from "../../templates/registry";
  * Preview visual simplificado para cada template
  * Renderiza una representación abstracta del layout
  */
-function TemplatePreview({ type, isSelected }) {
-  const baseClass = `w-full h-32 rounded-t-lg border-b relative overflow-hidden transition-colors ${
-    isSelected
-      ? "bg-[var(--primary)]/5 border-[var(--primary)]/20"
-      : "bg-[var(--muted)]/30 border-[var(--border)]"
-  }`;
+/**
+ * Preview visual simplificado para cada template
+ */
+function TemplatePreview({ type }) {
+  const baseClass =
+    "aspect-video bg-gray-100 dark:bg-gray-800 relative w-full h-full";
+  const innerCardClass =
+    "absolute inset-4 bg-white dark:bg-gray-900 shadow-sm rounded-lg flex flex-col overflow-hidden";
 
   if (type === "minimal") {
     return (
       <div className={baseClass}>
-        {/* Header simple */}
-        <div className="h-4 w-full border-b border-dashed border-gray-300 dark:border-gray-700 flex items-center px-2 gap-1">
-          <div className="w-8 h-1.5 rounded-full bg-[var(--foreground)]/20"></div>
-        </div>
-        {/* List */}
-        <div className="p-2 space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex gap-2">
-              <div className="w-8 h-8 rounded bg-[var(--foreground)]/10 shrink-0"></div>
-              <div className="flex-1 space-y-1">
-                <div className="w-16 h-1.5 rounded-full bg-[var(--foreground)]/20"></div>
-                <div className="w-8 h-1.5 rounded-full bg-[var(--foreground)]/10"></div>
-              </div>
+        <div className={innerCardClass}>
+          <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-t-lg"></div>
+          <div className="p-2 space-y-2">
+            <div className="h-2 w-1/3 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded"></div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     );
@@ -46,19 +42,15 @@ function TemplatePreview({ type, isSelected }) {
   if (type === "storefront") {
     return (
       <div className={baseClass}>
-        {/* Banner Header */}
-        <div className="h-12 w-full bg-[var(--foreground)]/10 flex flex-col items-center justify-center gap-1">
-          <div className="w-12 h-1.5 rounded-full bg-[var(--foreground)]/40"></div>
-          <div className="w-20 h-1 rounded-full bg-[var(--foreground)]/20"></div>
-        </div>
-        {/* Grid */}
-        <div className="p-2 grid grid-cols-2 gap-2">
-          {[1, 2].map((i) => (
-            <div key={i} className="space-y-1">
-              <div className="aspect-square rounded bg-[var(--foreground)]/10"></div>
-              <div className="w-full h-1 rounded bg-[var(--foreground)]/20"></div>
+        <div className={innerCardClass}>
+          <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-t-lg mb-2"></div>
+          <div className="p-2 space-y-2">
+            <div className="h-2 w-1/2 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-sm" />
+              <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-sm" />
             </div>
-          ))}
+          </div>
         </div>
       </div>
     );
@@ -67,15 +59,15 @@ function TemplatePreview({ type, isSelected }) {
   if (type === "gallery") {
     return (
       <div className={baseClass}>
-        {/* Big Hero */}
-        <div className="h-full w-full p-2 grid grid-cols-1 gap-2">
-          <div className="flex-1 rounded bg-[var(--foreground)]/10 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full border-2 border-[var(--foreground)]/10"></div>
-          </div>
-          <div className="h-8 grid grid-cols-3 gap-1">
-            <div className="rounded bg-[var(--foreground)]/10"></div>
-            <div className="rounded bg-[var(--foreground)]/10"></div>
-            <div className="rounded bg-[var(--foreground)]/10"></div>
+        <div className={innerCardClass}>
+          <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-t-lg mb-1"></div>
+          <div className="p-2 grid grid-cols-3 gap-1">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-sm"
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -97,16 +89,16 @@ export function TemplateSelector({ value, onChange, disabled = false }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-[var(--foreground)]">
+        <label className="text-sm font-medium text-(--color-fg)">
           Diseño del catálogo
         </label>
-        <div className="text-xs text-[var(--muted-foreground)] flex items-center gap-1">
+        <div className="text-xs text-(--color-fg-secondary) flex items-center gap-1">
           <Info className="w-3 h-3" />
           <span>Elige la estructura base de tu tienda</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {templates.map((template) => {
           const isSelected = value === template.id;
 
@@ -116,23 +108,23 @@ export function TemplateSelector({ value, onChange, disabled = false }) {
               whileHover={!disabled ? { y: -4 } : undefined}
               whileTap={!disabled ? { scale: 0.98 } : undefined}
               className={`
-                relative group rounded-xl border-2 text-left transition-all overflow-hidden flex flex-col h-full
+                relative group rounded-2xl border-2 text-left transition-all overflow-hidden flex flex-col h-full
                 ${
                   isSelected
-                    ? "border-[var(--primary)] bg-[var(--card)] shadow-md shadow-[var(--primary)]/10 ring-1 ring-[var(--primary)]/50"
-                    : "border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/30 hover:shadow-sm"
+                    ? "border-(--color-primary) bg-(--color-card) shadow-md ring-1 ring-(--color-primary)/50"
+                    : "border-(--color-border) bg-(--color-card) hover:border-(--color-border-hover) hover:shadow-sm"
                 }
                 ${disabled ? "opacity-60 grayscale cursor-not-allowed" : "cursor-pointer"}
               `}
               onClick={() => !disabled && onChange(template.id)}
             >
               {/* Visual Preview */}
-              <TemplatePreview type={template.id} isSelected={isSelected} />
+              <TemplatePreview type={template.id} />
 
               {/* Selected Badge */}
               {isSelected && (
                 <div className="absolute top-2 right-2 z-10">
-                  <div className="w-6 h-6 rounded-full bg-[var(--primary)] text-white flex items-center justify-center shadow-sm">
+                  <div className="w-6 h-6 rounded-full bg-(--color-primary) text-white flex items-center justify-center shadow-sm">
                     <Check className="w-3.5 h-3.5" />
                   </div>
                 </div>
@@ -140,36 +132,29 @@ export function TemplateSelector({ value, onChange, disabled = false }) {
 
               {/* Info Content */}
               <div className="p-4 flex flex-col flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h3
-                    className={`font-bold ${isSelected ? "text-[var(--primary)]" : "text-[var(--foreground)]"}`}
-                  >
-                    {template.name}
-                  </h3>
-                </div>
-
-                <p className="text-xs text-[var(--muted-foreground)] mb-3 flex-1">
+                <h3 className="font-bold mb-1">{template.name}</h3>
+                <p className="text-xs text-(--color-fg-secondary) mb-3">
                   {template.description}
                 </p>
 
                 {/* Tags features */}
                 <div className="flex flex-wrap gap-1 mt-auto">
                   {template.id === "minimal" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)]">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">
                       Lista
                     </span>
                   )}
                   {template.id === "storefront" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)]">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">
                       Banner
                     </span>
                   )}
                   {template.id === "gallery" && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)]">
-                      Imágenes
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">
+                      Galería
                     </span>
                   )}
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)]">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-(--color-bg-secondary) text-(--color-fg-secondary) border border-(--color-border)">
                     Responsive
                   </span>
                 </div>

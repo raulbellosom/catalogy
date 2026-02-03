@@ -34,10 +34,10 @@ function getEnvVar(key, defaultValue = "", required = false) {
 // ============================================================
 
 export const appwriteConfig = {
-  endpoint: getEnvVar("VITE_APPWRITE_ENDPOINT", "", true),
-  projectId: getEnvVar("VITE_APPWRITE_PROJECT_ID", "", true),
-  projectName: getEnvVar("VITE_APPWRITE_PROJECT_NAME", "catalogy"),
-  databaseId: getEnvVar("VITE_APPWRITE_DATABASE_ID", "main", true),
+  endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT || "",
+  projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID || "",
+  projectName: import.meta.env.VITE_APPWRITE_PROJECT_NAME || "catalogy",
+  databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID || "main",
 };
 
 // ============================================================
@@ -45,19 +45,15 @@ export const appwriteConfig = {
 // ============================================================
 
 export const collections = {
-  profiles: getEnvVar("VITE_APPWRITE_COLLECTION_PROFILES_ID", "profiles", true),
-  userPreferences: getEnvVar(
-    "VITE_APPWRITE_COLLECTION_USER_PREFERENCES_ID",
+  profiles: import.meta.env.VITE_APPWRITE_COLLECTION_PROFILES_ID || "profiles",
+  userPreferences:
+    import.meta.env.VITE_APPWRITE_COLLECTION_USER_PREFERENCES_ID ||
     "userPreferences",
-    true,
-  ),
-  emailVerifications: getEnvVar(
-    "VITE_APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID",
+  emailVerifications:
+    import.meta.env.VITE_APPWRITE_COLLECTION_EMAIL_VERIFICATIONS_ID ||
     "emailVerifications",
-    true,
-  ),
-  stores: getEnvVar("VITE_APPWRITE_COLLECTION_STORES_ID", "stores", true),
-  products: getEnvVar("VITE_APPWRITE_COLLECTION_PRODUCTS_ID", "products", true),
+  stores: import.meta.env.VITE_APPWRITE_COLLECTION_STORES_ID || "stores",
+  products: import.meta.env.VITE_APPWRITE_COLLECTION_PRODUCTS_ID || "products",
 };
 
 // Alias legacy para compatibilidad (mayúsculas para mantener compatibilidad con código existente)
@@ -74,17 +70,11 @@ export const COLLECTIONS = {
 // ============================================================
 
 export const buckets = {
-  avatars: getEnvVar("VITE_APPWRITE_BUCKET_AVATARS_ID", "avatars", true),
-  productImages: getEnvVar(
-    "VITE_APPWRITE_BUCKET_PRODUCT_IMAGES_ID",
-    "productImages",
-    true,
-  ),
-  storeLogos: getEnvVar(
-    "VITE_APPWRITE_BUCKET_STORE_LOGOS_ID",
-    "storeLogos",
-    true,
-  ),
+  avatars: import.meta.env.VITE_APPWRITE_BUCKET_AVATARS_ID || "avatars",
+  productImages:
+    import.meta.env.VITE_APPWRITE_BUCKET_PRODUCT_IMAGES_ID || "productImages",
+  storeLogos:
+    import.meta.env.VITE_APPWRITE_BUCKET_STORE_LOGOS_ID || "storeLogos",
 };
 
 // Alias legacy para compatibilidad (mayúsculas para mantener compatibilidad con código existente)
@@ -99,22 +89,13 @@ export const BUCKETS = {
 // ============================================================
 
 export const functions = {
-  emailVerification: getEnvVar(
-    "VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID",
-    "",
-    true,
-  ),
-  onUserCreated: getEnvVar(
-    "VITE_APPWRITE_FUNCTION_ON_USER_CREATED_ID",
-    "",
-    true,
-  ),
-  syncUserProfile: getEnvVar(
-    "VITE_APPWRITE_FUNCTION_SYNC_USER_PROFILE_ID",
-    "",
-    true,
-  ),
-  validateSlug: getEnvVar("VITE_APPWRITE_FUNCTION_VALIDATE_SLUG_ID", ""),
+  emailVerification:
+    import.meta.env.VITE_APPWRITE_FUNCTION_EMAIL_VERIFICATION_ID || "",
+  onUserCreated:
+    import.meta.env.VITE_APPWRITE_FUNCTION_ON_USER_CREATED_ID || "",
+  syncUserProfile:
+    import.meta.env.VITE_APPWRITE_FUNCTION_SYNC_USER_PROFILE_ID || "",
+  validateSlug: import.meta.env.VITE_APPWRITE_FUNCTION_VALIDATE_SLUG_ID || "",
 };
 
 // ============================================================

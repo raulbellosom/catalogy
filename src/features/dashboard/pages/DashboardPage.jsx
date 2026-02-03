@@ -52,7 +52,7 @@ export function DashboardPage() {
           icon={Package}
           title="Agregar productos"
           description="Agrega productos a tu catalogo"
-          to="/app/products/new"
+          to="/app/store?tab=products"
           delay={0.1}
         />
         <QuickActionCard

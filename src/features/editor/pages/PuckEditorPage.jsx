@@ -20,7 +20,11 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { databases, DATABASE_ID } from "../../../shared/lib/appwrite";
+import {
+  databases,
+  DATABASE_ID,
+  COLLECTIONS,
+} from "../../../shared/lib/appwrite";
 import { useAuth } from "../../../app/providers/AuthProvider";
 import { getTemplate } from "../../templates/registry";
 import { Button } from "../../../shared/ui/atoms/Button";
@@ -50,9 +54,11 @@ export function PuckEditorPage() {
   const { data: store, isLoading: isLoadingStore } = useQuery({
     queryKey: ["my-store", user?.$id],
     queryFn: async () => {
-      const response = await databases.listDocuments(DATABASE_ID, "stores", [
-        `equal("profileId", "${user.$id}")`,
-      ]);
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.STORES,
+        [`equal("profileId", "${user.$id}")`],
+      );
       return response.documents[0] || null;
     },
     enabled: !!user,
@@ -62,10 +68,11 @@ export function PuckEditorPage() {
   const { data: products = [] } = useQuery({
     queryKey: ["store-products", store?.$id],
     queryFn: async () => {
-      const response = await databases.listDocuments(DATABASE_ID, "products", [
-        `equal("storeId", "${store.$id}")`,
-        `equal("enabled", true)`,
-      ]);
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        COLLECTIONS.PRODUCTS,
+        [`equal("storeId", "${store.$id}")`, `equal("enabled", true)`],
+      );
       return response.documents;
     },
     enabled: !!store,
@@ -102,9 +109,14 @@ export function PuckEditorPage() {
   // Mutation para guardar cambios
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      await databases.updateDocument(DATABASE_ID, "stores", store.$id, {
-        puckData: JSON.stringify(data),
-      });
+      await databases.updateDocument(
+        DATABASE_ID,
+        COLLECTIONS.STORES,
+        store.$id,
+        {
+          puckData: JSON.stringify(data),
+        },
+      );
     },
     onSuccess: () => {
       setSaveState(SAVE_STATES.SAVED);
@@ -141,8 +153,8 @@ export function PuckEditorPage() {
   // Loading state
   if (isLoadingStore) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+      <div className="min-h-screen flex items-center justify-center bg-(--background)">
+        <Loader2 className="w-8 h-8 animate-spin text-(--primary)" />
       </div>
     );
   }
@@ -150,12 +162,12 @@ export function PuckEditorPage() {
   // Sin tienda
   if (!store) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--background)] p-4">
-        <AlertCircle className="w-16 h-16 text-[var(--destructive)] mb-4" />
-        <h1 className="text-xl font-semibold text-[var(--foreground)]">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-(--background) p-4">
+        <AlertCircle className="w-16 h-16 text-(--destructive) mb-4" />
+        <h1 className="text-xl font-semibold text-(--foreground)">
           No tienes una tienda
         </h1>
-        <p className="text-[var(--muted-foreground)] mt-2 text-center">
+        <p className="text-(--muted-foreground) mt-2 text-center">
           Primero debes crear una tienda para poder personalizarla
         </p>
         <Button className="mt-6" onClick={() => navigate("/app/store")}>
@@ -168,16 +180,16 @@ export function PuckEditorPage() {
   // Sin config de puck
   if (!puckConfig || !editorData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+      <div className="min-h-screen flex items-center justify-center bg-(--background)">
+        <Loader2 className="w-8 h-8 animate-spin text-(--primary)" />
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--background)]">
+    <div className="h-screen flex flex-col bg-(--background)">
       {/* Header del editor */}
-      <header className="h-14 border-b border-[var(--border)] bg-[var(--card)] flex items-center justify-between px-4">
+      <header className="h-14 border-b border-(--border) bg-(--card) flex items-center justify-between px-4">
         {/* Left: Back */}
         <div className="flex items-center gap-3">
           <Button
@@ -188,8 +200,8 @@ export function PuckEditorPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver
           </Button>
-          <div className="h-6 w-px bg-[var(--border)]" />
-          <span className="text-sm font-medium text-[var(--foreground)]">
+          <div className="h-6 w-px bg-(--border)" />
+          <span className="text-sm font-medium text-(--foreground)">
             Editando: {store.name}
           </span>
         </div>

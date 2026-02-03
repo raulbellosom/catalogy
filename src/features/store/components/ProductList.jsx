@@ -30,32 +30,32 @@ export function ProductList({
 
   if (viewMode === "table") {
     return (
-      <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
+            <thead className="bg-(--color-bg-secondary) border-b border-(--color-border)">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-fg-secondary)] uppercase tracking-wider w-[80px]">
+                <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider w-[80px]">
                   Imagen
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-fg-secondary)] uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Producto
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-fg-secondary)] uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Precio
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-fg-secondary)] uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Stock
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[var(--color-fg-secondary)] uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-[var(--color-fg-secondary)] uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-(--color-fg-secondary) uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--color-border)]">
+            <tbody className="divide-y divide-(--color-border)">
               {products.map((product) => (
                 <ProductRow
                   key={product.$id}
@@ -112,10 +112,10 @@ function ProductRow({
 
   return (
     <tr
-      className={`hover:bg-[var(--color-bg-secondary)] transition-colors ${!product.enabled ? "opacity-60 bg-[var(--color-bg-secondary)]/30" : ""}`}
+      className={`hover:bg-(--color-bg-secondary) transition-colors ${!product.enabled ? "opacity-60 bg-(--color-bg-secondary)/30" : ""}`}
     >
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="w-12 h-12 rounded-lg bg-[var(--color-bg-tertiary)] overflow-hidden flex items-center justify-center border border-[var(--color-border)]">
+        <div className="w-12 h-12 rounded-lg bg-(--color-bg-tertiary) overflow-hidden flex items-center justify-center border border-(--color-border)">
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -123,27 +123,27 @@ function ProductRow({
               className="w-full h-full object-cover"
             />
           ) : (
-            <ImageIcon className="w-6 h-6 text-[var(--color-fg-muted)]" />
+            <ImageIcon className="w-6 h-6 text-(--color-fg-muted)" />
           )}
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className="text-sm font-medium text-[var(--color-fg)]">
+        <div className="text-sm font-medium text-(--color-fg)">
           {product.name}
         </div>
         {product.description && (
-          <div className="text-xs text-[var(--color-fg-secondary)] truncate max-w-[200px]">
+          <div className="text-xs text-(--color-fg-secondary) truncate max-w-[200px]">
             {product.description}
           </div>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm font-semibold text-[var(--color-fg)]">
+        <div className="text-sm font-semibold text-(--color-fg)">
           ${product.price.toFixed(2)} {product.currency}
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center gap-1.5 text-sm text-[var(--color-fg-secondary)]">
+        <div className="flex items-center gap-1.5 text-sm text-(--color-fg-secondary)">
           <Package className="w-4 h-4" />
           <span>{product.stock || 0}</span>
         </div>
@@ -171,7 +171,7 @@ function ProductRow({
             onClick={() => onEdit(product)}
             title="Editar"
           >
-            <Edit className="w-4 h-4 text-[var(--color-primary)]" />
+            <Edit className="w-4 h-4 text-(--color-primary)" />
           </Button>
           <Button
             variant="ghost"
@@ -179,7 +179,7 @@ function ProductRow({
             onClick={() => onDelete(product)}
             isLoading={isDeleting}
             title="Eliminar"
-            className="text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
+            className="text-(--color-error) hover:bg-(--color-error-bg)"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -211,10 +211,10 @@ function ProductCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className={`bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl overflow-hidden hover:shadow-md transition-all group flex flex-col ${!product.enabled ? "opacity-75 grayscale-[0.5]" : ""}`}
+      className={`bg-(--color-card) border border-(--color-card-border) rounded-2xl overflow-hidden hover:shadow-md transition-all group flex flex-col ${!product.enabled ? "opacity-75 grayscale-[0.5]" : ""}`}
     >
       {/* Image */}
-      <div className="aspect-square bg-[var(--color-bg-secondary)] relative overflow-hidden">
+      <div className="aspect-square bg-(--color-bg-secondary) relative overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -223,19 +223,22 @@ function ProductCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <ImageIcon className="w-16 h-16 text-[var(--color-fg-muted)]" />
+            <ImageIcon className="w-16 h-16 text-(--color-fg-muted)" />
           </div>
         )}
 
         {/* Quick Actions Overlay */}
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300">
           <Button
             size="sm"
             variant="secondary"
-            className="h-8 w-8 p-0 rounded-full shadow-lg"
-            onClick={() => onEdit(product)}
+            className="h-10 w-10 p-0 rounded-full shadow-2xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 dark:border-white/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(product);
+            }}
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-5 h-5" />
           </Button>
         </div>
 
@@ -251,7 +254,7 @@ function ProductCard({
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex justify-between items-start mb-2 gap-2">
           <h3
-            className="font-semibold text-[var(--color-fg)] truncate flex-1"
+            className="font-semibold text-(--color-fg) truncate flex-1"
             title={product.name}
           >
             {product.name}
@@ -259,19 +262,19 @@ function ProductCard({
         </div>
 
         <div className="flex items-center gap-1 mb-2">
-          <DollarSign className="w-4 h-4 text-[var(--color-fg-secondary)]" />
-          <span className="text-xl font-bold text-[var(--color-primary)]">
+          <DollarSign className="w-4 h-4 text-(--color-fg-secondary)" />
+          <span className="text-xl font-bold text-(--color-primary)">
             {product.price.toLocaleString("es-MX", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </span>
-          <span className="text-xs text-[var(--color-fg-secondary)] font-medium mt-1">
+          <span className="text-xs text-(--color-fg-secondary) font-medium mt-1">
             {product.currency || "MXN"}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 mb-4 text-sm text-[var(--color-fg-secondary)]">
+        <div className="flex items-center gap-2 mb-4 text-sm text-(--color-fg-secondary)">
           <Package className="w-4 h-4" />
           <span>
             Stock: <b>{product.stock || 0}</b>
@@ -279,13 +282,13 @@ function ProductCard({
         </div>
 
         {product.description && (
-          <p className="text-sm text-[var(--color-fg-secondary)] line-clamp-2 mb-4 flex-1">
+          <p className="text-sm text-(--color-fg-secondary) line-clamp-2 mb-4 flex-1">
             {product.description}
           </p>
         )}
 
         {/* Footer Actions */}
-        <div className="pt-4 border-t border-[var(--color-border)] flex items-center justify-between gap-2 mt-auto">
+        <div className="pt-4 border-t border-(--color-border) flex items-center justify-between gap-2 mt-auto">
           <Button
             variant="ghost"
             size="sm"
@@ -293,8 +296,8 @@ function ProductCard({
             isLoading={isToggling}
             className={
               product.enabled
-                ? "text-[var(--color-fg-secondary)] hover:text-[var(--color-fg)]"
-                : "text-[var(--color-primary)]"
+                ? "text-(--color-fg-secondary) hover:text-(--color-fg)"
+                : "text-(--color-primary)"
             }
           >
             {product.enabled ? (
@@ -310,7 +313,7 @@ function ProductCard({
             size="sm"
             onClick={() => onDelete(product)}
             isLoading={isDeleting}
-            className="text-[var(--color-error)] hover:bg-[var(--color-error-bg)]"
+            className="text-(--color-error) hover:bg-(--color-error-bg)"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -322,14 +325,14 @@ function ProductCard({
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl border-dashed">
-      <div className="w-16 h-16 bg-[var(--color-bg-tertiary)] rounded-full flex items-center justify-center mb-4">
-        <Package className="w-8 h-8 text-[var(--color-fg-secondary)]" />
+    <div className="flex flex-col items-center justify-center py-16 px-4 bg-(--color-card) border border-(--color-card-border) rounded-2xl border-dashed">
+      <div className="w-16 h-16 bg-(--color-bg-tertiary) rounded-full flex items-center justify-center mb-4">
+        <Package className="w-8 h-8 text-(--color-fg-secondary)" />
       </div>
-      <h3 className="text-lg font-semibold text-[var(--color-fg)] mb-1">
+      <h3 className="text-lg font-semibold text-(--color-fg) mb-1">
         No hay productos
       </h3>
-      <p className="text-[var(--color-fg-secondary)] text-center text-sm mb-0">
+      <p className="text-(--color-fg-secondary) text-center text-sm mb-0">
         Agrega productos para comenzar a vender.
       </p>
     </div>

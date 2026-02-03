@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Save, Loader2, DollarSign, Package } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
@@ -33,16 +34,10 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
   const [stock, setStock] = useState("0");
   const [currency, setCurrency] = useState("MXN");
 
-  // Image state
-  // imageFileId is what we save to DB
+  // Image management
+  const [initialImageFileId, setInitialImageFileId] = useState("");
   const [imageFileId, setImageFileId] = useState("");
-  // imageUrl is for preview
   const [imageUrl, setImageUrl] = useState(null);
-  // pendingImageFile is logic if we wanted to defer upload,
-  // but existing logic uploads immediately, so we keep that pattern or improve it.
-  // Existing pattern in ProductFormPage uploads immediately. Let's stick to that for consistency,
-  // or we can try to be smarter.
-  // Note: ProductFormPage uploads immediately. Let's reuse that simplicity for now.
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -56,12 +51,16 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
       if (product) {
         setName(product.name || "");
         setDescription(product.description || "");
-        setPrice(product.price !== undefined ? product.price.toString() : "");
-        setStock(product.stock !== undefined ? product.stock.toString() : "0");
+        setPrice(product.price != null ? product.price.toString() : "");
+        setStock(product.stock != null ? product.stock.toString() : "0");
         setCurrency(product.currency || "MXN");
-        setImageFileId(product.imageFileId || "");
-        if (product.imageFileId) {
-          setImageUrl(getProductImageUrl(product.imageFileId));
+
+        const fileId = product.imageFileId || "";
+        setImageFileId(fileId);
+        setInitialImageFileId(fileId);
+
+        if (fileId) {
+          setImageUrl(getProductImageUrl(fileId));
         } else {
           setImageUrl(null);
         }
@@ -73,6 +72,7 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
         setStock("0");
         setCurrency("MXN");
         setImageFileId("");
+        setInitialImageFileId("");
         setImageUrl(null);
       }
     }
@@ -81,17 +81,20 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
   const handleImageUpload = async (file) => {
     try {
       setError("");
-      // Ideally show loading state on image component
       const response = await uploadImage.mutateAsync(file);
 
-      // If there was an old image and we replaced it
-      if (imageFileId && imageFileId !== response.$id) {
-        // Optionally delete old image, though ideally we do this only on Save?
-        // ProductFormPage deletes immediately.
+      // If we already uploaded a new image in this session without saving yet,
+      // we should delete THAT temporary one before replacing it with another new one.
+      // But if imageFileId is the initial one from the DB, we don't delete it yet (wait for Save).
+      if (
+        imageFileId &&
+        imageFileId !== initialImageFileId &&
+        imageFileId !== response.$id
+      ) {
         try {
           await deleteProductImage(imageFileId);
         } catch (e) {
-          console.warn("Failed to delete replacing image", e);
+          console.warn("Failed to delete temporary image", e);
         }
       }
 
@@ -104,21 +107,32 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
   };
 
   const handleImageRemove = async () => {
-    // If we remove the image, we might want to delete from storage immediately
-    // or wait until save? ProductFormPage deletes immediately.
-    if (imageFileId) {
+    // If we remove an image that was just uploaded in this session (temporary), delete it.
+    if (imageFileId && imageFileId !== initialImageFileId) {
       try {
         await deleteProductImage(imageFileId);
       } catch (err) {
-        console.warn("Failed to delete image", err);
+        console.warn("Failed to delete temporary image", err);
       }
     }
     setImageFileId("");
     setImageUrl(null);
   };
 
+  const handleClose = async () => {
+    // Cleanup: If the user cancels and we uploaded a new image, delete it.
+    if (imageFileId && imageFileId !== initialImageFileId) {
+      try {
+        await deleteProductImage(imageFileId);
+      } catch (err) {
+        console.warn("Cleanup failed on cancel", err);
+      }
+    }
+    onClose();
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError("");
 
     // Validations
@@ -153,13 +167,22 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
 
       if (isEditMode) {
         await updateProduct.mutateAsync({ productId: product.$id, data });
+
+        // Success: If we changed the image, delete the OLD initial one from DB
+        if (initialImageFileId && imageFileId !== initialImageFileId) {
+          try {
+            await deleteProductImage(initialImageFileId);
+          } catch (e) {
+            console.warn("Failed to cleanup old database image", e);
+          }
+        }
       } else {
         await createProduct.mutateAsync(data);
       }
 
       onClose();
     } catch (err) {
-      console.error("Procut save error:", err);
+      console.error("Product save error:", err);
       setError(err.message || "Error al guardar el producto");
     } finally {
       setIsSubmitting(false);
@@ -169,28 +192,62 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
   return (
     <Modal
       open={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={isEditMode ? "Editar Producto" : "Nuevo Producto"}
       description={
         isEditMode
-          ? "Modifica los detalles de tu producto."
-          : "Agrega un nuevo producto a tu inventario."
+          ? "Actualiza la información detallada de tu producto para mejorar tus ventas."
+          : "Crea una ficha de producto atractiva y completa para tus clientes."
       }
-      size="lg"
+      size="3xl"
+      footer={
+        <ModalFooter className="w-full">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="px-8 h-12 rounded-xl"
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            form="product-form"
+            isLoading={isSubmitting}
+            className="px-10 h-12 rounded-xl shadow-xl shadow-(--color-primary)/20 font-bold"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isEditMode ? "Guardar Cambios" : "Crear Producto"}
+          </Button>
+        </ModalFooter>
+      }
     >
-      <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
+      <form
+        id="product-form"
+        onSubmit={handleSubmit}
+        className="space-y-8 py-4"
+      >
         {/* Error message */}
-        {error && (
-          <div className="p-3 bg-[var(--color-error-bg)] border border-[var(--color-error)] rounded-lg text-[var(--color-error)] text-sm">
-            {error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="p-4 bg-(--color-error-bg) border border-(--color-error) rounded-2xl text-(--color-error) text-sm flex items-start gap-3 overflow-hidden"
+            >
+              <span className="shrink-0 mt-0.5">⚠️</span>
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">
-          {/* Image Column */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[var(--color-fg)]">
-              Imagen
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+          {/* Top Left: Image Section */}
+          <div className="space-y-4">
+            <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
+              Imagen de Portada
             </label>
             <div className="aspect-square w-full">
               <ImageUpload
@@ -201,85 +258,147 @@ export function ProductModal({ isOpen, onClose, storeId, product }) {
                 maxSizeMB={10}
                 aspectRatio="square"
                 className="h-full w-full"
+                label=""
               />
             </div>
-            <p className="text-xs text-[var(--color-fg-secondary)] text-center">
-              JPG, PNG, WEBP. Max 10MB.
-            </p>
           </div>
 
-          {/* Fields Column */}
-          <div className="space-y-4">
-            <Input
-              label="Nombre"
-              placeholder="Ej. Camiseta Básica"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={3}
-              maxLength={150}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="relative">
-                <Input
-                  type="number"
-                  label="Precio"
-                  placeholder="0.00"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  required
-                  min="0"
-                  step="0.01"
-                />
-                <DollarSign className="absolute right-3 top-[38px] w-4 h-4 text-[var(--color-fg-muted)]" />
-              </div>
-              <div className="relative">
-                <Input
-                  type="number"
-                  label="Stock"
-                  placeholder="0"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                  required
-                  min="0"
-                  step="1"
-                />
-                <Package className="absolute right-3 top-[38px] w-4 h-4 text-[var(--color-fg-muted)]" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-fg)] mb-1.5">
-                Descripción
-              </label>
-              <textarea
-                placeholder="Detalles sobre materiales, tallas, cuidados..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={2000}
-                rows={4}
-                className="w-full px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg text-[var(--color-fg)] placeholder:text-[var(--color-fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none text-sm"
+          {/* Top Right: Core Details */}
+          <div className="flex flex-col justify-between space-y-6">
+            <div className="space-y-6">
+              <Input
+                label="Nombre del Producto"
+                placeholder="Ej. Sudadera Oversize Vintage Noir"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                minLength={3}
+                maxLength={150}
+                className="text-lg font-medium"
               />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="relative group">
+                  <Input
+                    type="number"
+                    label="Precio"
+                    placeholder="0.00"
+                    value={price}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || parseFloat(val) >= 0) {
+                        setPrice(val);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (price) setPrice(parseFloat(price).toFixed(2));
+                    }}
+                    required
+                    min="0"
+                    step="0.01"
+                    className="pr-12"
+                  />
+                  <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="relative group">
+                  <Input
+                    type="number"
+                    label="Stock Disponible"
+                    placeholder="0"
+                    value={stock}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "" || parseInt(val) >= 0) {
+                        setStock(val);
+                      }
+                    }}
+                    required
+                    min="0"
+                    step="1"
+                    className="pr-12"
+                  />
+                  <div className="absolute right-4 bottom-3.5 text-(--color-fg-muted) transition-colors group-focus-within:text-(--color-primary)">
+                    <Package className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <div className="p-5 bg-(--color-bg-secondary) rounded-2xl border border-(--color-border) border-dashed space-y-2">
+              <h4 className="text-xs font-bold text-(--color-fg) uppercase tracking-widest">
+                Tip de Diseño
+              </h4>
+              <p className="text-xs text-(--color-fg-secondary) leading-relaxed">
+                Usa fondos limpios y buena iluminación. Las fotos consistentes
+                aumentan la confianza del comprador hasta en un 40%.
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom: Full Width Description */}
+          <div className="md:col-span-2 space-y-4 pt-4 border-t border-(--color-border)">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-bold text-(--color-fg) tracking-tight uppercase">
+                Descripción del Producto
+              </label>
+
+              {/* Character Count Ring */}
+              <div className="flex items-center gap-2">
+                <div className="relative w-5 h-5">
+                  <svg className="w-full h-full -rotate-90">
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="8"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="text-(--color-border)"
+                    />
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="8"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeDasharray={2 * Math.PI * 8}
+                      strokeDashoffset={
+                        2 * Math.PI * 8 * (1 - description.length / 2000)
+                      }
+                      className={`transition-all duration-300 ${
+                        description.length > 1800
+                          ? "text-(--color-error)"
+                          : "text-(--color-primary)"
+                      }`}
+                    />
+                  </svg>
+                </div>
+                <span
+                  className={`text-[10px] font-bold tabular-nums ${
+                    description.length > 1800
+                      ? "text-(--color-error)"
+                      : "text-(--color-fg-muted)"
+                  }`}
+                >
+                  {description.length} / 2000
+                </span>
+              </div>
+            </div>
+
+            <textarea
+              placeholder="Detalla qué hace único a tu producto, especificaciones técnicas, materiales, guía de tallas o envío..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={2000}
+              rows={5}
+              className="w-full px-5 py-4 bg-(--color-bg-secondary) border border-(--color-border) rounded-2xl text-(--color-fg) placeholder:text-(--color-fg-muted) transition-all duration-200 focus:outline-none focus:border-(--color-border-focus) focus:ring-4 focus:ring-(--color-primary)/10 resize-none text-base"
+            />
           </div>
         </div>
       </form>
-
-      <ModalFooter className="mt-6">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onClose}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" form="product-form" isLoading={isSubmitting}>
-          <Save className="w-4 h-4 mr-2" />
-          {isEditMode ? "Guardar Cambios" : "Crear Producto"}
-        </Button>
-      </ModalFooter>
     </Modal>
   );
 }

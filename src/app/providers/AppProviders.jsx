@@ -10,11 +10,11 @@ import { ToastProvider } from "@/shared/ui/molecules";
 export function AppProviders({ children }) {
   return (
     <ThemeProvider>
-      <SubdomainProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <SubdomainProvider>
           <ToastProvider>{children}</ToastProvider>
-        </AuthProvider>
-      </SubdomainProvider>
+        </SubdomainProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

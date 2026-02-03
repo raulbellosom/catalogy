@@ -5,7 +5,7 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
-import { useSubdomain } from "@/shared/hooks";
+import { useSubdomainContext } from "@/app/providers";
 import { useStoreBySlug, useProducts } from "@/shared/hooks";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -17,15 +17,18 @@ import { motion } from "motion/react";
  * Renders store catalog for public viewing via subdomain
  */
 export function CatalogPage({ previewSlug }) {
-  const subdomain = useSubdomain();
-  const slug = previewSlug || subdomain;
+  const { slug: subdomainSlug, store: subdomainStore } = useSubdomainContext();
+  const slug = previewSlug || subdomainSlug;
 
-  // Fetch store by slug (subdomain)
+  // Use store from context if on subdomain, otherwise fetch (for preview)
   const {
-    data: store,
-    isLoading: loadingStore,
+    data: previewStore,
+    isLoading: loadingPreviewStore,
     error: storeError,
-  } = useStoreBySlug(slug);
+  } = useStoreBySlug(previewSlug ? previewSlug : null);
+
+  const store = previewSlug ? previewStore : subdomainStore;
+  const loadingStore = previewSlug ? loadingPreviewStore : false;
 
   // Fetch products if store exists
   const { data: productsData, isLoading: loadingProducts } = useProducts(

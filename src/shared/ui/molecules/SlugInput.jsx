@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, X, Loader2, ExternalLink } from "lucide-react";
+import { appConfig } from "@/shared/lib/env";
 import { Input } from "@/shared/ui/atoms/Input";
 import { useSlugAvailability } from "@/shared/hooks";
 import { validateSlug } from "@/shared/services/storeService";
@@ -15,6 +16,7 @@ import { validateSlug } from "@/shared/services/storeService";
 export function SlugInput({
   value,
   onChange,
+  initialValue = "",
   excludeStoreId = null,
   required = true,
 }) {
@@ -54,8 +56,16 @@ export function SlugInput({
 
   const isChecking =
     (checkingAvailability || isFetching) && debouncedSlug === value;
+
+  // Only show success if it's different from initial value and valid
+  const hasChanged = value !== initialValue;
   const showSuccess =
-    !slugError && isAvailable && debouncedSlug === value && value.length >= 3;
+    hasChanged &&
+    !slugError &&
+    isAvailable &&
+    debouncedSlug === value &&
+    value.length >= 3;
+
   const showError =
     !slugError && isAvailable === false && debouncedSlug === value;
 
@@ -65,9 +75,9 @@ export function SlugInput({
         type="text"
         label={
           <div className="flex justify-between items-center w-full">
-            <span>Link de tu tienda</span>
+            <span>Editar link de la tienda</span>
             <div className="flex items-center gap-2 font-normal">
-              <span className="text-xs text-[var(--color-fg-muted)]">
+              <span className="text-xs text-(--color-fg-secondary)">
                 {value.length}/50
               </span>
               <div className="relative w-4 h-4">
@@ -79,7 +89,7 @@ export function SlugInput({
                     stroke="currentColor"
                     strokeWidth="2"
                     fill="transparent"
-                    className="text-[var(--color-border)]"
+                    className="text-(--color-border)"
                   />
                   <circle
                     cx="8"
@@ -95,7 +105,7 @@ export function SlugInput({
                     className={`transition-all duration-300 ${
                       value.length >= 50
                         ? "text-red-500"
-                        : "text-[var(--color-primary)]"
+                        : "text-(--color-primary)"
                     }`}
                   />
                 </svg>
@@ -110,10 +120,6 @@ export function SlugInput({
             .toLowerCase()
             .replace(/[^a-z0-9-]/g, "");
 
-          // Only trigger change if value is different (optional, but good for react)
-          // Actually we need to force the update so the input reflects the sanitation immediately
-          // Create a synthetic event or just call onChange if the parent expects value or event.
-          // Adjusting based on standard Input behavior which usually expects event.
           e.target.value = sanitized;
           onChange(e);
         }}
@@ -126,7 +132,7 @@ export function SlugInput({
       {/* Status indicator */}
       <div className="absolute right-4 top-[38px]">
         {isChecking && (
-          <Loader2 className="w-5 h-5 text-[var(--color-fg-muted)] animate-spin" />
+          <Loader2 className="w-5 h-5 text-(--color-fg-muted) animate-spin" />
         )}
         {showSuccess && (
           <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -137,22 +143,16 @@ export function SlugInput({
       {/* Validation messages */}
       <div className="mt-2 space-y-1">
         {slugError && (
-          <p className="text-sm text-[var(--color-error)]">{slugError}</p>
+          <p className="text-sm text-(--color-error)">{slugError}</p>
         )}
         {showError && (
-          <p className="text-sm text-[var(--color-error)]">
+          <p className="text-sm text-(--color-error)">
             Esta dirección ya está en uso
           </p>
         )}
         {showSuccess && (
           <p className="text-sm text-green-600 dark:text-green-400">
             ¡Dirección disponible!
-          </p>
-        )}
-        {!slugError && value && (
-          <p className="text-xs text-[var(--color-fg-secondary)]">
-            Tu catálogo estará en:{" "}
-            <strong>{value}.catalog.racoondevs.com</strong>
           </p>
         )}
       </div>

@@ -33,8 +33,6 @@ import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { StoreSettingsPage } from "@/features/store/pages/StoreSettingsPage";
 import { StorePreviewPage } from "@/features/store/pages/StorePreviewPage";
-import { ProductsPage } from "@/features/products/pages/ProductsPage";
-import { ProductFormPage } from "@/features/products/pages/ProductFormPage";
 import { UserSettingsPage } from "@/features/settings/pages/UserSettingsPage";
 import { PuckEditorPage } from "@/features/editor/pages/PuckEditorPage";
 
@@ -60,6 +58,28 @@ export function AppRoutes() {
 
   // Store subdomain routes ({slug}.catalog.racoondevs.com)
   if (isStoreDomain) {
+    const { store, user } = useSubdomainContext();
+
+    // If store doesn't exist, show Not Found
+    if (!store) {
+      return (
+        <Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      );
+    }
+
+    // If store is not published, check if user is the owner
+    const isOwner = user?.$id === store.profileId;
+
+    if (!store.published && !isOwner) {
+      return (
+        <Routes>
+          <Route path="*" element={<CatalogNotAvailablePage />} />
+        </Routes>
+      );
+    }
+
     return (
       <>
         <ScrollToTop />
@@ -125,9 +145,6 @@ export function AppRoutes() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="store" element={<StoreSettingsPage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="products/new" element={<ProductFormPage />} />
-          <Route path="products/:productId" element={<ProductFormPage />} />
           <Route path="settings" element={<UserSettingsPage />} />
 
           {/* Admin routes */}

@@ -1,5 +1,7 @@
 import { createContext, useContext, useMemo } from "react";
 import { useSubdomain } from "@/shared/hooks/useSubdomain";
+import { useStoreBySlug } from "@/shared/hooks/useStore";
+import { useAuth } from "@/app/providers/AuthProvider";
 
 /**
  * @typedef {Object} SubdomainContextValue
@@ -20,16 +22,28 @@ const SubdomainContext = createContext(
  */
 export function SubdomainProvider({ children }) {
   try {
-    const { isRootDomain, slug, isLoading } = useSubdomain();
+    const { isRootDomain, slug, isLoading: loadingSubdomain } = useSubdomain();
+    const { user, isAuthenticated } = useAuth();
+    const {
+      data: store,
+      isLoading: loadingStore,
+      error,
+    } = useStoreBySlug(slug);
+
+    const isLoading = loadingSubdomain || (!!slug && loadingStore);
 
     const value = useMemo(
       () => ({
         isRootDomain,
         isStoreDomain: !isRootDomain && !!slug,
         slug,
+        store,
+        user,
+        isAuthenticated,
+        error,
         isLoading,
       }),
-      [isRootDomain, slug, isLoading],
+      [isRootDomain, slug, store, user, isAuthenticated, error, isLoading],
     );
 
     return (

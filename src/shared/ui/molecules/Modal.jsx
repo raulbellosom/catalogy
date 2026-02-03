@@ -64,29 +64,14 @@ export function Modal({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [open, onClose, dismissible]);
 
-  // Lock body scroll and apply blur when open
+  // Lock body scroll when open
   useEffect(() => {
     if (open) {
-      // Add blur to the main app content
-      const root = document.getElementById("root");
-      if (root) {
-        root.style.filter = "blur(8px)";
-        root.style.transition = "filter 0.2s ease-out";
-      }
       document.body.style.overflow = "hidden";
     } else {
-      // Remove blur from main app content
-      const root = document.getElementById("root");
-      if (root) {
-        root.style.filter = "";
-      }
       document.body.style.overflow = "";
     }
     return () => {
-      const root = document.getElementById("root");
-      if (root) {
-        root.style.filter = "";
-      }
       document.body.style.overflow = "";
     };
   }, [open]);
@@ -96,6 +81,10 @@ export function Modal({
     md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-xl",
+    "2xl": "max-w-2xl",
+    "3xl": "max-w-3xl",
+    "4xl": "max-w-4xl",
+    "5xl": "max-w-5xl",
     full: "max-w-full mx-4",
   };
 
@@ -108,7 +97,7 @@ export function Modal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
           {/* Overlay */}
           <motion.div
             variants={overlayVariants}
@@ -116,7 +105,7 @@ export function Modal({
             animate="visible"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/70"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={handleOverlayClick}
           />
 
@@ -126,21 +115,21 @@ export function Modal({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`relative w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[90vh] ${sizeClasses[size]} ${className}`}
+            className={`relative w-full rounded-xl border border-(--color-border) bg-(--color-card) shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[90vh] ${sizeClasses[size]} ${className}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header - Fixed */}
             {(title || description) && (
-              <div className="shrink-0 px-6 pt-6 pb-4 border-b border-[var(--color-border)]">
+              <div className="shrink-0 px-6 pt-6 pb-4 border-b border-(--color-border)">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     {title && (
-                      <h2 className="text-xl font-bold text-[var(--color-fg)] tracking-tight">
+                      <h2 className="text-xl font-bold text-(--color-fg) tracking-tight">
                         {title}
                       </h2>
                     )}
                     {description && (
-                      <p className="mt-1.5 text-sm text-[var(--color-fg-secondary)]">
+                      <p className="mt-1.5 text-sm text-(--color-fg-secondary)">
                         {description}
                       </p>
                     )}
@@ -150,7 +139,7 @@ export function Modal({
                   {showClose && dismissible && (
                     <button
                       onClick={onClose}
-                      className="shrink-0 rounded-lg p-1.5 text-[var(--color-fg-muted)] transition hover:bg-[var(--color-bg-muted)] hover:text-[var(--color-fg)]"
+                      className="shrink-0 rounded-lg p-1.5 text-(--color-fg-muted) transition hover:bg-(--color-bg-muted) hover:text-(--color-fg)"
                       aria-label="Cerrar"
                     >
                       <X className="h-5 w-5" />
@@ -167,7 +156,7 @@ export function Modal({
 
             {/* Footer - Fixed (Optional) */}
             {footer && (
-              <div className="shrink-0 px-6 py-4 border-t border-[var(--color-border)] bg-[var(--color-card)] rounded-b-xl">
+              <div className="shrink-0 px-6 py-4 border-t border-(--color-border) bg-(--color-card) rounded-b-xl">
                 {footer}
               </div>
             )}

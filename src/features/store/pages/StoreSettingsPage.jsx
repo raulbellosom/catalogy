@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Store,
   Globe,
@@ -15,6 +15,7 @@ import {
   Grid,
   List,
   Filter,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
@@ -62,11 +63,31 @@ export function StoreSettingsPage() {
   const updateProduct = useUpdateProduct(store?.$id);
 
   // UI State
-  const [activeTab, setActiveTab] = useState("general"); // 'general' | 'appearance' | 'products'
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(
+    () => searchParams.get("tab") || "general",
+  );
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+
+  // Sync tab with URL
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    if (
+      tabFromUrl &&
+      ["general", "appearance", "products"].includes(tabFromUrl)
+    ) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  // Update URL on tab change (optional, but good for navigation)
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    navigate(`/app/store?tab=${tab}`, { replace: true });
+  };
 
   // Product Management State
   const [productViewMode, setProductViewMode] = useState("grid"); // 'grid' | 'table'
@@ -243,7 +264,7 @@ export function StoreSettingsPage() {
   if (loadingStore) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-(--color-primary)" />
       </div>
     );
   }
@@ -253,11 +274,11 @@ export function StoreSettingsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[var(--color-fg)] flex items-center gap-3">
-            <Store className="w-8 h-8 text-[var(--color-primary)]" />
+          <h1 className="text-3xl font-bold text-(--color-fg) flex items-center gap-3">
+            <Store className="w-8 h-8 text-(--color-primary)" />
             Mi Tienda
           </h1>
-          <p className="text-[var(--color-fg-secondary)] mt-1 ml-11">
+          <p className="text-(--color-fg-secondary) mt-1 ml-11">
             Configuración general y gestión de productos
           </p>
         </div>
@@ -268,9 +289,12 @@ export function StoreSettingsPage() {
               target="_blank"
               rel="noreferrer"
             >
-              <Button variant="outline">
+              <Button
+                variant="outline"
+                className="border-(--color-primary)/20 hover:bg-(--color-primary)/5"
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Ver Tienda
+                {store.published ? "Ver Tienda" : "Vista Previa"}
               </Button>
             </a>
           )}
@@ -301,22 +325,22 @@ export function StoreSettingsPage() {
       </AnimatePresence>
 
       {/* Tabs */}
-      <div className="border-b border-[var(--color-border)] flex gap-1 items-end overflow-x-auto">
+      <div className="border-b border-(--color-border) flex gap-1 items-end overflow-x-auto">
         <TabButton
           active={activeTab === "general"}
-          onClick={() => setActiveTab("general")}
+          onClick={() => handleTabChange("general")}
           icon={Store}
           label="General"
         />
         <TabButton
           active={activeTab === "appearance"}
-          onClick={() => setActiveTab("appearance")}
+          onClick={() => handleTabChange("appearance")}
           icon={Palette}
           label="Apariencia"
         />
         <TabButton
           active={activeTab === "products"}
-          onClick={() => setActiveTab("products")}
+          onClick={() => handleTabChange("products")}
           icon={Package}
           label="Productos"
         />
@@ -331,12 +355,12 @@ export function StoreSettingsPage() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-6 shadow-sm space-y-6">
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-6">
                 <div>
-                  <h3 className="text-lg font-bold text-[var(--color-fg)] mb-1">
+                  <h3 className="text-lg font-bold text-(--color-fg) mb-1">
                     Información Básica
                   </h3>
-                  <p className="text-sm text-[var(--color-fg-secondary)] mb-4">
+                  <p className="text-sm text-(--color-fg-secondary) mb-4">
                     Detalles principales de tu comercio.
                   </p>
 
@@ -348,11 +372,11 @@ export function StoreSettingsPage() {
                       required
                     />
                     <div>
-                      <label className="text-sm font-medium text-[var(--color-fg)]">
+                      <label className="text-sm font-medium text-(--color-fg)">
                         Descripción
                       </label>
                       <textarea
-                        className="w-full mt-1 px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl text-[var(--color-fg)] focus:ring-2 focus:ring-[var(--color-primary)] outline-none resize-none"
+                        className="w-full mt-1 px-3 py-2 bg-[var(--color-bg)] border border-(--color-border) rounded-xl text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none resize-none"
                         rows={4}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
@@ -363,31 +387,66 @@ export function StoreSettingsPage() {
                 </div>
               </div>
 
-              <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[var(--color-fg)] mb-1">
-                  Dominio
-                </h3>
-                <p className="text-sm text-[var(--color-fg-secondary)] mb-4">
-                  Define la URL de tu tienda.
-                </p>
-                <SlugInput
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  excludeStoreId={store?.$id}
-                />
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-(--color-fg) mb-1">
+                      Link de tu tienda
+                    </h3>
+                    <p className="text-sm text-(--color-fg-secondary)">
+                      Esta es la dirección pública de tu catálogo.
+                    </p>
+                  </div>
+                  <Globe className="w-6 h-6 text-(--color-primary) opacity-50" />
+                </div>
+
+                <div className="space-y-6">
+                  <SlugInput
+                    value={slug}
+                    initialValue={store?.slug || ""}
+                    onChange={(e) => setSlug(e.target.value)}
+                    excludeStoreId={store?.$id}
+                  />
+
+                  <div className="flex items-center gap-2 p-3 bg-(--color-bg-secondary) border border-(--color-border) rounded-xl group hover:border-(--color-primary)/30 transition-colors">
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-xs text-(--color-fg-muted) font-medium uppercase tracking-wider mb-0.5">
+                        URL de la tienda
+                      </p>
+                      <p className="text-(--color-fg) font-semibold truncate">
+                        {slug}.{appConfig.baseDomain}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-10 px-4 rounded-lg bg-(--color-card) shadow-sm hover:text-(--color-primary)"
+                      onClick={() => {
+                        const url = `https://${slug}.${appConfig.baseDomain}`;
+                        navigator.clipboard.writeText(url);
+                        setSuccess("Link copiado al portapapeles");
+                        setTimeout(() => setSuccess(""), 2000);
+                      }}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copiar
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[var(--color-fg)] mb-4">
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-(--color-fg) mb-4">
                   Estado de la tienda
                 </h3>
                 <div
                   className={`flex flex-col gap-4 p-4 rounded-xl border ${
                     store?.published
                       ? "bg-green-500/5 border-green-500/20"
-                      : "bg-[var(--color-bg-secondary)] border-[var(--color-border)]"
+                      : "bg-(--color-bg-secondary) border-(--color-border)"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -395,7 +454,7 @@ export function StoreSettingsPage() {
                       className={`p-2 rounded-lg ${
                         store?.published
                           ? "bg-green-500/10 text-green-600"
-                          : "bg-[var(--color-bg-tertiary)] text-[var(--color-fg-muted)]"
+                          : "bg-[var(--color-bg-tertiary)] text-(--color-fg-muted)"
                       }`}
                     >
                       <Globe className="w-6 h-6" />
@@ -405,12 +464,12 @@ export function StoreSettingsPage() {
                         className={`font-semibold text-lg block ${
                           store?.published
                             ? "text-green-700 dark:text-green-400"
-                            : "text-[var(--color-fg)]"
+                            : "text-(--color-fg)"
                         }`}
                       >
                         {store?.published ? "Tienda Pública" : "Tienda Privada"}
                       </span>
-                      <p className="text-sm text-[var(--color-fg-secondary)]">
+                      <p className="text-sm text-(--color-fg-secondary)">
                         {store?.published
                           ? "Cualquiera con el link puede ver tu tienda."
                           : "Solo tú puedes ver tu tienda."}
@@ -470,11 +529,11 @@ export function StoreSettingsPage() {
                   </ModalFooter>
                 }
               >
-                <div className="p-4 bg-[var(--color-bg-secondary)] rounded-lg text-sm text-[var(--color-fg-secondary)]">
-                  <p className="font-medium text-[var(--color-fg)] mb-1">
+                <div className="p-4 bg-(--color-bg-secondary) rounded-lg text-sm text-(--color-fg-secondary)">
+                  <p className="font-medium text-(--color-fg) mb-1">
                     Link de tu tienda:
                   </p>
-                  <code className="block bg-[var(--color-bg)] p-2 rounded border border-[var(--color-border)] select-all">
+                  <code className="block bg-[var(--color-bg)] p-2 rounded border border-(--color-border) select-all">
                     https://{store?.slug}.{appConfig.baseDomain}
                   </code>
                 </div>
@@ -500,16 +559,16 @@ export function StoreSettingsPage() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[var(--color-fg)] mb-4">
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-(--color-fg) mb-4">
                   Plantilla
                 </h3>
                 <TemplateSelector value={templateId} onChange={setTemplateId} />
               </div>
             </div>
             <div className="lg:col-span-1 space-y-6">
-              <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[var(--color-fg)] mb-4">
+              <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-(--color-fg) mb-4">
                   Logo
                 </h3>
                 <ImageUpload
@@ -536,14 +595,14 @@ export function StoreSettingsPage() {
         {activeTab === "products" && (
           <div className="space-y-6">
             {/* Toolbar */}
-            <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
               <div className="flex items-center gap-2 w-full md:w-auto">
                 <div className="relative flex-1 md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-fg-muted)]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--color-fg-muted)" />
                   <input
                     type="text"
                     placeholder="Buscar productos..."
-                    className="w-full pl-9 pr-4 py-2 bg-[var(--color-bg-secondary)] border-none rounded-lg text-sm text-[var(--color-fg)] focus:ring-2 focus:ring-[var(--color-primary)] outline-none"
+                    className="w-full pl-9 pr-4 py-2 bg-(--color-bg-secondary) border-none rounded-lg text-sm text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) outline-none"
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                   />
@@ -552,27 +611,27 @@ export function StoreSettingsPage() {
                   <select
                     value={filterEnabled}
                     onChange={(e) => setFilterEnabled(e.target.value)}
-                    className="appearance-none pl-9 pr-8 py-2 bg-[var(--color-bg-secondary)] rounded-lg text-sm font-medium text-[var(--color-fg)] outline-none cursor-pointer focus:ring-2 focus:ring-[var(--color-primary)]"
+                    className="appearance-none pl-9 pr-8 py-2 bg-(--color-bg-secondary) rounded-lg text-sm font-medium text-(--color-fg) outline-none cursor-pointer focus:ring-2 focus:ring-(--color-primary)"
                   >
                     <option value="all">Todos</option>
                     <option value="active">Activos</option>
                     <option value="hidden">Ocultos</option>
                   </select>
-                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-fg-muted)]" />
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--color-fg-muted)" />
                 </div>
               </div>
 
               <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                <div className="flex bg-[var(--color-bg-secondary)] p-1 rounded-lg">
+                <div className="flex bg-(--color-bg-secondary) p-1 rounded-lg">
                   <button
                     onClick={() => setProductViewMode("grid")}
-                    className={`p-1.5 rounded-md transition-all ${productViewMode === "grid" ? "bg-[var(--color-card)] shadow text-[var(--color-fg)]" : "text-[var(--color-fg-muted)]"}`}
+                    className={`p-1.5 rounded-md transition-all ${productViewMode === "grid" ? "bg-(--color-card) shadow text-(--color-fg)" : "text-(--color-fg-muted)"}`}
                   >
                     <Grid className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setProductViewMode("table")}
-                    className={`p-1.5 rounded-md transition-all ${productViewMode === "table" ? "bg-[var(--color-card)] shadow text-[var(--color-fg)]" : "text-[var(--color-fg-muted)]"}`}
+                    className={`p-1.5 rounded-md transition-all ${productViewMode === "table" ? "bg-(--color-card) shadow text-(--color-fg)" : "text-(--color-fg-muted)"}`}
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -586,7 +645,7 @@ export function StoreSettingsPage() {
             {/* List */}
             {loadingProducts ? (
               <div className="py-12 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+                <Loader2 className="w-8 h-8 animate-spin text-(--color-primary)" />
               </div>
             ) : (
               <ProductList
@@ -622,8 +681,8 @@ function TabButton({ active, onClick, icon: Icon, label }) {
                 flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors
                 ${
                   active
-                    ? "border-[var(--color-primary)] text-[var(--color-primary)]"
-                    : "border-transparent text-[var(--color-fg-secondary)] hover:text-[var(--color-fg)] hover:border-[var(--color-fg-muted)]"
+                    ? "border-(--color-primary) text-(--color-primary)"
+                    : "border-transparent text-(--color-fg-secondary) hover:text-(--color-fg) hover:border-(--color-fg-muted)"
                 }
             `}
     >

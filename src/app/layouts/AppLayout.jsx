@@ -1,4 +1,10 @@
-import { Outlet, NavLink, useNavigate, Link } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  useNavigate,
+  Link,
+  useLocation,
+} from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -33,8 +39,13 @@ import { motion, AnimatePresence } from "motion/react";
 /** @type {NavItem[]} */
 const NAV_ITEMS = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/app/store", label: "Mi tienda", icon: Store, exact: false },
-  { to: "/app/products", label: "Productos", icon: Package, exact: false },
+  { to: "/app/store", label: "Mi tienda", icon: Store, exact: true },
+  {
+    to: "/app/store?tab=products",
+    label: "Productos",
+    icon: Package,
+    exact: false,
+  },
   { to: "/app/settings", label: "Configuracion", icon: Settings, exact: false },
 ];
 
@@ -48,25 +59,44 @@ const NAV_ITEMS = [
  * @param {boolean} [props.exact]
  * @param {() => void} [props.onClick]
  */
-function NavItem({ to, icon: Icon, label, collapsed, exact = false, onClick }) {
+function NavItem({ to, icon: Icon, label, collapsed, onClick }) {
+  const { search, pathname } = useLocation();
+
+  const isActive = () => {
+    const targetUrl = new URL(to, window.location.origin);
+    const targetPath = targetUrl.pathname;
+    const targetTab = targetUrl.searchParams.get("tab");
+
+    // Match pathname
+    if (pathname !== targetPath) return false;
+
+    // If target has a tab, current search must match it
+    const currentTab = new URLSearchParams(search).get("tab");
+    if (targetTab) {
+      return currentTab === targetTab;
+    }
+
+    // If target has NO tab, current search must also have no tab (or at least not 'products' etc.)
+    return !currentTab || currentTab === "general";
+  };
+
   return (
     <NavLink
       to={to}
-      end={exact}
       onClick={onClick}
-      className={({ isActive }) =>
+      className={() =>
         `group flex items-center overflow-hidden transition-all relative select-none mx-2 my-0.5 rounded-xl ${
-          isActive
+          isActive()
             ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)]"
             : "text-[var(--color-fg-secondary)] hover:bg-[var(--color-bg-tertiary)] hover:text-[var(--color-fg)]"
         }`
       }
       title={collapsed ? label : undefined}
     >
-      {({ isActive }) => (
+      {() => (
         <>
           {/* Active indicator */}
-          {isActive && (
+          {isActive() && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-[var(--color-primary)] rounded-r-full"></div>
           )}
 
@@ -74,7 +104,7 @@ function NavItem({ to, icon: Icon, label, collapsed, exact = false, onClick }) {
           <div className="flex h-11 w-12 shrink-0 items-center justify-center">
             <Icon
               className={`h-5 w-5 transition-transform ${
-                isActive ? "scale-105" : "group-hover:scale-105"
+                isActive() ? "scale-105" : "group-hover:scale-105"
               }`}
             />
           </div>
@@ -102,33 +132,47 @@ function NavItem({ to, icon: Icon, label, collapsed, exact = false, onClick }) {
  * @param {React.ComponentType} props.icon
  * @param {boolean} [props.exact]
  */
-function MobileNavItem({ to, icon: Icon, label, exact = false }) {
+function MobileNavItem({ to, icon: Icon, label }) {
+  const { search, pathname } = useLocation();
+
+  const isActive = () => {
+    const targetUrl = new URL(to, window.location.origin);
+    const targetPath = targetUrl.pathname;
+    const targetTab = targetUrl.searchParams.get("tab");
+
+    if (pathname !== targetPath) return false;
+
+    const currentTab = new URLSearchParams(search).get("tab");
+    if (targetTab) return currentTab === targetTab;
+
+    return !currentTab || currentTab === "general";
+  };
+
   return (
     <NavLink
       to={to}
-      end={exact}
-      className={({ isActive }) =>
+      className={() =>
         `flex flex-col items-center gap-1 rounded-xl py-2 px-3 text-xs font-semibold transition-all relative ${
-          isActive
+          isActive()
             ? "text-[var(--color-primary)]"
             : "text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
         }`
       }
     >
-      {({ isActive }) => (
+      {() => (
         <>
           <motion.div
             initial={false}
             animate={{
-              scale: isActive ? 1.15 : 1,
-              y: isActive ? -2 : 0,
+              scale: isActive() ? 1.15 : 1,
+              y: isActive() ? -2 : 0,
             }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <Icon className="h-5 w-5" />
           </motion.div>
           <span className="truncate max-w-[64px]">{label}</span>
-          {isActive && (
+          {isActive() && (
             <motion.div
               layoutId="mobile-nav-indicator"
               className="absolute -top-0.5 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-[var(--color-primary)]"
