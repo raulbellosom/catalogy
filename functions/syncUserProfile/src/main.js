@@ -11,6 +11,8 @@ import { Client, Databases, Users } from "node-appwrite";
  * 1) Actualiza el documento `profiles/{userId}` (firstName, lastName, phone, avatarFileId)
  * 2) Sincroniza `name`, `email` y `phone` en Appwrite Auth.
  * 3) Si el email cambia, resetea emailVerified a false
+ * 4) Permite actualizar campos de aceptación de términos (termsAcceptedAt, termsVersion, privacyAcceptedAt)
+ *    solo si se pasan explícitamente en el body (para re-aceptación futura)
  *
  * Seguridad:
  * - Solo permite actualizar el perfil del usuario autenticado
@@ -127,6 +129,18 @@ export default async ({ req, res, log, error }) => {
 
   if (body.avatarFileId !== undefined)
     patch.avatarFileId = safeStr(body.avatarFileId, 64);
+
+  // Terms and Privacy acceptance fields (only update if explicitly provided)
+  // These should only change when user explicitly re-accepts terms/privacy
+  if (body.termsAcceptedAt !== undefined) {
+    patch.termsAcceptedAt = body.termsAcceptedAt;
+  }
+  if (body.termsVersion !== undefined) {
+    patch.termsVersion = safeStr(body.termsVersion, 20);
+  }
+  if (body.privacyAcceptedAt !== undefined) {
+    patch.privacyAcceptedAt = body.privacyAcceptedAt;
+  }
 
   if (Object.keys(patch).length === 0) {
     return res.json({ success: true, message: "No changes detected" });

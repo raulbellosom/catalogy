@@ -73,27 +73,31 @@ Document ID:
 
 - Preferido: documentId == Auth userId
 
-| Attribute     | Type    | Required | Default | Constraint(s) | Notes                           |
-| ------------- | ------- | -------- | ------- | ------------- | ------------------------------- |
-| firstName     | string  | yes      |         | size=80       | min length validado en frontend |
-| lastName      | string  | yes      |         | size=80       | min length validado en frontend |
-| email         | email   | yes      |         |               | debe coincidir con Auth email   |
-| emailVerified | boolean | no       | false   |               |                                 |
-| phone         | string  | no       |         | size=30       | opcional                        |
-| phoneVerified | boolean | no       | false   |               |                                 |
-| avatarFileId  | string  | no       |         | size=64       | Storage fileId                  |
-| role          | enum    | no       | user    | admin,user    | control de acceso               |
-| enabled       | boolean | no       | true    |               | soft delete                     |
-| active        | boolean | no       | true    |               | estado de negocio               |
+| Attribute         | Type     | Required | Default | Constraint(s) | Notes                                    |
+| ----------------- | -------- | -------- | ------- | ------------- | ---------------------------------------- |
+| firstName         | string   | yes      |         | size=80       | min length validado en frontend          |
+| lastName          | string   | yes      |         | size=80       | min length validado en frontend          |
+| email             | email    | yes      |         |               | debe coincidir con Auth email            |
+| emailVerified     | boolean  | no       | false   |               |                                          |
+| phone             | string   | no       |         | size=30       | opcional                                 |
+| phoneVerified     | boolean  | no       | false   |               |                                          |
+| avatarFileId      | string   | no       |         | size=64       | Storage fileId                           |
+| role              | enum     | no       | user    | admin,user    | control de acceso                        |
+| enabled           | boolean  | no       | true    |               | soft delete                              |
+| active            | boolean  | no       | true    |               | estado de negocio                        |
+| termsAcceptedAt   | datetime | no       |         |               | fecha/hora de aceptación de términos     |
+| termsVersion      | string   | no       |         | size=20       | versión de términos aceptada (ej: 1.0.0) |
+| privacyAcceptedAt | datetime | no       |         |               | fecha/hora de aceptación de privacidad   |
 
 Indexes:
 
-| Index Name           | Type   | Attributes | Notes                     |
-| -------------------- | ------ | ---------- | ------------------------- |
-| uq_profiles_email    | unique | email ↑    | unicidad de email         |
-| key_profiles_enabled | key    | enabled ↑  | queries por estado        |
-| key_profiles_active  | key    | active ↑   | queries por estado activo |
-| key_profiles_role    | key    | role ↑     | queries por rol           |
+| Index Name                   | Type   | Attributes        | Notes                     |
+| ---------------------------- | ------ | ----------------- | ------------------------- |
+| uq_profiles_email            | unique | email ↑           | unicidad de email         |
+| key_profiles_enabled         | key    | enabled ↑         | queries por estado        |
+| key_profiles_active          | key    | active ↑          | queries por estado activo |
+| key_profiles_role            | key    | role ↑            | queries por rol           |
+| key_profiles_termsacceptedat | key    | termsAcceptedAt ↑ | queries por aceptación    |
 
 Permissions:
 

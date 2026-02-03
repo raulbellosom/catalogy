@@ -71,6 +71,9 @@ export default async ({ req, res, log, error }) => {
 
     const { firstName, lastName } = splitName(authUser.name);
 
+    // Timestamp actual para aceptación de términos
+    const now = new Date().toISOString();
+
     const doc = {
       firstName,
       lastName,
@@ -82,6 +85,9 @@ export default async ({ req, res, log, error }) => {
       role: "user",
       enabled: true,
       active: true,
+      termsAcceptedAt: now,
+      termsVersion: "1.0.0",
+      privacyAcceptedAt: now,
     };
 
     // Create if not exists, else update (idempotent)
