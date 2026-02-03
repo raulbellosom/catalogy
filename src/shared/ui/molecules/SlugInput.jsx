@@ -63,7 +63,46 @@ export function SlugInput({
     <div className="relative">
       <Input
         type="text"
-        label="Slug (URL de tu catálogo)"
+        label={
+          <div className="flex justify-between items-center w-full">
+            <span>Link de tu tienda</span>
+            <div className="flex items-center gap-2 font-normal">
+              <span className="text-xs text-[var(--color-fg-muted)]">
+                {value.length}/50
+              </span>
+              <div className="relative w-4 h-4">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="8"
+                    cy="8"
+                    r="6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="transparent"
+                    className="text-[var(--color-border)]"
+                  />
+                  <circle
+                    cx="8"
+                    cy="8"
+                    r="6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="transparent"
+                    strokeDasharray={37.7}
+                    strokeDashoffset={
+                      37.7 - (37.7 * Math.min(value.length, 50)) / 50
+                    }
+                    className={`transition-all duration-300 ${
+                      value.length >= 50
+                        ? "text-red-500"
+                        : "text-[var(--color-primary)]"
+                    }`}
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        }
         placeholder="mi-tienda"
         value={value}
         onChange={(e) => {
@@ -79,7 +118,7 @@ export function SlugInput({
           onChange(e);
         }}
         required={required}
-        pattern="[a-z0-9-]+"
+        pattern="^[a-z0-9]+(?:-[a-z0-9]+)*$"
         minLength={3}
         maxLength={50}
       />
@@ -102,12 +141,12 @@ export function SlugInput({
         )}
         {showError && (
           <p className="text-sm text-[var(--color-error)]">
-            Este slug ya está en uso
+            Esta dirección ya está en uso
           </p>
         )}
         {showSuccess && (
           <p className="text-sm text-green-600 dark:text-green-400">
-            ¡Slug disponible!
+            ¡Dirección disponible!
           </p>
         )}
         {!slugError && value && (

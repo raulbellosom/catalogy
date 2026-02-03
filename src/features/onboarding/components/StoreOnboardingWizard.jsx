@@ -115,6 +115,7 @@ export function StoreOnboardingWizard() {
   const [slugSuggestions, setSlugSuggestions] = useState([]);
 
   // Generate slug suggestions when name changes
+  // Generate slug suggestions when name changes
   useEffect(() => {
     if (!name) {
       setSlugSuggestions([]);
@@ -128,15 +129,21 @@ export function StoreOnboardingWizard() {
       .replace(/^-|-$/g, "");
     if (!base) return;
 
-    const suggestions = [
-      base,
-      `${base}-store`,
-      `${base}-shop`,
-      `tienda-${base}`,
-    ].slice(0, 4);
+    const hasStore = base.includes("store") || base.includes("tienda");
+    const suggestions = [base];
 
-    // Filter out if current slug matches any (optional, but keep it simple)
-    setSlugSuggestions(suggestions);
+    if (!hasStore) {
+      suggestions.push(`tienda-${base}`);
+      suggestions.push(`${base}-tienda`);
+      suggestions.push(`${base}-store`); // Keep one English option as it's common
+    }
+
+    suggestions.push(`${base}-mx`);
+    suggestions.push(`${base}-oficial`);
+    suggestions.push(`${base}-online`);
+
+    // Unique and limit
+    setSlugSuggestions([...new Set(suggestions)].slice(0, 4));
   }, [name]);
 
   // Style State
@@ -258,7 +265,11 @@ export function StoreOnboardingWizard() {
               />
               <SlugInput
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= 50) {
+                    setSlug(e.target.value);
+                  }
+                }}
               />
 
               {/* Slug Suggestions */}
