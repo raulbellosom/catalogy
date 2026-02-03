@@ -8,7 +8,7 @@
  */
 
 import { Render } from "@puckeditor/core";
-import { StoreHeader, ProductGrid } from "../components";
+import { StoreHeader, ProductGrid, StoreFooter } from "../components";
 import { galleryPuckConfig } from "../../editor/configs/galleryConfig";
 
 /**
@@ -31,12 +31,12 @@ export function GalleryTemplate({ store, products, puckData }) {
 
   // Layout default estilo galeria
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Hero grande */}
+    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+      {/* Hero grande y centrado */}
       <StoreHeader store={store} variant="hero" showDescription={true} />
 
       {/* Galeria de productos */}
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-16 flex-1 max-w-7xl">
         {/* Grid amplio para enfatizar imagenes */}
         <ProductGrid
           products={products}
@@ -45,10 +45,8 @@ export function GalleryTemplate({ store, products, puckData }) {
         />
       </main>
 
-      {/* Footer minimo para no distraer de las imagenes */}
-      <footer className="py-8 text-center">
-        <p className="text-sm text-[var(--muted-foreground)]">{store.name}</p>
-      </footer>
+      {/* Footer simple */}
+      <StoreFooter store={store} variant="simple" />
     </div>
   );
 }

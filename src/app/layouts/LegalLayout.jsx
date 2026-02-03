@@ -1,5 +1,6 @@
 import { Link, Outlet } from "react-router-dom";
-import { ArrowLeft, Store } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Logo } from "@/shared/ui/atoms/Logo";
 import { Button } from "@/shared/ui/atoms/Button";
 import { ThemeToggle } from "@/shared/ui/molecules/ThemeToggle";
 import { Footer } from "@/shared/ui/organisms/Footer";
@@ -24,15 +25,7 @@ export function LegalLayout() {
 
           {/* Logo and Theme Toggle */}
           <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <Store className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--color-primary)]" />
-              <span className="text-lg sm:text-xl font-bold text-[var(--color-fg)]">
-                Catalogy
-              </span>
-            </Link>
+            <Logo />
             <ThemeToggle />
           </div>
         </div>

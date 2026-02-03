@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, Store } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
+import { Logo } from "@/shared/ui/atoms/Logo";
 import { LoadingSpinner } from "@/shared/ui/atoms/LoadingSpinner";
 import { ThemeToggle } from "@/shared/ui/molecules/ThemeToggle";
 
@@ -27,12 +28,7 @@ export function ProductDetailPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Store className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--color-primary)]" />
-              <span className="text-lg sm:text-xl font-bold text-[var(--color-fg)]">
-                Catalogy
-              </span>
-            </div>
+            <Logo />
             <ThemeToggle />
           </div>
         </div>

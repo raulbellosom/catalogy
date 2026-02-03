@@ -114,6 +114,7 @@ export async function createStore(data) {
       name: name.trim(),
       description: description?.trim() || "",
       templateId: templateId || "minimal",
+      settings: data.settings ? JSON.stringify(data.settings) : "{}",
       published: false,
       enabled: true,
     },
@@ -143,6 +144,7 @@ export async function updateStore(storeId, data) {
   // Trim text fields
   if (data.name) updateData.name = data.name.trim();
   if (data.description) updateData.description = data.description.trim();
+  if (data.settings) updateData.settings = JSON.stringify(data.settings);
 
   return await databases.updateDocument(
     DATABASE_ID,

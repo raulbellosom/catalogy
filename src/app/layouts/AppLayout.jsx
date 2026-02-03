@@ -15,7 +15,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/app/providers";
-import { useIsAdmin } from "@/shared/hooks";
+import { useIsAdmin, useUserStore } from "@/shared/hooks";
+import { Button } from "@/shared/ui/atoms/Button";
+import { Logo } from "@/shared/ui/atoms/Logo";
+import { FullScreenLoader } from "@/shared/ui/molecules/FullScreenLoader";
 import { ThemeToggle } from "@/shared/ui/molecules/ThemeToggle";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -233,6 +236,8 @@ function MobileDrawerNavItems({ onNavigate }) {
 export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { data: store, isLoading: loadingStore } = useUserStore();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -261,6 +266,80 @@ export function AppLayout() {
 
   const displayName = user?.name || user?.email?.split("@")[0] || "Usuario";
 
+  // Force redirect to dashboard if trying to access other routes without a store
+  useEffect(() => {
+    if (!loadingStore && !store) {
+      // Allow only the dashboard route (where wizard lives)
+      // and admin routes (if applicable, but let's keep it simple for now)
+      if (
+        location.pathname !== "/app" &&
+        !location.pathname.startsWith("/app/admin")
+      ) {
+        navigate("/app", { replace: true });
+      }
+    }
+  }, [store, loadingStore, location.pathname, navigate]);
+
+  if (loadingStore) {
+    return <FullScreenLoader />;
+  }
+
+  // ================= ONBOARDING LAYOUT (NO STORE) =================
+  if (!loadingStore && !store) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg-secondary)] flex flex-col">
+        {/* Simple Header */}
+        <header className="fixed top-0 left-0 right-0 h-16 border-b border-[var(--color-card-border)] bg-[var(--color-card)]/80 backdrop-blur-lg px-6 flex items-center justify-between z-20">
+          <div className="flex items-center gap-2">
+            <Logo />
+          </div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-[var(--color-fg-muted)] hover:text-[var(--color-error)]"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
+          </div>
+        </header>
+
+        {/* Centered Content */}
+        <main className="flex-1 flex items-center justify-center pt-16 p-4">
+          <div className="w-full max-w-4xl">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key="onboarding"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </main>
+
+        {/* Simple Footer */}
+        <footer className="py-4 text-center text-xs text-[var(--color-fg-muted)]">
+          <a
+            href="https://racoondevs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[var(--color-primary)]"
+          >
+            Powered by RacoonDevs
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
+  // ================= STANDARD LAYOUT (HAS STORE) =================
   return (
     <div className="min-h-screen bg-[var(--color-bg-secondary)]">
       {/* ========== DESKTOP SIDEBAR ========== */}
@@ -270,19 +349,15 @@ export function AppLayout() {
         }`}
       >
         {/* Logo area */}
-        <div className="flex h-16 items-center border-b border-[var(--color-card-border)] overflow-hidden px-2">
-          <div className="flex h-full w-12 shrink-0 items-center justify-center">
-            <Store className="h-7 w-7 text-[var(--color-primary)]" />
-          </div>
-          <div
-            className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
-              collapsed ? "grid-cols-[0fr]" : "grid-cols-[1fr]"
-            }`}
-          >
-            <span className="overflow-hidden whitespace-nowrap text-xl font-bold text-[var(--color-fg)]">
-              Catalogy
-            </span>
-          </div>
+        <div className="flex h-16 items-center border-b border-[var(--color-card-border)] overflow-hidden px-4">
+          {/* Using Logo component which handles text and icon */}
+          {collapsed ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <Logo variant="icon" />
+            </div>
+          ) : (
+            <Logo variant="full" />
+          )}
         </div>
 
         {/* Navigation */}
@@ -481,7 +556,7 @@ export function AppLayout() {
             <Menu className="w-6 h-6 text-[var(--color-fg)]" />
           </button>
           <div className="flex items-center gap-2">
-            <Store className="h-6 w-6 text-[var(--color-primary)]" />
+            <Logo variant="icon" />
             <span className="font-bold text-[var(--color-fg)]">Catalogy</span>
           </div>
 

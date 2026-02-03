@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-    <path d="M9 22V12h6v10"/>
-</svg>
+<svg data-logo="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 46 40">
+        <g style="opacity: 1;" id="logogram" transform="translate(0, 0) rotate(0)"><path d="M0 33L4.60606 25H12.2448C17.2569 25 21.4947 28.7103 22.1571 33.6784L23 40H13L11.5585 36.6365C10.613 34.4304 8.44379 33 6.04362 33H0Z" fill="#6366F1"></path><path d="M46 33L41.3939 25H33.7552C28.7431 25 24.5053 28.7103 23.8429 33.6784L23 40H33L34.4415 36.6365C35.387 34.4304 37.5562 33 39.9564 33H46Z" fill="#6366F1"></path><path d="M4.60606 25L18.9999 0H23L22.6032 9.52405C22.2608 17.7406 15.7455 24.3596 7.53537 24.8316L4.60606 25Z" fill="#4F46E5"></path><path d="M41.3939 25L27.0001 0H23L23.3968 9.52405C23.7392 17.7406 30.2545 24.3596 38.4646 24.8316L41.3939 25Z" fill="#4F46E5"></path></g>
+        <g style="opacity: 1;" id="logotype" transform="translate(46, 20)"></g>
+        
+      </svg>

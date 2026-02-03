@@ -2,6 +2,9 @@ import { Package, Store, TrendingUp, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/app/providers";
 import { Button } from "@/shared/ui/atoms/Button";
+import { StoreOnboardingWizard } from "@/features/onboarding/components/StoreOnboardingWizard";
+import { useUserStore } from "@/shared/hooks";
+import { appConfig } from "@/shared/lib/env";
 import { motion } from "motion/react";
 
 /**
@@ -9,7 +12,18 @@ import { motion } from "motion/react";
  */
 export function DashboardPage() {
   const { user } = useAuth();
+  const { data: store, isLoading: loadingStore } = useUserStore();
 
+  // If no store exists, show the Onboarding Wizard
+  if (!store) {
+    return (
+      <div className="max-w-4xl mx-auto py-8">
+        <StoreOnboardingWizard />
+      </div>
+    );
+  }
+
+  // Standard Dashboard View (User has a store)
   return (
     <div>
       {/* Welcome header */}
@@ -18,7 +32,10 @@ export function DashboardPage() {
           Hola, {user?.name?.split(" ")[0] || "Usuario"}
         </h1>
         <p className="text-[var(--color-fg-secondary)]">
-          Bienvenido a tu panel de control
+          Bienvenido a tu panel de control de{" "}
+          <span className="font-semibold text-[var(--color-primary)]">
+            {store.name}
+          </span>
         </p>
       </div>
 
@@ -42,7 +59,7 @@ export function DashboardPage() {
           icon={ExternalLink}
           title="Ver mi catalogo"
           description="Abre tu catalogo publico"
-          to="#"
+          to={`https://${store.slug}.${appConfig.baseDomain}`}
           external
           delay={0.2}
         />
@@ -55,7 +72,7 @@ export function DashboardPage() {
         <StatCard
           icon={Store}
           label="Estado"
-          value="No publicado"
+          value={store.published ? "Publicado" : "No publicado"}
           delay={0.5}
         />
       </div>

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { Store } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
+import { Logo } from "@/shared/ui/atoms/Logo";
 import { ThemeToggle } from "@/shared/ui/molecules/ThemeToggle";
 
 /**
@@ -19,15 +19,7 @@ export function Navbar({ showAuthButtons = true, currentPath = "" }) {
     <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg)]/90 backdrop-blur-md border-b border-[var(--color-border)]">
       <div className="max-w-6xl mx-auto px-4 h-14 sm:h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link
-          to="/"
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-        >
-          <Store className="w-6 h-6 sm:w-7 sm:h-7 text-[var(--color-primary)]" />
-          <span className="text-lg sm:text-xl font-bold text-[var(--color-fg)]">
-            Catalogy
-          </span>
-        </Link>
+        <Logo className="hover:opacity-80 transition-opacity" />
 
         {/* Actions */}
         {showAuthButtons && (

@@ -16,15 +16,16 @@ import { motion } from "motion/react";
  * Public catalog page
  * Renders store catalog for public viewing via subdomain
  */
-export function CatalogPage() {
+export function CatalogPage({ previewSlug }) {
   const subdomain = useSubdomain();
+  const slug = previewSlug || subdomain;
 
   // Fetch store by slug (subdomain)
   const {
     data: store,
     isLoading: loadingStore,
     error: storeError,
-  } = useStoreBySlug(subdomain);
+  } = useStoreBySlug(slug);
 
   // Fetch products if store exists
   const { data: productsData, isLoading: loadingProducts } = useProducts(

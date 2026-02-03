@@ -182,6 +182,7 @@ Document ID:
 | description | string  | no       |         | size=500      | descripcion corta                            |
 | logoFileId  | string  | no       |         | size=64       | FK -> storeLogos bucket                      |
 | templateId  | string  | no       | minimal | size=50       | ID del template (minimal/storefront/gallery) |
+| settings    | string  | no       | "{}"    | size=2000     | JSON de configuracion (colores, fonts)       |
 | puckData    | string  | no       | null    | size=100000   | JSON de configuracion Puck Editor            |
 | published   | boolean | no       | false   |               | si el catalogo es publico                    |
 | enabled     | boolean | no       | true    |               | soft delete                                  |

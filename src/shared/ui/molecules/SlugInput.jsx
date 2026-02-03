@@ -66,7 +66,18 @@ export function SlugInput({
         label="Slug (URL de tu catálogo)"
         placeholder="mi-tienda"
         value={value}
-        onChange={onChange}
+        onChange={(e) => {
+          const sanitized = e.target.value
+            .toLowerCase()
+            .replace(/[^a-z0-9-]/g, "");
+
+          // Only trigger change if value is different (optional, but good for react)
+          // Actually we need to force the update so the input reflects the sanitation immediately
+          // Create a synthetic event or just call onChange if the parent expects value or event.
+          // Adjusting based on standard Input behavior which usually expects event.
+          e.target.value = sanitized;
+          onChange(e);
+        }}
         required={required}
         pattern="[a-z0-9-]+"
         minLength={3}

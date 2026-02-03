@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Store, Mail, MapPin, ExternalLink, Shield } from "lucide-react";
+import { Mail, MapPin, ExternalLink, Shield } from "lucide-react";
+import { Logo } from "@/shared/ui/atoms/Logo";
 
 /**
  * Footer component
@@ -15,11 +16,8 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-6 md:gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-3 md:mb-4">
-              <Store className="w-6 h-6 md:w-7 md:h-7 text-[var(--color-primary)]" />
-              <span className="text-lg md:text-xl font-bold text-[var(--color-fg)]">
-                Catalogy
-              </span>
+            <div className="mb-3 md:mb-4">
+              <Logo />
             </div>
             <p className="text-xs md:text-sm text-[var(--color-fg-secondary)] mb-3 md:mb-4 line-clamp-2 md:line-clamp-none">
               La plataforma mas sencilla para crear y publicar catalogos de

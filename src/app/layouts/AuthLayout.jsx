@@ -1,7 +1,7 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { Store } from "lucide-react";
 import { Navbar } from "@/shared/ui/organisms/Navbar";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import { Footer } from "@/shared/ui/organisms/Footer";
+import { Logo } from "@/shared/ui/atoms/Logo";
 
 /**
  * Auth layout for login, register, forgot password pages
@@ -20,16 +20,9 @@ export function AuthLayout() {
       <main className="flex-1 flex items-center justify-center px-4 py-8 pt-24 sm:pt-24 overflow-x-hidden min-h-[calc(100vh-200px)]">
         <div className="w-full max-w-md">
           {/* Logo/Brand - visible on mobile */}
-          <Link
-            to="/"
-            className="flex md:hidden items-center gap-2 mb-4 text-[var(--color-primary)] hover:opacity-80 transition-opacity justify-center"
-          >
-            <Store className="w-6 h-6" />
-            <span className="text-lg font-bold text-[var(--color-fg)]">
-              Catalogy
-            </span>
-          </Link>
-
+          <div className="flex md:hidden items-center justify-center mb-4">
+            <Logo />
+          </div>
           {/* Auth card con efecto de vidrio y sombra moderna */}
           <div className="w-full relative overflow-hidden">
             {/* Efectos de fondo decorativos - contenidos dentro del card */}

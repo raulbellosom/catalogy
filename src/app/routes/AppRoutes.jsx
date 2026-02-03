@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSubdomainContext } from "@/app/providers";
+import { useDynamicHead } from "@/shared/hooks/useDynamicHead";
 import { ScrollToTop } from "@/shared/utils/ScrollToTop";
 
 // Layouts
@@ -31,6 +32,7 @@ import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
 // App pages (protected)
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { StoreSettingsPage } from "@/features/store/pages/StoreSettingsPage";
+import { StorePreviewPage } from "@/features/store/pages/StorePreviewPage";
 import { ProductsPage } from "@/features/products/pages/ProductsPage";
 import { ProductFormPage } from "@/features/products/pages/ProductFormPage";
 import { UserSettingsPage } from "@/features/settings/pages/UserSettingsPage";
@@ -49,6 +51,7 @@ import { GuestRoute } from "./GuestRoute";
  */
 export function AppRoutes() {
   const { isRootDomain, isStoreDomain, isLoading } = useSubdomainContext();
+  useDynamicHead();
 
   // Show loading while determining domain context
   if (isLoading) {
@@ -137,6 +140,16 @@ export function AppRoutes() {
           element={
             <ProtectedRoute>
               <PuckEditorPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Store Preview */}
+        <Route
+          path="app/store/:slug/preview"
+          element={
+            <ProtectedRoute>
+              <StorePreviewPage />
             </ProtectedRoute>
           }
         />

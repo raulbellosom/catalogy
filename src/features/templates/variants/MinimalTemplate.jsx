@@ -10,7 +10,7 @@
  */
 
 import { Render } from "@puckeditor/core";
-import { StoreHeader, ProductGrid } from "../components";
+import { StoreHeader, ProductGrid, StoreFooter } from "../components";
 import { minimalPuckConfig } from "../../editor/configs/minimalConfig";
 
 /**
@@ -34,15 +34,17 @@ export function MinimalTemplate({ store, products, puckData }) {
 
   // Layout default sin personalizacion
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="min-h-screen flex flex-col bg-[var(--background)]">
       {/* Header minimalista */}
       <StoreHeader store={store} variant="minimal" showDescription={true} />
 
       {/* Separador sutil */}
-      <div className="border-b border-[var(--border)]" />
+      <div className="container mx-auto px-4">
+        <div className="border-b border-[var(--border)]" />
+      </div>
 
       {/* Productos */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 md:py-12 flex-1">
         <ProductGrid
           products={products}
           variant="standard"
@@ -51,9 +53,7 @@ export function MinimalTemplate({ store, products, puckData }) {
       </main>
 
       {/* Footer minimo */}
-      <footer className="py-6 text-center text-sm text-[var(--muted-foreground)]">
-        <p>{store.name}</p>
-      </footer>
+      <StoreFooter store={store} variant="simple" />
     </div>
   );
 }

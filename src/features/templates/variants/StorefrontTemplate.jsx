@@ -8,7 +8,7 @@
  */
 
 import { Render } from "@puckeditor/core";
-import { StoreHeader, ProductGrid } from "../components";
+import { StoreHeader, ProductGrid, StoreFooter } from "../components";
 import { storefrontPuckConfig } from "../../editor/configs/storefrontConfig";
 
 /**
@@ -31,32 +31,32 @@ export function StorefrontTemplate({ store, products, puckData }) {
 
   // Layout default estilo storefront
   return (
-    <div className="min-h-screen bg-[var(--background)]">
-      {/* Hero Banner */}
+    <div className="min-h-screen flex flex-col bg-[var(--background)]">
+      {/* Hero Banner with Primary Color Background */}
       <StoreHeader store={store} variant="banner" showDescription={true} />
 
-      {/* Seccion de bienvenida */}
-      <section className="bg-[var(--muted)] py-8">
+      {/* Seccion de bienvenida / Features */}
+      <section className="bg-[var(--muted)]/50 py-12 border-b border-[var(--border)]">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-xl font-semibold text-[var(--foreground)]">
-            Bienvenido a nuestra tienda
+          <h2 className="text-2xl md:text-3xl font-bold text-[var(--foreground)] mb-3">
+            Bienvenido a {store.name}
           </h2>
-          <p className="mt-2 text-[var(--muted-foreground)] max-w-2xl mx-auto">
-            Explora nuestra coleccion de productos seleccionados especialmente
-            para ti
+          <p className="text-[var(--muted-foreground)] max-w-2xl mx-auto text-lg leading-relaxed">
+            Explora nuestra colección de productos seleccionados. Calidad y
+            servicio garantizados.
           </p>
         </div>
       </section>
 
       {/* Productos */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="mb-8">
+      <main className="container mx-auto px-4 py-16 flex-1">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-[var(--border)]">
           <h2 className="text-2xl font-bold text-[var(--foreground)]">
-            Nuestros productos
+            Catálogo
           </h2>
-          <p className="text-[var(--muted-foreground)] mt-1">
-            {products?.length || 0} productos disponibles
-          </p>
+          <span className="text-sm font-medium px-3 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+            {products?.length || 0} Productos
+          </span>
         </div>
 
         <ProductGrid
@@ -66,21 +66,8 @@ export function StorefrontTemplate({ store, products, puckData }) {
         />
       </main>
 
-      {/* Footer con mas info */}
-      <footer className="bg-[var(--card)] border-t border-[var(--border)] py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h3 className="font-semibold text-[var(--foreground)]">
-              {store.name}
-            </h3>
-            {store.description && (
-              <p className="text-sm text-[var(--muted-foreground)] mt-1 max-w-md mx-auto">
-                {store.description}
-              </p>
-            )}
-          </div>
-        </div>
-      </footer>
+      {/* Footer promiment */}
+      <StoreFooter store={store} variant="prominent" />
     </div>
   );
 }
