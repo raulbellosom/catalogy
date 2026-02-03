@@ -64,14 +64,29 @@ export function Modal({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [open, onClose, dismissible]);
 
-  // Lock body scroll when open
+  // Lock body scroll and apply blur when open
   useEffect(() => {
     if (open) {
+      // Add blur to the main app content
+      const root = document.getElementById("root");
+      if (root) {
+        root.style.filter = "blur(8px)";
+        root.style.transition = "filter 0.2s ease-out";
+      }
       document.body.style.overflow = "hidden";
     } else {
+      // Remove blur from main app content
+      const root = document.getElementById("root");
+      if (root) {
+        root.style.filter = "";
+      }
       document.body.style.overflow = "";
     }
     return () => {
+      const root = document.getElementById("root");
+      if (root) {
+        root.style.filter = "";
+      }
       document.body.style.overflow = "";
     };
   }, [open]);
@@ -101,7 +116,7 @@ export function Modal({
             animate="visible"
             exit="hidden"
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            className="absolute inset-0 bg-black/70"
             onClick={handleOverlayClick}
           />
 

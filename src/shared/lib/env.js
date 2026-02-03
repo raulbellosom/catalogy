@@ -125,7 +125,10 @@ export const appConfig = {
 };
 
 // Alias legacy para compatibilidad
-export const APP_CONFIG = appConfig;
+export const APP_CONFIG = {
+  ...appConfig,
+  BASE_DOMAIN: appConfig.baseDomain, // Legacy alias
+};
 
 // ============================================================
 // Database ID (legacy export)

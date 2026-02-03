@@ -15,6 +15,11 @@ import { APP_CONFIG } from "@/shared/lib/appwrite";
  * @returns {string | null} - Extracted slug or null if root domain
  */
 function extractSlugFromHostname(hostname, baseDomain) {
+  // Guard against undefined/null values
+  if (!hostname || !baseDomain) {
+    return null;
+  }
+
   // Normalize both to lowercase
   const normalizedHostname = hostname.toLowerCase();
   const normalizedBaseDomain = baseDomain.toLowerCase();
@@ -48,7 +53,15 @@ export function useSubdomain() {
 
   useEffect(() => {
     const hostname = window.location.hostname;
-    const baseDomain = APP_CONFIG.BASE_DOMAIN;
+    const baseDomain = APP_CONFIG?.baseDomain || APP_CONFIG?.BASE_DOMAIN;
+
+    // Guard against missing base domain
+    if (!baseDomain) {
+      console.error("BASE_DOMAIN not configured in environment variables");
+      setSlug(null);
+      setIsLoading(false);
+      return;
+    }
 
     // Check for local development override via query param
     const urlParams = new URLSearchParams(window.location.search);
