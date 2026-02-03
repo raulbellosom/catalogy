@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 
@@ -21,10 +21,15 @@ export function ImageUpload({
   label = "Imagen",
   accept = "image/png,image/jpeg,image/jpg,image/webp",
   maxSizeMB = 5,
+  onImageClick,
 }) {
   const [preview, setPreview] = useState(currentImageUrl || null);
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreview(currentImageUrl);
+  }, [currentImageUrl]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -79,12 +84,24 @@ export function ImageUpload({
 
       {preview ? (
         <div className="relative w-full max-w-xs">
-          <div className="relative aspect-square rounded-xl overflow-hidden border-2 border-[var(--color-card-border)] bg-[var(--color-bg-secondary)]">
+          <div
+            className={`relative aspect-square rounded-xl overflow-hidden border-2 border-[var(--color-card-border)] bg-[var(--color-bg-secondary)] ${onImageClick ? "cursor-pointer" : ""}`}
+            onClick={() => onImageClick && onImageClick(preview)}
+          >
             <img
               src={preview}
               alt="Preview"
               className="w-full h-full object-cover"
             />
+            {/* Hover Overlay for View Hint if clickable */}
+            {onImageClick && !isUploading && (
+              <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center group">
+                <div className="opacity-0 group-hover:opacity-100 bg-black/60 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm transition-opacity">
+                  Ver imagen
+                </div>
+              </div>
+            )}
+
             {isUploading && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
@@ -95,8 +112,11 @@ export function ImageUpload({
           {!isUploading && (
             <button
               type="button"
-              onClick={handleRemove}
-              className="absolute -top-2 -right-2 w-8 h-8 bg-[var(--color-error)] text-white rounded-full flex items-center justify-center hover:bg-[var(--color-error)]/90 transition-colors shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemove();
+              }}
+              className="absolute -top-2 -right-2 w-8 h-8 bg-[var(--color-error)] text-white rounded-full flex items-center justify-center hover:bg-[var(--color-error)]/90 transition-colors shadow-lg z-10"
               aria-label="Eliminar imagen"
             >
               <X className="w-5 h-5" />

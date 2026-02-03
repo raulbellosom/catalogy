@@ -435,7 +435,7 @@ export function AppLayout() {
 
       {/* ========== DESKTOP MAIN CONTENT ========== */}
       <main
-        className={`hidden lg:block lg:min-h-screen lg:pt-16 transition-all duration-300 ease-in-out ${
+        className={`hidden lg:block lg:min-h-screen lg:pt-16 lg:pb-16 transition-all duration-300 ease-in-out ${
           collapsed ? "lg:pl-16" : "lg:pl-64"
         }`}
       >
@@ -600,7 +600,9 @@ export function AppLayout() {
       </AnimatePresence>
 
       {/* ========== MOBILE MAIN CONTENT ========== */}
-      <main className="lg:hidden min-h-screen pt-14 pb-20 safe-top safe-bottom">
+      <main className="lg:hidden min-h-screen safe-top">
+        {/* Explicit spacer for fixed header */}
+        <div className="h-24" aria-hidden="true" />
         <div className="p-4">
           <AnimatePresence mode="wait">
             <motion.div
@@ -614,6 +616,9 @@ export function AppLayout() {
             </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Explicit spacer for bottom nav */}
+        <div className="h-32 safe-bottom" aria-hidden="true" />
       </main>
 
       {/* ========== MOBILE BOTTOM NAV ========== */}
