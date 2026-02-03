@@ -87,7 +87,7 @@ export function StoreFooter({ store, config = {} }) {
           <p
             className={`text-[10px] uppercase tracking-[0.2em] ${muted} opacity-40`}
           >
-            © {currentYear} {store?.name}. Todos los derechos reservados.
+            © {currentYear} Catalogy. Todos los derechos reservados.
           </p>
         </div>
       </div>
