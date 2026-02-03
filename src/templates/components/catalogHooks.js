@@ -42,19 +42,21 @@ export const useCatalogFilters = ({ store, products }) => {
       .filter((price) => typeof price === "number");
     if (!prices.length) return { min: 0, max: 0 };
     return {
-      min: 1, // Siempre permitir filtrar desde 1 como base mínima
+      min: 0, // Allow 0 based on DB schema
       max: prices.length ? Math.max(...prices) : 0,
     };
   }, [productList]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryIds, setActiveCategoryIds] = useState([]);
-  const [minPrice, setMinPrice] = useState(1);
+  const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(priceBounds.max);
+  const [sortOrder, setSortOrder] = useState("none"); // 'asc', 'desc', 'none'
 
   useEffect(() => {
-    setMinPrice(1);
+    setMinPrice(0);
     setMaxPrice(priceBounds.max);
+    setSortOrder("none");
   }, [priceBounds.max]);
 
   const toggleCategory = (categoryId) => {
@@ -70,7 +72,7 @@ export const useCatalogFilters = ({ store, products }) => {
     const min = clampNumber(minPrice, priceBounds.min);
     const max = clampNumber(maxPrice, priceBounds.max);
 
-    return productList.filter((product) => {
+    const filtered = productList.filter((product) => {
       const price = typeof product.price === "number" ? product.price : 0;
       if (price < min || price > max) return false;
 
@@ -86,6 +88,15 @@ export const useCatalogFilters = ({ store, products }) => {
       const ids = Array.isArray(product.categoryIds) ? product.categoryIds : [];
       return ids.some((id) => activeCategoryIds.includes(id));
     });
+
+    // Sorting
+    if (sortOrder === "asc") {
+      return [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
+    } else if (sortOrder === "desc") {
+      return [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
+    }
+
+    return filtered;
   }, [
     productList,
     searchQuery,
@@ -94,6 +105,7 @@ export const useCatalogFilters = ({ store, products }) => {
     maxPrice,
     priceBounds.min,
     priceBounds.max,
+    sortOrder,
   ]);
 
   return {
@@ -108,6 +120,8 @@ export const useCatalogFilters = ({ store, products }) => {
     setMaxPrice,
     priceBounds,
     filteredProducts,
+    sortOrder,
+    setSortOrder,
   };
 };
 

@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
-import { ProductDetailModal, StoreNavbar, StoreFooter } from "../components";
+import {
+  ProductDetailModal,
+  StoreNavbar,
+  StoreFooter,
+  CatalogFilters,
+} from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -82,6 +87,8 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
     setMaxPrice,
     priceBounds,
     filteredProducts,
+    sortOrder,
+    setSortOrder,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer
@@ -128,7 +135,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
               className="hidden md:flex items-center gap-2 text-sm font-medium text-(--store-primary) hover:text-slate-900 transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
-              Quick Pay link
+              Ir al pago
             </a>
           )
         }
@@ -191,7 +198,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
                   href={store.paymentLink}
                   className="inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-(--store-primary) hover:bg-slate-900 transition-colors shadow-lg"
                 >
-                  Pay / Checkout Now
+                  Ir al pago
                 </a>
               </div>
             )}
@@ -213,73 +220,21 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
       >
         {/* Sidebar Controls (Desktop) */}
         <aside className="hidden md:block w-64 shrink-0 space-y-8">
-          {/* Categories Widget */}
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
-            <h3 className="font-bold text-slate-900 text-lg mb-4 border-b border-slate-100 pb-2">
-              Categories
-            </h3>
-            <ul className="space-y-2.5">
-              <li>
-                <button
-                  onClick={() =>
-                    activeCategoryIds.length > 0 &&
-                    toggleCategory(activeCategoryIds[0])
-                  } // Reset hack for single-select mostly
-                  className={`flex items-center w-full text-sm ${activeCategoryIds.length === 0 ? "text-(--store-primary) font-bold" : "text-slate-600 hover:text-slate-900"}`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full mr-2 ${activeCategoryIds.length === 0 ? "bg-(--store-primary)" : "bg-transparent border border-slate-300"}`}
-                  ></span>
-                  All Products
-                </button>
-              </li>
-              {categories.map((cat) => (
-                <li key={cat.id}>
-                  <button
-                    onClick={() => toggleCategory(cat.id)}
-                    className={`flex items-center w-full text-left text-sm transition-colors ${activeCategoryIds.includes(cat.id) ? "text-(--store-primary) font-bold" : "text-slate-600 hover:text-slate-900"}`}
-                  >
-                    {/* Fake Checkbox/Radio styling */}
-                    <div
-                      className={`w-4 h-4 rounded border flex items-center justify-center mr-2 ${activeCategoryIds.includes(cat.id) ? "bg-(--store-primary) border-(--store-primary)" : "border-slate-300"}`}
-                    >
-                      {activeCategoryIds.includes(cat.id) && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                    {cat.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <CatalogFilters
+              categories={categories}
+              activeCategoryIds={activeCategoryIds}
+              onToggleCategory={toggleCategory}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              onMinPriceChange={setMinPrice}
+              onMaxPriceChange={setMaxPrice}
+              priceBounds={priceBounds}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              primaryColor={primary}
+            />
           </div>
-
-          {/* Price Widget */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
-            <h3 className="font-bold text-slate-900 text-lg mb-4 border-b border-slate-100 pb-2">
-              Price Range
-            </h3>
-            <div className="flex items-center justify-between text-sm text-slate-600 mb-4">
-              <span>{formatPrice(minPrice)}</span>
-              <span>{formatPrice(maxPrice)}</span>
-            </div>
-            {/* Visual Bar placeholder */}
-            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-              <div className="h-full bg-(--store-primary) w-full opacity-50"></div>
-            </div>
-          </div>
-
-          {/* Purchase Info Widget */}
-          {store?.purchaseInstructions && (
-            <div className="bg-(--store-secondary) rounded-lg p-5 border border-(--store-primary)/20">
-              <h4 className="flex items-center gap-2 text-(--store-primary) font-bold text-sm mb-2">
-                <Info className="w-4 h-4" /> Store Info
-              </h4>
-              <p className="text-xs text-slate-700 leading-relaxed">
-                {store.purchaseInstructions}
-              </p>
-            </div>
-          )}
         </aside>
 
         {/* Mobile Filter Toggle */}

@@ -7,3 +7,5 @@ export * from "./CatalogControls";
 export * from "./ProductDetailModal";
 export * from "./StorePurchaseInfo";
 export * from "./StoreNavbar";
+export * from "./CatalogFilters";
+export * from "./CatalogFilters";

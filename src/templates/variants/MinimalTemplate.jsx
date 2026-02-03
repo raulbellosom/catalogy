@@ -15,7 +15,12 @@ import {
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
-import { ProductDetailModal, StoreNavbar, StoreFooter } from "../components";
+import {
+  ProductDetailModal,
+  StoreNavbar,
+  StoreFooter,
+  CatalogFilters,
+} from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -82,6 +87,8 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
     setMaxPrice,
     priceBounds,
     filteredProducts,
+    sortOrder,
+    setSortOrder,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer State
@@ -129,7 +136,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                 className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
                 style={{ backgroundColor: primary }}
               >
-                Proceder al pago
+                Ir al pago
               </a>
             </div>
           )
@@ -162,7 +169,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
               rel="noopener noreferrer"
               className="block text-center w-full py-3 bg-(--minimal-accent) text-white rounded-lg font-medium"
             >
-              Ir a Pagar
+              Ir al pago
             </a>
           )}
         </div>
@@ -171,6 +178,15 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
       {/* Hero Section: Simple & Text-based */}
       <header className="relative bg-white py-16 md:py-24 border-b border-gray-100 overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6 relative z-10">
+          {logoUrl && (
+            <div className="flex justify-center mb-6">
+              <img
+                src={logoUrl}
+                alt={store.name}
+                className="h-16 md:h-24 w-auto object-contain"
+              />
+            </div>
+          )}
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
             {store?.description ? (
               <span className="block">{store.name}</span>
@@ -239,77 +255,19 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
               showFilters ? "block opacity-100" : "hidden opacity-0"
             }`}
           >
-            {/* Categories */}
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">
-                Categorías
-              </h3>
-              <ul className="space-y-3">
-                {categories.map((cat) => {
-                  const isActive = activeCategoryIds.includes(cat.id);
-                  return (
-                    <li key={cat.id}>
-                      <button
-                        onClick={() => toggleCategory(cat.id)}
-                        className="flex items-center gap-3 w-full text-left group"
-                      >
-                        <div
-                          className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
-                            isActive
-                              ? "bg-black border-black text-white"
-                              : "bg-white border-gray-300 group-hover:border-gray-400"
-                          }`}
-                          style={
-                            isActive
-                              ? {
-                                  backgroundColor: primary,
-                                  borderColor: primary,
-                                }
-                              : {}
-                          }
-                        >
-                          {isActive && <Check size={12} strokeWidth={3} />}
-                        </div>
-                        <span
-                          className={`text-sm transition-colors ${
-                            isActive
-                              ? "font-medium text-gray-900"
-                              : "text-gray-600 group-hover:text-gray-900"
-                          }`}
-                        >
-                          {cat.name}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-                {categories.length === 0 && (
-                  <li className="text-sm text-gray-400 italic">
-                    Sin categorías disponibles
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            {/* Price Range */}
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">
-                Precio
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <span className="font-medium text-gray-900">
-                    {formatPrice(minPrice)}
-                  </span>
-                  <span className="text-gray-400 mx-2">
-                    <ArrowRight size={14} />
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    {formatPrice(maxPrice)}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <CatalogFilters
+              categories={categories}
+              activeCategoryIds={activeCategoryIds}
+              onToggleCategory={toggleCategory}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              onMinPriceChange={setMinPrice}
+              onMaxPriceChange={setMaxPrice}
+              priceBounds={priceBounds}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              primaryColor={primary}
+            />
           </aside>
 
           {/* Product Grid */}

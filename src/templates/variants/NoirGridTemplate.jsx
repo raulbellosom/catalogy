@@ -65,6 +65,8 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
     setMaxPrice,
     priceBounds,
     filteredProducts,
+    sortOrder,
+    setSortOrder,
   } = useCatalogFilters({ store, products });
   const { handleShare, sharedProductId } = useProductShare();
 
@@ -179,7 +181,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                       rel="noopener noreferrer"
                       className="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-(--noir-accent) text-black font-bold transition-all duration-300 shadow-xl hover:shadow-2xl hover:bg-(--noir-accent-soft) hover:-translate-y-1"
                     >
-                      Pagar ahora
+                      Ir al pago
                       <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </a>
                   </div>
@@ -200,6 +202,8 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
             categories={categories}
             activeCategoryIds={activeCategoryIds}
             onToggleCategory={toggleCategory}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
           />
 
           <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">

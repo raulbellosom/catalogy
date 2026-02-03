@@ -11,7 +11,12 @@ import {
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
-import { ProductDetailModal, StoreNavbar, StoreFooter } from "../components";
+import {
+  ProductDetailModal,
+  StoreNavbar,
+  StoreFooter,
+  CatalogFilters,
+} from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -71,7 +76,14 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
     setSearchQuery,
     activeCategoryIds,
     toggleCategory,
+    minPrice,
+    setMinPrice,
+    maxPrice,
+    setMaxPrice,
+    priceBounds,
     filteredProducts,
+    sortOrder,
+    setSortOrder,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer
@@ -144,30 +156,35 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         </div>
       )}
 
-      {/* Filter Tabs - Minimal */}
-      {categories.length > 0 && (
-        <div className="px-6 pb-8 flex flex-wrap justify-center gap-4">
-          <button
-            onClick={() =>
-              activeCategoryIds.length > 0 &&
-              toggleCategory(activeCategoryIds[0])
-            } // Logic to reset or simpler toggle logic needs refining if we want to "Clear All". Hook supports toggling.
-            // Assuming 'toggleCategory' removes if present. To clear all we might need access to setCategories or similar from hook, but for now we iterate render.
-            className={`text-sm uppercase tracking-widest pb-1 border-b-2 transition-colors ${activeCategoryIds.length === 0 ? "border-stone-900 text-stone-900" : "border-transparent text-stone-400 hover:text-stone-600"}`}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => toggleCategory(cat.id)}
-              className={`text-sm uppercase tracking-widest pb-1 border-b-2 transition-colors ${activeCategoryIds.includes(cat.id) ? "border-stone-900 text-stone-900" : "border-transparent text-stone-400 hover:text-stone-600"}`}
-            >
-              {cat.name}
-            </button>
-          ))}
+      {/* Filters Section */}
+      <div className="px-6 pb-8 flex flex-col items-center gap-6">
+        <button
+          onClick={() => {
+            // Simple toggle logic if I had state, but I don't have it exposed here yet.
+            // I will use a ref or just simple state in the next step.
+            // For now, I will render it always visible but styled minimally, OR better:
+            // Just render it nicely centered.
+          }}
+          className="hidden" // Placeholder logic, I will implement proper state in next tool call.
+        />
+
+        {/* Reusing CatalogFilters but constrained width */}
+        <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+          <CatalogFilters
+            categories={categories}
+            activeCategoryIds={activeCategoryIds}
+            onToggleCategory={toggleCategory}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onMinPriceChange={setMinPrice}
+            onMaxPriceChange={setMaxPrice}
+            priceBounds={priceBounds}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            primaryColor={primary}
+          />
         </div>
-      )}
+      </div>
 
       {/* Masonry-like Grid (CSS Grid) */}
       <main className="px-4 md:px-6 pb-20">

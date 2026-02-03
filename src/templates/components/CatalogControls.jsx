@@ -32,6 +32,8 @@ export function CatalogControls({
   categories,
   activeCategoryIds,
   onToggleCategory,
+  sortOrder,
+  setSortOrder,
 }) {
   const styles = toneStyles[tone] || toneStyles.light;
 
@@ -43,17 +45,29 @@ export function CatalogControls({
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="relative flex-1">
-          <Search
-            className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${styles.label}`}
-          />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="¿Qué estás buscando?"
-            className={`w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all ${styles.input}`}
-          />
+        <div className="flex-1 flex gap-4">
+          <div className="relative flex-1">
+            <Search
+              className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${styles.label}`}
+            />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Buscar..."
+              className={`w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all ${styles.input}`}
+            />
+          </div>
+          {/* Sort Dropdown */}
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder && setSortOrder(e.target.value)}
+            className={`px-4 py-3 rounded-xl text-sm outline-none min-w-[140px] cursor-pointer ${styles.input}`}
+          >
+            <option value="none">Relevancia</option>
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+          </select>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-6 min-w-[300px]">
@@ -64,7 +78,7 @@ export function CatalogControls({
             </div>
             <input
               type="range"
-              min={1}
+              min={0}
               max={priceBounds.max}
               step="1"
               value={minPrice}
@@ -79,7 +93,7 @@ export function CatalogControls({
             </div>
             <input
               type="range"
-              min={1}
+              min={0}
               max={priceBounds.max}
               step="1"
               value={maxPrice}
@@ -91,7 +105,7 @@ export function CatalogControls({
       </div>
 
       {categories?.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-[var(--noir-border)] transition-all">
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-(--noir-border) transition-all">
           {categories.map((category) => {
             const isActive = activeCategoryIds.includes(category.id);
             return (
