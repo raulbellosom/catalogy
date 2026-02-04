@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   ShoppingBag,
@@ -76,6 +77,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
     filteredProducts,
     sortOrder,
     setSortOrder,
+    resetFilters,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer State
@@ -130,37 +132,70 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         }
       />
 
-      {/* Mobile Menu Overlay for Minimal Template */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white p-4 pt-20 animate-in slide-in-from-top-5">
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="absolute top-4 right-4 p-2 text-gray-600 hover:text-black"
-          >
-            <X size={24} />
-          </button>
-          <div className="relative w-full mb-4">
-            <input
-              type="text"
-              placeholder="Buscar..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-50 border-none rounded-full py-2.5 pl-4 pr-10 text-sm focus:ring-1 focus:ring-black"
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-60 bg-black/10 backdrop-blur-[2px] md:hidden"
             />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          </div>
-          {store?.paymentLink && (
-            <a
-              href={store.paymentLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block text-center w-full py-3 bg-(--minimal-accent) text-white rounded-lg font-medium"
+
+            {/* Menu Sidebar */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
             >
-              Ir al pago
-            </a>
-          )}
-        </div>
-      )}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="absolute top-8 right-8 p-2 text-gray-600 hover:text-black border border-gray-100 rounded-full shadow-sm"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="space-y-12">
+                <div className="space-y-6">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-2">
+                    Búsqueda y Filtros
+                  </h3>
+                  <CatalogFilters
+                    categories={categories}
+                    activeCategoryIds={activeCategoryIds}
+                    onToggleCategory={toggleCategory}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onMinPriceChange={setMinPrice}
+                    onMaxPriceChange={setMaxPrice}
+                    priceBounds={priceBounds}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    primaryColor={primary}
+                  />
+                </div>
+
+                {store?.paymentLink && (
+                  <div className="pt-8 border-t border-gray-100">
+                    <a
+                      href={store.paymentLink}
+                      target="_blank"
+                      className="w-full py-4 text-center bg-black text-white rounded-full font-bold shadow-lg"
+                      style={{ backgroundColor: primary }}
+                    >
+                      Ir al pago
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section: Simple & Text-based */}
       <header className="relative bg-(--color-bg) py-16 md:py-24 border-b border-gray-900/5 overflow-hidden">
@@ -175,11 +210,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
             </div>
           )}
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
-            {store?.description ? (
-              <span className="block">{store.name}</span>
-            ) : (
-              "Bienvenido a nuestra colección"
-            )}
+            {store?.name}
           </h1>
           {store?.description && (
             <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
@@ -215,7 +246,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`group flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all border ${
@@ -238,8 +269,8 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Sidebar Filters */}
           <aside
-            className={`lg:w-72 space-y-12 transition-all duration-300 ease-in-out ${
-              showFilters ? "block opacity-100" : "hidden opacity-0"
+            className={`hidden lg:block lg:w-72 space-y-12 transition-all duration-300 ease-in-out ${
+              showFilters ? "opacity-100" : "opacity-0"
             }`}
           >
             <CatalogFilters
@@ -320,10 +351,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                   Intenta ajustar los filtros o tu búsqueda.
                 </p>
                 <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    // Reset filters logic if available via props
-                  }}
+                  onClick={resetFilters}
                   className="mt-6 text-sm font-bold text-(--minimal-accent) hover:underline"
                 >
                   Borrar filtros

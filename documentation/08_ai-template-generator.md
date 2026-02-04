@@ -55,12 +55,17 @@ interface Product {
 
 ### 4.1 Layout General
 
-- **Sticky Navbar:** Logo, nombre de la tienda, y acceso rápido a búsqueda/carrito (si aplica).
-- **Hero/Header:** Presentación impactante de la tienda usando `store.name` y `store.description`.
-- **Responsive:** Diseño Mobile-First impecable.
+- **Responsive:** Diseño Mobile-First impecable. La cuadrícula de productos debe mostrar **mínimo 2 productos por fila** en móviles.
+- **Sticky Navbar:** Logo, nombre de la tienda, y acceso rápido a búsqueda. En móviles, debe incluir un menú de hamburguesa que abra un lateral con filtros y buscador integrado.
 - **Sticky Footer:** Información de contacto, links de pago (`paymentLink`) e instrucciones (`purchaseInstructions`).
 
-### 4.2 Controles de Catálogo (Local)
+### 4.2 Privacidad de Datos y Fidelidad
+
+- **Dato Crítico:** NO agregues textos, etiquetas o descripciones que el usuario no haya proporcionado. No inventes slogans, no pongas etiquetas de "Premium", "Oferta" o descripciones de relleno.
+- **Fidelidad:** Si un campo opcional (como `description` en productos o tienda) está vacío, deja el área vacía o no la renderices.
+- **Sin Inventar:** La UI debe ser hermosa por su estructura y diseño, no por contenido ficticio.
+
+### 4.3 Controles de Catálogo (Local)
 
 Debes implementar los siguientes filtros de manera **LOCAL** (ya están resueltos en `useCatalog` o `CatalogControls`):
 
@@ -68,11 +73,14 @@ Debes implementar los siguientes filtros de manera **LOCAL** (ya están resuelto
 - **Categorías:** Basado en `store.categoriesJson`.
 - **Ordenamiento:** Precio (Mayor a menor), Precio (Menor a mayor) y Orden Normal.
 - **Rango de Precios:** Slider o inputs min/max.
+- **Reiniciar Filtros:** DEBES incluir un botón de "Reiniciar Filtros" o "Limpiar" que resteé todos los estados de búsqueda y filtrado.
 
 ### 4.3 Visualización de Productos
 
-- **Product Card:** Diseño innovador con estados hover, visualización clara del precio y badge de categoría.
+- **Product Card:** Diseño innovador con estados hover, visualización clara del precio y **píldoras/tags de categoría**.
+  - **Interacción:** Al hacer clic en un tag de categoría dentro de la card, se debe activar el filtro correspondiente en el catálogo.
 - **Product Detail Modal:** Al hacer click, abrir el modal que incluya:
+  - **Título y Precio:** Con **ALTO CONTRASTE**. Asegúrate de que el texto sea perfectamente legible sobre el fondo del modal (ej: blanco sobre fondo oscuro, negro sobre fondo claro). **ESTO ES UNA REGLA CRÍTICA DE ACCESIBILIDAD.**
   - Visualizador de imágenes (Carousel si hay > 1).
   - Descripción extendida.
   - Stock disponible ("Disponibles").

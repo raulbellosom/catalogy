@@ -41,6 +41,17 @@ export function StoreNavbar({
     glass = false,
   } = config;
 
+  const handleSearchSubmit = (e) => {
+    if (e.key === "Enter") {
+      const element =
+        document.getElementById("catalog") ||
+        document.getElementById("results");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
   return (
     <nav
       className={`fixed ${isPreview ? "top-10" : "top-0"} left-0 right-0 z-50 
@@ -60,35 +71,36 @@ export function StoreNavbar({
           ) : (
             <Logo className={`h-6 w-auto ${accent}`} variant="icon" />
           )}
-          <span className="font-bold tracking-tight truncate max-w-[200px] md:max-w-none">
+          <span className="font-bold tracking-tight truncate max-w-[120px] md:max-w-none">
             {store?.name || "Store"}
           </span>
         </div>
 
-        {/* Center: Search (Optional) */}
+        {/* Center: Search (Visible on MD+, and always available in logic) */}
         {search && (
-          <div className="hidden md:flex flex-1 max-w-sm lg:max-w-md mx-4">
+          <div className="flex-1 max-w-sm lg:max-w-md mx-2 md:mx-4">
             <div
-              className={`relative w-full flex items-center border ${border} rounded-lg overflow-hidden bg-opacity-10 bg-black/5 focus-within:ring-2 ring-current`}
+              className={`relative w-full flex items-center border ${border} rounded-full overflow-hidden bg-opacity-10 bg-black/5 focus-within:ring-2 ring-current transition-all`}
             >
               <Search className={`w-4 h-4 absolute left-3 opacity-50`} />
               <input
                 type="text"
-                placeholder="Buscar productos..."
+                placeholder="Buscar..."
                 className={`w-full py-2 pl-9 pr-4 bg-transparent outline-none text-sm placeholder-current placeholder-opacity-50`}
                 value={search.query}
                 onChange={(e) => search.onQueryChange(e.target.value)}
+                onKeyDown={handleSearchSubmit}
               />
             </div>
           </div>
         )}
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-3 md:gap-4 shrink-0">
-          {/* Custom Actions Slot (e.g. Payment Link inside template logic passed here, or hardcoded checks) */}
+        <div className="flex items-center gap-2 md:gap-4 shrink-0">
+          {/* Custom Actions Slot */}
           {actions}
 
-          {/* Fallback standard actions if desired, or leave empty to be filled by 'actions' prop */}
+          {/* Fallback standard actions */}
           {store?.paymentLink && !actions && (
             <a
               href={store.paymentLink}
@@ -101,7 +113,7 @@ export function StoreNavbar({
             </a>
           )}
 
-          {/* Mobile Menu Trigger */}
+          {/* Mobile Menu Trigger - Explicitly Hidden on Desktop */}
           {onMobileMenuToggle && (
             <button
               onClick={onMobileMenuToggle}

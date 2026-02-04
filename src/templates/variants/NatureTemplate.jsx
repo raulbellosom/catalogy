@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   ShoppingBag,
@@ -75,6 +76,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
     filteredProducts,
     sortOrder,
     setSortOrder,
+    resetFilters,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer State
@@ -175,8 +177,8 @@ export function NatureTemplate({ store, products, isPreview = false }) {
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full"
       >
         <div className="flex flex-col lg:flex-row gap-12">
-          {/* Sidebar / Filters Button */}
-          <div className="lg:w-72 shrink-0">
+          {/* Sidebar / Filters - Hidden on Mobile */}
+          <div className="hidden lg:block lg:w-72 shrink-0">
             <div className="sticky top-24 space-y-8">
               <div className="bg-white/50 backdrop-blur-sm border border-green-50 rounded-3xl p-6 shadow-sm">
                 <h3 className="text-sm font-bold uppercase tracking-widest text-green-800/60 mb-6 flex items-center gap-2">
@@ -223,7 +225,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
             </div>
 
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {filteredProducts.map((product) => {
                   const imageId = product.imageFileIds?.[0];
                   const imageUrl = imageId ? getProductImageUrl(imageId) : null;
@@ -264,8 +266,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                           {product.name}
                         </h3>
                         <p className="text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
-                          {product.description ||
-                            "Inspirado en la esencia natural"}
+                          {product.description || ""}
                         </p>
                         <div className="flex items-center text-(--nature-primary) text-xs font-bold uppercase tracking-widest gap-1 group-hover:gap-2 transition-all">
                           Ver más detalles <ChevronRight size={14} />
@@ -308,6 +309,79 @@ export function NatureTemplate({ store, products, isPreview = false }) {
           accent: "text-green-50",
         }}
       />
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-60 bg-black/40 backdrop-blur-sm md:hidden"
+            />
+
+            {/* Menu Sidebar */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-[#fdfbf7] p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+            >
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="absolute top-8 right-8 p-2 bg-white organic-shape shadow-lg text-[#1a2e1a]"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="space-y-12">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-green-100 pb-2">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#15803d]/40">
+                      Búsqueda y Filtros
+                    </h3>
+                    <button
+                      onClick={resetFilters}
+                      className="text-[10px] font-bold uppercase tracking-widest text-(--nature-primary)"
+                    >
+                      Reiniciar
+                    </button>
+                  </div>
+                  <CatalogFilters
+                    categories={categories}
+                    activeCategoryIds={activeCategoryIds}
+                    onToggleCategory={toggleCategory}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onMinPriceChange={setMinPrice}
+                    onMaxPriceChange={setMaxPrice}
+                    priceBounds={priceBounds}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    primaryColor={primary}
+                  />
+                </div>
+
+                {store?.paymentLink && (
+                  <div className="pt-8 border-t border-green-100">
+                    <a
+                      href={store.paymentLink}
+                      target="_blank"
+                      className="w-full py-4 bg-[#15803d] text-white rounded-full font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                    >
+                      <ExternalLink size={20} /> Comprar Ahora
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <ImageViewerModal

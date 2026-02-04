@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   ShoppingCart,
@@ -54,7 +55,6 @@ const formatPrice = (price, currency = "MXN") => {
 export function StorefrontTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
@@ -77,6 +77,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
     filteredProducts,
     sortOrder,
     setSortOrder,
+    resetFilters,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer
@@ -130,56 +131,88 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         }
       />
 
-      {/* Mobile Menu Overlay could go here if managed by template, or inside Navbar if robust. 
-          For now, keeping the mobile menu logic of StorefrontTemplate might be needed or we rely on Navbar not having one?
-          StoreNavbar doesn't have a built-in menu drawer. 
-          We need to render it here if open. */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white p-4 pt-20">
-          {/* Simple Mobile Menu Content */}
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="absolute top-4 right-4 p-2 text-slate-500"
-          >
-            <X size={24} />
-          </button>
-          <div className="flex flex-col gap-4">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full border border-slate-300 rounded-lg py-2 px-4"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm md:hidden"
             />
-            {store?.paymentLink && (
-              <a
-                href={store.paymentLink}
-                target="_blank"
-                className="flex items-center gap-2 text-lg font-medium text-(--store-primary)"
+
+            {/* Menu Sidebar */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+            >
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="absolute top-8 right-8 p-2 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full"
               >
-                <ExternalLink className="w-5 h-5" />
-                Quick Pay link
-              </a>
-            )}
-          </div>
-        </div>
-      )}
+                <X size={24} />
+              </button>
+
+              <div className="space-y-12">
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                      Búsqueda y Filtros
+                    </h3>
+                    <button
+                      onClick={resetFilters}
+                      className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
+                    >
+                      Reiniciar
+                    </button>
+                  </div>
+                  <CatalogFilters
+                    categories={categories}
+                    activeCategoryIds={activeCategoryIds}
+                    onToggleCategory={toggleCategory}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onMinPriceChange={setMinPrice}
+                    onMaxPriceChange={setMaxPrice}
+                    priceBounds={priceBounds}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    primaryColor={primary}
+                  />
+                </div>
+
+                {store?.paymentLink && (
+                  <div className="pt-8 border-t border-slate-100">
+                    <a
+                      href={store.paymentLink}
+                      target="_blank"
+                      className="w-full py-4 bg-(--store-primary) text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
+                    >
+                      <ExternalLink size={20} /> Checkout
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Hero / Banner Area */}
       <div className="bg-(--color-bg) border-b border-slate-200/50">
         <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col md:flex-row items-center gap-8">
           <div className="flex-1 space-y-4">
-            <span className="inline-block px-3 py-1 bg-(--store-secondary) text-(--store-primary) text-xs font-bold uppercase tracking-wider rounded-full">
-              Official Store
-            </span>
             <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 leading-tight">
-              {store?.description
-                ? "Discover Quality & Style"
-                : "Best Products for You"}
+              {store?.name}
             </h2>
             <p className="text-lg text-slate-600 max-w-xl">
-              {store?.description ||
-                "Browse our selected collection of premium items available directly from us."}
+              {store?.description || ""}
             </p>
             {store?.paymentLink && (
               <div className="pt-4">
@@ -192,14 +225,17 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
               </div>
             )}
           </div>
-          {/* Decorative placeholder right side if no banner image */}
-          <div className="flex-1 flex justify-center md:justify-end">
-            <div className="w-full max-w-md aspect-video bg-slate-100 rounded-2xl flex items-center justify-center border-2 border-dashed border-slate-300">
-              <span className="text-slate-400 font-medium">
-                Featured Collection
-              </span>
+          {logoUrl && (
+            <div className="flex-1 flex justify-center md:justify-end">
+              <div className="w-full max-w-xs md:max-w-md aspect-square bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl">
+                <img
+                  src={logoUrl}
+                  alt={store.name}
+                  className="w-full h-full object-contain p-8"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -226,37 +262,6 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
           </div>
         </aside>
 
-        {/* Mobile Filter Toggle */}
-        <div className="md:hidden w-full">
-          <button
-            onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-slate-300 py-3 rounded-lg font-medium text-slate-700 shadow-sm"
-          >
-            <Filter className="w-4 h-4" />
-            {mobileFiltersOpen ? "Hide Filters" : "Show Filters"}
-          </button>
-
-          {mobileFiltersOpen && (
-            <div className="mt-4 bg-white p-4 rounded-lg shadow-lg border border-slate-200 space-y-6 animate-in slide-in-from-top-2">
-              {/* Mobile version of sidebar content */}
-              <div>
-                <h4 className="font-bold mb-2">Categories</h4>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => toggleCategory(cat.id)}
-                      className={`px-3 py-1 rounded-full text-sm border ${activeCategoryIds.includes(cat.id) ? "bg-(--store-primary) text-white border-(--store-primary)" : "bg-white text-slate-600 border-slate-300"}`}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Product Results */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-6">
@@ -267,71 +272,33 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
           </div>
 
           {filteredProducts && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => {
-                const imageId = product.imageFileIds?.[0];
-                const imageUrl = imageId ? getProductImageUrl(imageId) : null;
-
-                return (
-                  <div
-                    key={product.id || product.$id}
-                    onClick={() => setSelectedProduct(product)}
-                    className="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden"
-                  >
-                    {/* Image */}
-                    <div className="relative aspect-square bg-slate-100 overflow-hidden">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300">
-                          <ShoppingCart className="w-10 h-10 opacity-20" />
-                        </div>
-                      )}
-                      {/* Badge? */}
-                      {product.price < 500 && (
-                        <span className="absolute top-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded">
-                          DEAL
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4 flex flex-col flex-1">
-                      <div className="mb-1 text-xs text-slate-400 font-medium uppercase tracking-wide">
-                        Generic
-                      </div>
-                      <h3 className="text-slate-900 font-semibold text-lg leading-tight mb-2 group-hover:text-(--store-primary) transition-colors line-clamp-2">
-                        {product.name}
-                      </h3>
-                      <div className="mt-auto pt-4 flex items-center justify-between">
-                        <span className="text-lg font-bold text-slate-900">
-                          {formatPrice(product.price, product.currency)}
-                        </span>
-                        <button className="p-2 rounded-full bg-slate-100 text-slate-600 group-hover:bg-(--store-primary) group-hover:text-white transition-colors">
-                          <ShoppingCart className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id || product.$id}
+                  product={product}
+                  onCategoryClick={(id) => toggleCategory(id)}
+                  onClick={() => setSelectedProduct(product)}
+                  onImageClick={(index, images, e) =>
+                    openViewer(index, images, e)
+                  }
+                />
+              ))}
             </div>
           ) : (
-            <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-500">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                 <Search className="w-8 h-8 text-slate-300" />
               </div>
-              <h3 className="text-lg font-medium text-slate-900">
-                No products found
-              </h3>
-              <p>
-                Try adjusting your search or filter to find what you're looking
-                for.
+              <p className="text-slate-500 font-medium">
+                No se encontraron productos
               </p>
+              <button
+                onClick={resetFilters}
+                className="mt-4 text-(--store-primary) font-bold hover:underline"
+              >
+                Limpiar filtros
+              </button>
             </div>
           )}
         </div>

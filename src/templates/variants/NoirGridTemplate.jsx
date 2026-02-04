@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Image as ImageIcon,
   Store as StoreIcon,
   ExternalLink,
   Info,
   CreditCard,
+  X,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import {
@@ -35,6 +37,7 @@ const resolveFontFamily = (fontId) => {
 
 export function NoirGridTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Settings Resolution
   const theme = resolveThemeSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
@@ -55,6 +58,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
     filteredProducts,
     sortOrder,
     setSortOrder,
+    resetFilters,
   } = useCatalogFilters({ store, products });
   const { handleShare, sharedProductId } = useProductShare();
 
@@ -98,6 +102,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
           query: searchQuery,
           onQueryChange: setSearchQuery,
         }}
+        onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
 
       <div
@@ -178,21 +183,23 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
             )}
           </header>
 
-          <CatalogControls
-            tone="noir"
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            onMinPriceChange={setMinPrice}
-            onMaxPriceChange={setMaxPrice}
-            priceBounds={priceBounds}
-            categories={categories}
-            activeCategoryIds={activeCategoryIds}
-            onToggleCategory={toggleCategory}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-          />
+          <div className="hidden md:block">
+            <CatalogControls
+              tone="noir"
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              onMinPriceChange={setMinPrice}
+              onMaxPriceChange={setMaxPrice}
+              priceBounds={priceBounds}
+              categories={categories}
+              activeCategoryIds={activeCategoryIds}
+              onToggleCategory={toggleCategory}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+            />
+          </div>
 
           <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredProducts?.map((product) => (
@@ -201,6 +208,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                 product={product}
                 tone="noir"
                 size="full"
+                onCategoryClick={(id) => toggleCategory(id)}
                 onImageClick={(index, images) => openViewer(index, images)}
                 onClick={() => setSelectedProduct(product)}
               />
@@ -250,6 +258,80 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
             accent: "text-(--noir-accent-soft)",
           }}
         />
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileMenuOpen(false)}
+                className="fixed inset-0 z-60 bg-black/70 backdrop-blur-sm md:hidden"
+              />
+
+              {/* Menu Sidebar */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 right-0 z-60 w-[85%] bg-(--noir-bg) p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              >
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="absolute top-8 right-8 p-2 border border-(--noir-border) rounded-2xl text-(--noir-strong)"
+                >
+                  <X size={24} />
+                </button>
+
+                <div className="space-y-12 text-(--noir-strong)">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-(--noir-border) pb-2">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-(--noir-muted)">
+                        Búsqueda y Filtros
+                      </h3>
+                      <button
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold uppercase tracking-widest text-(--noir-accent)"
+                      >
+                        Reiniciar
+                      </button>
+                    </div>
+                    <CatalogFilters
+                      categories={categories}
+                      activeCategoryIds={activeCategoryIds}
+                      onToggleCategory={toggleCategory}
+                      minPrice={minPrice}
+                      maxPrice={maxPrice}
+                      onMinPriceChange={setMinPrice}
+                      onMaxPriceChange={setMaxPrice}
+                      priceBounds={priceBounds}
+                      sortOrder={sortOrder}
+                      setSortOrder={setSortOrder}
+                      primaryColor={primary}
+                      dark={true}
+                    />
+                  </div>
+
+                  {store?.paymentLink && (
+                    <div className="pt-8 border-t border-(--noir-border)">
+                      <a
+                        href={store.paymentLink}
+                        target="_blank"
+                        className="w-full py-4 bg-(--noir-accent) text-black rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl"
+                      >
+                        <ExternalLink size={20} /> Checkout
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
       <ImageViewerModal

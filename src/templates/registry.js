@@ -10,6 +10,7 @@ import { StorefrontTemplate } from "./variants/StorefrontTemplate";
 import { GalleryTemplate } from "./variants/GalleryTemplate";
 import { NoirGridTemplate } from "./variants/NoirGridTemplate";
 import { NatureTemplate } from "./variants/NatureTemplate";
+import { PrismTemplate } from "./variants/PrismTemplate";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -79,6 +80,18 @@ export const TEMPLATES = {
     defaultSettings: {
       colors: { primary: "#15803d", secondary: "#fdfbf7" },
       font: "merriweather",
+    },
+  },
+  prism: {
+    id: "prism",
+    name: "Prism",
+    description:
+      "Diseño futurista con glassmorphism, gradientes y estética tech",
+    component: PrismTemplate,
+    thumbnail: "/templates/prism-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#8b5cf6", secondary: "#0f172a" },
+      font: "montserrat",
     },
   },
 };

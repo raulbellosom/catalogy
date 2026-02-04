@@ -49,6 +49,7 @@ export function ProductCard({
   showDescription = true,
   onClick,
   onImageClick,
+  onCategoryClick,
   onShare,
   shared = false,
   tone = "light",
@@ -61,6 +62,13 @@ export function ProductCard({
       return;
     }
     await shareProduct(product);
+  };
+
+  const handleCategoryClick = (event, catId) => {
+    event.stopPropagation();
+    if (onCategoryClick) {
+      onCategoryClick(catId);
+    }
   };
 
   const imageFileIds = Array.isArray(product.imageFileIds)
@@ -114,16 +122,17 @@ export function ProductCard({
           {product.categories && product.categories.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.categories.map((cat) => (
-                <span
+                <button
                   key={cat.id || cat.name}
-                  className={`text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${
+                  onClick={(e) => handleCategoryClick(e, cat.id)}
+                  className={`text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded transition-colors ${
                     isNoir
-                      ? "bg-(--noir-surface-2) text-(--noir-accent)"
-                      : "bg-(--primary)/10 text-(--primary)"
+                      ? "bg-(--noir-surface-2) text-(--noir-accent) hover:bg-(--noir-accent) hover:text-black"
+                      : "bg-(--primary)/10 text-(--primary) hover:bg-(--primary) hover:text-white"
                   }`}
                 >
                   {cat.name}
-                </span>
+                </button>
               ))}
             </div>
           )}

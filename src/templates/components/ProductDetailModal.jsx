@@ -35,7 +35,7 @@ export function ProductDetailModal({
 }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [zoom, setZoom] = useState(1);
-  const isNoir = tone === "noir";
+  const isDark = tone === "noir" || tone === "prism";
   const isNature = tone === "nature";
 
   // Resolve settings for colors
@@ -67,22 +67,22 @@ export function ProductDetailModal({
 
   if (!product) return null;
 
-  const panelBase = isNoir
+  const panelBase = isDark
     ? "bg-(--noir-surface) text-(--noir-strong) border-(--noir-border)"
     : "bg-(--color-bg) text-slate-900 border-slate-200/50";
 
-  const mutedText = isNoir
+  const mutedText = isDark
     ? "text-(--noir-muted)"
     : isNature
       ? "text-green-800/60"
       : "text-slate-500";
   // Dynamic Accent Color
-  const accentColor = isNoir
+  const accentColor = isDark
     ? "text-(--noir-accent)"
     : isNature
       ? "text-(--modal-primary)"
       : "";
-  const surface2 = isNoir
+  const surface2 = isDark
     ? "bg-(--noir-surface-2)"
     : isNature
       ? "bg-green-50/50"
@@ -130,7 +130,7 @@ export function ProductDetailModal({
             <button
               onClick={onClose}
               className={`absolute right-4 top-4 z-110 p-2 rounded-full transition-colors ${
-                isNoir
+                isDark
                   ? "text-(--noir-muted) hover:text-(--noir-strong) hover:bg-white/10"
                   : "text-gray-400 hover:text-gray-900 hover:bg-gray-100"
               }`}
@@ -152,13 +152,13 @@ export function ProductDetailModal({
                       }}
                       className={`relative shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${
                         idx === currentIdx
-                          ? isNoir
+                          ? isDark
                             ? "border-(--noir-accent) shadow-md scale-95 md:scale-100 ring-2 ring-offset-1"
                             : "shadow-md scale-95 md:scale-100 ring-2 ring-offset-1 ring-black/5"
                           : "border-transparent opacity-60 hover:opacity-100"
                       }`}
                       style={
-                        idx === currentIdx && !isNoir
+                        idx === currentIdx && !isDark
                           ? { borderColor: primary, ringColor: primary }
                           : {}
                       }
@@ -250,19 +250,25 @@ export function ProductDetailModal({
                     {product.categories?.map((cat) => (
                       <span
                         key={cat.id}
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${surface2} ${accentColor}`}
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.6 rounded-md shadow-sm border ${
+                          isDark
+                            ? "bg-(--noir-surface-2) text-(--noir-accent) border-(--noir-border)"
+                            : "bg-white text-slate-900 border-slate-100"
+                        }`}
                       >
                         {cat.name}
                       </span>
                     ))}
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                  <h2
+                    className={`text-3xl md:text-4xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}
+                  >
                     {product.name}
                   </h2>
                   <div className="flex items-center gap-2 text-2xl font-bold">
                     <span
-                      className={accentColor}
-                      style={!isNoir ? { color: primary } : {}}
+                      className={isDark ? "text-(--noir-accent)" : ""}
+                      style={!isDark ? { color: primary } : {}}
                     >
                       {formatPrice(product.price, product.currency)}
                     </span>
@@ -277,7 +283,7 @@ export function ProductDetailModal({
                     Descripción
                   </h3>
                   <p
-                    className={`text-sm leading-relaxed ${isNoir ? "text-(--noir-strong)/90" : "text-slate-700"}`}
+                    className={`text-sm leading-relaxed ${isDark ? "text-(--noir-strong)/90" : "text-slate-700"}`}
                   >
                     {product.description || "Sin descripción disponible."}
                   </p>
@@ -285,14 +291,14 @@ export function ProductDetailModal({
 
                 {/* Details Section - Premium Design */}
                 <div
-                  className={`pt-6 border-t ${isNoir ? "border-(--noir-border)" : "border-slate-100"} flex flex-col gap-6`}
+                  className={`pt-6 border-t ${isDark ? "border-(--noir-border)" : "border-slate-100"} flex flex-col gap-6`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2">
                         <Package
                           className={`w-4 h-4 ${accentColor}`}
-                          style={!isNoir ? { color: primary } : {}}
+                          style={!isDark ? { color: primary } : {}}
                         />
                         <span
                           className={`text-[10px] font-bold uppercase tracking-widest ${mutedText}`}
@@ -307,16 +313,16 @@ export function ProductDetailModal({
 
                     <button
                       onClick={() => shareProduct(product)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${isNoir ? "border-(--noir-border) hover:border-(--noir-accent)" : "border-slate-200"} ${surface2} transition-all group`}
-                      style={!isNoir ? { borderColor: "rgba(0,0,0,0.1)" } : {}}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${isDark ? "border-(--noir-border) hover:border-(--noir-accent)" : "border-slate-200"} ${surface2} transition-all group`}
+                      style={!isDark ? { borderColor: "rgba(0,0,0,0.1)" } : {}}
                     >
                       <Share2
                         className={`w-4 h-4 group-hover:scale-110 transition-transform ${accentColor}`}
-                        style={!isNoir ? { color: primary } : {}}
+                        style={!isDark ? { color: primary } : {}}
                       />
                       <span
                         className={`text-xs font-bold ${accentColor}`}
-                        style={!isNoir ? { color: primary } : {}}
+                        style={!isDark ? { color: primary } : {}}
                       >
                         Compartir
                       </span>
@@ -328,14 +334,14 @@ export function ProductDetailModal({
               {/* Action Section */}
               {store?.paymentLink && (
                 <div
-                  className={`mt-8 pt-6 border-t ${isNoir ? "border-(--noir-border)" : "border-slate-100"}`}
+                  className={`mt-8 pt-6 border-t ${isDark ? "border-(--noir-border)" : "border-slate-100"}`}
                 >
                   <a
                     href={store.paymentLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                      isNoir
+                      isDark
                         ? "bg-(--noir-accent) text-black hover:bg-white"
                         : "bg-(--modal-primary) text-white hover:opacity-90"
                     }`}
