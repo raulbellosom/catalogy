@@ -11,9 +11,9 @@ export function StickySaveButton({ isSubmitting, hasChanges }) {
       <div
         className={`
         lg:hidden
-        fixed bottom-[80px] left-0 right-0 p-4 z-40
-        bg-(--color-card)/80 backdrop-blur-md border-t border-(--color-border)
-        safe-bottom
+        fixed bottom-0 left-0 right-0 z-30
+        pt-2 px-4 pb-[calc(68px+env(safe-area-inset-bottom,0px)+8px)]
+        bg-(--color-card) border-t border-(--color-border) shadow-xl
       `}
       >
         <div className="max-w-6xl mx-auto flex justify-end">
