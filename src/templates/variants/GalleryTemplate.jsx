@@ -1,16 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Search,
-  Grid,
-  Maximize2,
-  X,
-  Share2,
-  Info,
-  ChevronRight,
-  Filter,
-  ExternalLink,
-} from "lucide-react";
+import { Search, Grid, Maximize2, X, Share2, ExternalLink } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import {
@@ -18,11 +8,11 @@ import {
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
+  StorePurchaseInfo,
+  shareProduct,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
-import { Logo } from "@/shared/ui/atoms/Logo";
-import { appConfig } from "@/shared/lib/env";
+import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
@@ -51,7 +41,7 @@ const formatPrice = (price, currency = "MXN") => {
 export function GalleryTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [desktopFiltersOpen, setDesktopFiltersOpen] = useState(false);
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
@@ -121,43 +111,78 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
           <p className="text-xl md:text-2xl font-light leading-relaxed italic text-stone-600">
             "{store.description}"
           </p>
-          {store?.purchaseInstructions && (
-            <div className="mt-8 flex justify-center">
-              <span className="inline-flex items-center gap-2 px-6 py-2 border border-stone-300 rounded-full text-xs uppercase tracking-widest hover:bg-stone-900 hover:text-white transition-colors cursor-help group relative">
-                <Info className="w-3 h-3" /> Info
-                {/* Tooltip for instructions */}
-                <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 w-72 bg-white p-4 shadow-xl rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all text-left text-normal normal-case z-50 text-stone-600">
-                  {store.purchaseInstructions}
-                </div>
-              </span>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Filters Section - Hidden on Mobile */}
-      <div className="hidden md:flex px-6 pb-8 flex-col items-center gap-6">
-        <div className="w-full max-w-md bg-(--color-bg) p-6 rounded-xl shadow-sm border border-stone-200/50">
-          <CatalogFilters
-            categories={categories}
-            activeCategoryIds={activeCategoryIds}
-            onToggleCategory={toggleCategory}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            onMinPriceChange={setMinPrice}
-            onMaxPriceChange={setMaxPrice}
-            priceBounds={priceBounds}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            primaryColor={primary}
-          />
-        </div>
-      </div>
-
       {/* Masonry-like Grid (CSS Grid) */}
-      <main className="px-4 md:px-6 pb-20">
+      <main className="px-4 md:px-6 pb-20 max-w-7xl mx-auto">
+        <div className="hidden md:flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex flex-wrap gap-2">
+            {categories?.map((cat) => {
+              const isActive = activeCategoryIds.includes(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => toggleCategory(cat.id)}
+                  className={`px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold transition-colors ${
+                    isActive
+                      ? "bg-stone-900 text-white"
+                      : "bg-white/70 text-stone-500 border border-stone-200 hover:bg-stone-900 hover:text-white"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <select
+              value={sortOrder}
+              onChange={(event) => setSortOrder(event.target.value)}
+              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-stone-200 bg-white/70 text-stone-600"
+            >
+              <option value="none">Relevancia</option>
+              <option value="asc">Menor precio</option>
+              <option value="desc">Mayor precio</option>
+            </select>
+            <button
+              onClick={() => setDesktopFiltersOpen((prev) => !prev)}
+              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white transition-colors"
+            >
+              Filtros
+            </button>
+            <button
+              onClick={resetFilters}
+              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold text-stone-900"
+            >
+              Reiniciar
+            </button>
+          </div>
+        </div>
+
+        {desktopFiltersOpen && (
+          <div className="hidden md:block mb-10">
+            <div className="bg-white/80 border border-stone-200/60 rounded-2xl p-6 shadow-sm">
+              <CatalogFilters
+                categories={categories}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                primaryColor={primary}
+              />
+            </div>
+          </div>
+        )}
+
         {filteredProducts && filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-[250px] md:auto-rows-[400px]">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[250px] md:auto-rows-[400px]">
             {filteredProducts.map((product, i) => {
               const imageId = product.imageFileIds?.[0];
               const imageUrl = imageId ? getProductImageUrl(imageId) : null;
@@ -185,11 +210,20 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-stone-400">
                       <Grid className="w-12 h-12 opacity-20" />
-                      <span className="mt-2 text-xs uppercase tracking-widest">
-                        No Image
-                      </span>
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      shareProduct(product);
+                    }}
+                    className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-stone-800 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                    aria-label="Compartir producto"
+                  >
+                    <Share2 size={16} />
+                  </button>
 
                   {/* Hover Overlay info */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
@@ -229,13 +263,13 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                             )
                           }
                           className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-                          title="View Fullscreen"
+                          title="Ver en pantalla completa"
                         >
                           <Maximize2 className="w-5 h-5" />
                         </button>
                       )}
                       <button className="px-6 py-2 bg-white text-black font-bold uppercase text-xs tracking-widest rounded-full hover:bg-stone-200 transition-colors">
-                        Details
+                        Detalles
                       </button>
                     </div>
                   </div>
@@ -250,6 +284,9 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         )}
       </main>
 
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-10 w-full">
+        <StorePurchaseInfo store={store} />
+      </div>
       <StoreFooter
         store={store}
         config={{
@@ -302,6 +339,16 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                       Reiniciar
                     </button>
                   </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Buscar..."
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-stone-200 bg-stone-50 text-stone-900 placeholder:text-stone-400"
+                    />
+                  </div>
                   <CatalogFilters
                     categories={categories}
                     activeCategoryIds={activeCategoryIds}
@@ -322,9 +369,9 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      className="w-full py-4 bg-stone-900 text-white rounded-full font-bold flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-stone-900 text-white rounded-full font-bold flex items-center justify-center gap-2 whitespace-nowrap"
                     >
-                      <ExternalLink size={20} /> Checkout
+                      <ExternalLink size={20} /> Ir al pago
                     </a>
                   </div>
                 )}

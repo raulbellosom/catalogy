@@ -58,11 +58,7 @@ export function StorePurchaseInfo({ store, tone = "light" }) {
               Pagar ahora
               <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </a>
-            <p
-              className={`text-[10px] uppercase tracking-widest text-center ${mutedText}`}
-            >
-              Transacción 100% Protegida
-            </p>
+            
           </div>
         )}
       </div>

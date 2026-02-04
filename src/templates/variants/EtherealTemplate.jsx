@@ -1,16 +1,28 @@
-import React, { useState, useMemo } from "react";
-import { Menu, X, ArrowRight, ShoppingBag } from "lucide-react";
+import { useState } from "react";
+import { X, ArrowRight } from "lucide-react";
 import {
   StoreNavbar,
   StoreFooter,
   CatalogControls,
-  ProductGrid,
   ProductCard,
   ProductDetailModal,
+  StorePurchaseInfo,
   useCatalog,
 } from "../components";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
-import { getProductImageUrl } from "@/shared/services/productService";
+import { resolveThemeSettings } from "@/templates/registry";
+
+const resolveFontFamily = (fontId) => {
+  const map = {
+    inter: "'Inter', sans-serif",
+    merriweather: "'Merriweather', serif",
+    jetbrains: "'JetBrains Mono', monospace",
+    roboto: "'Roboto', sans-serif",
+    playfair: "'Playfair Display', serif",
+    montserrat: "'Montserrat', sans-serif",
+  };
+  return map[fontId] || "'Playfair Display', serif";
+};
 
 export function EtherealTemplate({ store, products, isPreview = false }) {
   const {
@@ -33,49 +45,20 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Resolution of colors and fonts
-  const settings = useMemo(() => {
-    try {
-      if (store?.settings?.useTemplateStyles) {
-        return {
-          colors: { primary: "#BFA181", secondary: "#FAFAF9" },
-          font: "playfair",
-        };
-      }
-      return typeof store.settings === "string"
-        ? JSON.parse(store.settings)
-        : store.settings;
-    } catch (e) {
-      return {
-        colors: { primary: "#BFA181", secondary: "#FAFAF9" },
-        font: "playfair",
-      };
-    }
-  }, [store]);
-
-  const primaryColor = settings?.colors?.primary || "#BFA181";
-  const secondaryColor = settings?.colors?.secondary || "#FAFAF9";
-  const fontFamily = settings?.font || "playfair";
-
-  // Dynamic Styles
-  const fontStyles =
-    {
-      inter: "font-sans",
-      merriweather: "font-serif",
-      montserrat: "font-sans",
-      playfair: "font-serif",
-      roboto: "font-sans",
-      jetbrains: "font-mono",
-    }[fontFamily] || "font-serif"; // Default to serif for Ethereal
+  const theme = resolveThemeSettings(store);
+  const primaryColor = theme.colors.primary;
+  const secondaryColor = theme.colors.secondary;
+  const fontFamily = resolveFontFamily(theme.font);
 
   return (
     <div
-      className={`min-h-screen selection:bg-opacity-20 ${fontStyles} ${isPreview ? "pt-10" : ""}`}
+      className={`min-h-screen selection:bg-opacity-20 ${isPreview ? "pt-10" : ""}`}
       style={{
         backgroundColor: secondaryColor,
-        color: "#1c1917", // Stone 900
+        color: "#1c1917",
+        fontFamily,
         "--primary": primaryColor,
-        "--color-primary": primaryColor, // Compatibility for shared components
+        "--color-primary": primaryColor,
         "--color-bg-secondary": secondaryColor,
         "--color-border": `${primaryColor}40`,
         "--color-fg": "#1c1917",
@@ -143,8 +126,10 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
         <div
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[20s] hover:scale-110"
           style={{
-            backgroundImage: `url(${store.logoFileId ? getStoreLogoUrl(store.logoFileId) : "/placeholder.jpg"})`,
-            opacity: 0.15,
+            backgroundImage: store?.logoFileId
+              ? `url(${getStoreLogoUrl(store.logoFileId)})`
+              : "radial-gradient(circle at top, rgba(0,0,0,0.08), transparent 60%)",
+            opacity: store?.logoFileId ? 0.15 : 1,
           }}
         />
         <div
@@ -153,15 +138,14 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
         />
 
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pt-16">
-          <p className="text-sm md:text-base tracking-[0.3em] uppercase mb-4 opacity-70">
-            Bienvenido a
-          </p>
           <h1 className="text-5xl md:text-7xl font-light mb-8 tracking-wide">
             {store.name}
           </h1>
-          <p className="max-w-md mx-auto text-lg opacity-80 mb-8 font-light italic">
-            {store.description}
-          </p>
+          {store.description && (
+            <p className="max-w-md mx-auto text-lg opacity-80 mb-8 font-light italic">
+              {store.description}
+            </p>
+          )}
           <button
             onClick={() =>
               window.scrollTo({ top: window.innerHeight, behavior: "smooth" })
@@ -200,6 +184,7 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
             setSortOrder={setSortOrder}
             categories={categories}
             tone="light"
+            onReset={resetFilters}
           />
         </div>
 
@@ -235,6 +220,9 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
 
       {/* Shared Footer */}
       <div id="footer">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12">
+          <StorePurchaseInfo store={store} />
+        </div>
         <StoreFooter
           store={store}
           config={{
@@ -247,48 +235,52 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
         />
       </div>
 
-      {/* Mobile Menu Overlay - Keeping custom for now as no shared component exists, but cleaner integration */}
+      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-stone-900 bg-opacity-95 backdrop-blur-md flex flex-col items-center justify-center">
-          <button
-            className="absolute top-6 right-6 text-white p-2"
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <X size={32} strokeWidth={1} />
-          </button>
+          />
+          <div className="fixed inset-y-0 right-0 z-60 w-[85%] bg-stone-50 p-6 pt-24 shadow-2xl overflow-y-auto md:hidden">
+            <button
+              className="absolute top-8 right-8 text-stone-900 p-2 border border-stone-200 rounded-full"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X size={24} strokeWidth={1} />
+            </button>
 
-          <nav className="flex flex-col items-center gap-8 text-white text-2xl font-light tracking-widest">
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                window.scrollTo({
-                  top: window.innerHeight,
-                  behavior: "smooth",
-                });
-              }}
-            >
-              Collection
-            </button>
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                document
-                  .getElementById("footer")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Contact
-            </button>
-          </nav>
-        </div>
+            <div className="space-y-10">
+              <CatalogControls
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                categories={categories}
+                tone="light"
+                onReset={resetFilters}
+              />
+
+              {store?.paymentLink && (
+                <a
+                  href={store.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 px-4 bg-(--primary) text-white rounded-full font-bold flex items-center justify-center shadow-lg whitespace-nowrap"
+                >
+                  Ir al pago
+                </a>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {/* Product Modal */}
@@ -297,9 +289,6 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
           product={selectedProduct}
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
-          storeSettings={{
-            colors: { primary: primaryColor, secondary: secondaryColor },
-          }}
           store={store}
         />
       )}

@@ -3,16 +3,9 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   ShoppingBag,
-  Menu,
   X,
-  ChevronDown,
-  Facebook,
-  Instagram,
-  Twitter,
-  ExternalLink,
   Filter,
-  ArrowRight,
-  Check,
+  Share2,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -21,11 +14,11 @@ import {
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
+  StorePurchaseInfo,
+  shareProduct,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
-import { Logo } from "@/shared/ui/atoms/Logo";
-import { appConfig } from "@/shared/lib/env";
+import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
@@ -161,9 +154,27 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
 
               <div className="space-y-12">
                 <div className="space-y-6">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-2">
-                    Búsqueda y Filtros
-                  </h3>
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                      Búsqueda y Filtros
+                    </h3>
+                    <button
+                      onClick={resetFilters}
+                      className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
+                    >
+                      Reiniciar
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Buscar..."
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400"
+                    />
+                  </div>
                   <CatalogFilters
                     categories={categories}
                     activeCategoryIds={activeCategoryIds}
@@ -184,7 +195,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      className="w-full py-4 text-center bg-black text-white rounded-full font-bold shadow-lg"
+                      className="w-full py-4 px-4 bg-black text-white rounded-full font-bold flex items-center justify-center shadow-lg whitespace-nowrap"
                       style={{ backgroundColor: primary }}
                     >
                       Ir al pago
@@ -218,17 +229,6 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
             </p>
           )}
 
-          {/* Purchase Instructions Pill */}
-          {store?.purchaseInstructions && (
-            <div className="mt-8 inline-block bg-gray-50 border border-gray-100 rounded-2xl p-6 max-w-lg mx-auto text-left">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
-                Información de Compra
-              </h3>
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-                {store.purchaseInstructions}
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Abstract Background Element */}
@@ -273,6 +273,17 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
               showFilters ? "opacity-100" : "opacity-0"
             }`}
           >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                Filtros
+              </span>
+              <button
+                onClick={resetFilters}
+                className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
+              >
+                Reiniciar
+              </button>
+            </div>
             <CatalogFilters
               categories={categories}
               activeCategoryIds={activeCategoryIds}
@@ -291,7 +302,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
           {/* Product Grid */}
           <div className="flex-1">
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-12">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-12">
                 {filteredProducts.map((product) => {
                   // Get first valid image
                   const imageId = product.imageFileIds?.[0];
@@ -318,6 +329,18 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                           </div>
                         )}
 
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="absolute right-3 top-3 h-8 w-8 rounded-full bg-white/90 text-gray-700 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                          aria-label="Compartir producto"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+
                         {/* Overlay Action */}
                         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <span className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
@@ -331,6 +354,23 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                         <h3 className="font-medium text-gray-900 group-hover:text-(--minimal-accent) transition-colors">
                           {product.name}
                         </h3>
+                        {product.categories && product.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {product.categories.map((cat) => (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleCategory(cat.id);
+                                }}
+                                className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-(--minimal-accent) hover:text-white transition-colors"
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-sm font-medium text-gray-500">
                           {formatPrice(product.price, product.currency)}
                         </p>
@@ -362,6 +402,9 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+        <StorePurchaseInfo store={store} />
+      </div>
       <StoreFooter
         store={store}
         config={{

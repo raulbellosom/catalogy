@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Image as ImageIcon,
-  Store as StoreIcon,
-  ExternalLink,
-  Info,
-  CreditCard,
-  X,
-} from "lucide-react";
+import { Image as ImageIcon, Store as StoreIcon, ExternalLink, X, Search } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import {
   CatalogControls,
@@ -15,10 +8,9 @@ import {
   ProductCard,
   StoreNavbar,
   StoreFooter,
+  StorePurchaseInfo,
 } from "../components";
-import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
-import { Logo } from "@/shared/ui/atoms/Logo";
-import { appConfig } from "@/shared/lib/env";
+import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 
@@ -60,7 +52,6 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
     setSortOrder,
     resetFilters,
   } = useCatalogFilters({ store, products });
-  const { handleShare, sharedProductId } = useProductShare();
 
   // ImageViewerModal State
   const [viewer, setViewer] = useState({
@@ -138,49 +129,6 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
               </div>
             </div>
 
-            {/* Sección de Compra Integrada */}
-            {(store?.purchaseInstructions?.trim() ||
-              store?.paymentLink?.trim()) && (
-              <div className="flex flex-col lg:flex-row gap-8 justify-between">
-                {store?.purchaseInstructions?.trim() && (
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-(--noir-surface-2) text-(--noir-accent)">
-                        <Info className="w-4 h-4" />
-                      </div>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-(--noir-muted)">
-                        Instrucciones
-                      </h3>
-                    </div>
-                    <p className="text-sm leading-relaxed text-(--noir-strong)/80">
-                      {store.purchaseInstructions}
-                    </p>
-                  </div>
-                )}
-
-                {store?.paymentLink?.trim() && (
-                  <div className="flex flex-col gap-3 min-w-[280px]">
-                    <div className="flex items-center gap-2 lg:justify-end">
-                      <div className="p-1.5 rounded-lg bg-(--noir-surface-2) text-(--noir-accent)">
-                        <CreditCard className="w-4 h-4" />
-                      </div>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-(--noir-muted)">
-                        Pago Directo
-                      </h3>
-                    </div>
-                    <a
-                      href={store.paymentLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-(--noir-accent) text-black font-bold transition-all duration-300 shadow-xl hover:shadow-2xl hover:bg-(--noir-accent-soft) hover:-translate-y-1"
-                    >
-                      Ir al pago
-                      <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
           </header>
 
           <div className="hidden md:block">
@@ -198,6 +146,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
               onToggleCategory={toggleCategory}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
+              onReset={resetFilters}
             />
           </div>
 
@@ -229,23 +178,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
       {/* Footer Personalizado */}
       <div className="bg-(--noir-bg) pt-12">
         <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-8 text-center pb-8 text-(--noir-strong)">
-          {/* CTA Reubicado antes del footer */}
-          <div className="p-8 rounded-3xl bg-(--noir-surface-2) border border-(--noir-border) max-w-lg w-full">
-            <h5 className="font-semibold mb-2">
-              ¿Quieres crear tu propio catálogo?
-            </h5>
-            <p className="text-sm text-(--noir-muted) mb-6">
-              Únete a cientos de emprendedores que ya usan Catalogy para vender
-              más.
-            </p>
-            <a
-              href={`${appConfig.baseUrl}/auth/register`}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-black font-bold hover:bg-gray-200 transition-colors"
-            >
-              Comenzar Gratis
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </div>
+          <StorePurchaseInfo store={store} tone="noir" />
         </div>
 
         <StoreFooter
@@ -300,6 +233,16 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                         Reiniciar
                       </button>
                     </div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--noir-muted)" />
+                      <input
+                        type="search"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        placeholder="Buscar..."
+                        className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-(--noir-border) bg-(--noir-surface-2) text-(--noir-strong) placeholder:text-(--noir-muted)"
+                      />
+                    </div>
                     <CatalogFilters
                       categories={categories}
                       activeCategoryIds={activeCategoryIds}
@@ -321,9 +264,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                       <a
                         href={store.paymentLink}
                         target="_blank"
-                        className="w-full py-4 bg-(--noir-accent) text-black rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl"
+                        className="w-full py-4 bg-(--noir-accent) text-black rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl whitespace-nowrap"
                       >
-                        <ExternalLink size={20} /> Checkout
+                        <ExternalLink size={20} /> Ir al pago
                       </a>
                     </div>
                   )}

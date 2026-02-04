@@ -1,21 +1,29 @@
-import React, { useState, useMemo } from "react";
-import {
-  Menu,
-  X,
-  ChevronRight,
-  Gauge,
-  ExternalLink,
-  Share2,
-} from "lucide-react";
+import { useState } from "react";
+import { X, ChevronRight, Gauge, ExternalLink, Share2 } from "lucide-react";
 import {
   CatalogControls,
   ProductDetailModal,
   useCatalog,
   StoreNavbar,
   StoreFooter,
+  StorePurchaseInfo,
+  shareProduct,
 } from "../components";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
+import { resolveThemeSettings } from "@/templates/registry";
+
+const resolveFontFamily = (fontId) => {
+  const map = {
+    inter: "'Inter', sans-serif",
+    merriweather: "'Merriweather', serif",
+    jetbrains: "'JetBrains Mono', monospace",
+    roboto: "'Roboto', sans-serif",
+    playfair: "'Playfair Display', serif",
+    montserrat: "'Montserrat', sans-serif",
+  };
+  return map[fontId] || "'Inter', sans-serif";
+};
 
 export function VelocityTemplate({ store, products, isPreview = false }) {
   const {
@@ -38,49 +46,22 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const settings = useMemo(() => {
-    try {
-      if (store?.settings?.useTemplateStyles) {
-        return {
-          colors: { primary: "#DC2626", secondary: "#F8FAFC" },
-          font: "inter", // Use Inter or Montserrat
-        };
-      }
-      return typeof store.settings === "string"
-        ? JSON.parse(store.settings)
-        : store.settings;
-    } catch (e) {
-      return {
-        colors: { primary: "#DC2626", secondary: "#F8FAFC" },
-        font: "inter",
-      };
-    }
-  }, [store]);
-
-  const primaryColor = settings?.colors?.primary || "#DC2626";
-  const secondaryColor = settings?.colors?.secondary || "#F8FAFC";
-  const fontFamily = settings?.font || "inter";
-
-  const fontStyles =
-    {
-      inter: "font-sans",
-      merriweather: "font-serif",
-      montserrat: "font-sans",
-      playfair: "font-serif",
-      roboto: "font-sans",
-      jetbrains: "font-mono",
-    }[fontFamily] || "font-sans";
+  const theme = resolveThemeSettings(store);
+  const primaryColor = theme.colors.primary;
+  const secondaryColor = theme.colors.secondary;
+  const fontFamily = resolveFontFamily(theme.font);
 
   return (
     <div
-      className={`min-h-screen ${fontStyles} text-slate-900 ${isPreview ? "pt-10" : ""}`}
+      className={`min-h-screen text-slate-900 ${isPreview ? "pt-10" : ""}`}
       style={{
         backgroundColor: secondaryColor,
+        fontFamily,
         "--velocity-accent": primaryColor,
-        "--color-primary": primaryColor, // Compatibility
+        "--color-primary": primaryColor,
         "--color-bg-secondary": secondaryColor,
         "--color-border": `${primaryColor}40`,
-        "--color-fg": "#0f172a", // slate-900
+        "--color-fg": "#0f172a",
       }}
     >
       <style>{`
@@ -150,16 +131,14 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
         <div className="relative max-w-[1440px] mx-auto px-6 py-8">
           <div className="grid md:grid-cols-2 gap-12 items-center py-12 md:py-24">
             <div className="order-2 md:order-1 space-y-6">
-              <div className="inline-block px-3 py-1 bg-white/10 text-(--velocity-accent) text-xs font-bold uppercase tracking-widest rounded-sm mb-2">
-                Selección Premium
-              </div>
               <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter leading-[0.9]">
                 {store.name}
               </h1>
-              <p className="text-slate-400 text-lg max-w-md font-medium">
-                {store.description ||
-                  "Descubre nuestra colección exclusiva de productos seleccionados para ti."}
-              </p>
+              {store.description && (
+                <p className="text-slate-400 text-lg max-w-md font-medium">
+                  {store.description}
+                </p>
+              )}
               <button
                 onClick={() =>
                   window.scrollTo({
@@ -212,6 +191,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
               setSortOrder={setSortOrder}
               categories={categories}
               tone="noir"
+              onReset={resetFilters}
             />
           </div>
           <div className="text-xs font-bold uppercase text-slate-400 hidden md:block">
@@ -220,7 +200,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
         </div>
 
         {/* Wide Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
           {filteredProducts &&
             filteredProducts.map((product) => (
               <div
@@ -238,9 +218,21 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300">
-                      <span className="font-bold text-lg">SIN IMAGEN</span>
+                      <Gauge size={48} className="text-slate-300" />
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      shareProduct(product);
+                    }}
+                    className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                    aria-label="Compartir producto"
+                  >
+                    <Share2 size={16} />
+                  </button>
 
                   {/* Status Badge */}
                   <div className="absolute top-4 left-4">
@@ -275,20 +267,23 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                   </div>
 
                   {/* Categories as Specs Tags */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {product.categoryIds.slice(0, 3).map((catId) => {
-                      const cat = categories.find((c) => c.id === catId);
-                      if (!cat) return null;
-                      return (
-                        <span
-                          key={catId}
-                          className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-sm uppercase tracking-wide"
+                  {product.categories && product.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {product.categories.slice(0, 3).map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleCategory(cat.id);
+                          }}
+                          className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-sm uppercase tracking-wide hover:bg-slate-900 hover:text-white transition-colors"
                         >
                           {cat.name}
-                        </span>
-                      );
-                    })}
-                  </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
                     <div className="text-2xl font-black text-(--velocity-accent) tracking-tight">
@@ -322,6 +317,9 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
 
       {/* Shared Footer */}
       <div id="footer">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 pb-12">
+          <StorePurchaseInfo store={store} />
+        </div>
         <StoreFooter
           store={store}
           config={{
@@ -336,50 +334,50 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col p-6">
-          <div className="flex justify-end mb-12">
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="fixed inset-y-0 right-0 z-60 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 text-white"
+              className="absolute top-8 right-8 p-2 text-slate-900 border border-slate-200 rounded-full"
             >
-              <X size={32} />
+              <X size={24} />
             </button>
+
+            <div className="space-y-10">
+              <CatalogControls
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                categories={categories}
+                tone="light"
+                onReset={resetFilters}
+              />
+
+              {store?.paymentLink && (
+                <a
+                  href={store.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 bg-(--velocity-accent) text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg whitespace-nowrap"
+                >
+                  <ExternalLink size={18} /> Ir al pago
+                </a>
+              )}
+            </div>
           </div>
-          <nav className="flex flex-col gap-8 text-2xl font-black italic uppercase tracking-tighter text-white">
-            <button
-              className="text-left py-4 border-b border-white/10 hover:text-(--velocity-accent)"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              Home
-            </button>
-            <button
-              className="text-left py-4 border-b border-white/10 hover:text-(--velocity-accent)"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                window.scrollTo({
-                  top: window.innerHeight,
-                  behavior: "smooth",
-                });
-              }}
-            >
-              Inventory
-            </button>
-            <button
-              className="text-left py-4 border-b border-white/10 hover:text-(--velocity-accent)"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                document
-                  .getElementById("footer")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Contact
-            </button>
-          </nav>
-        </div>
+        </>
       )}
 
       {selectedProduct && (
@@ -387,9 +385,6 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
           product={selectedProduct}
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
-          storeSettings={{
-            colors: { primary: primaryColor, secondary: secondaryColor },
-          }}
           store={store}
         />
       )}

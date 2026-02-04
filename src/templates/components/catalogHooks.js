@@ -33,6 +33,10 @@ export const useCatalogFilters = ({ store, products }) => {
     [store?.categoriesJson, store?.categories],
   );
 
+  const categoryMap = useMemo(() => {
+    return new Map(categories.map((category) => [category.id, category]));
+  }, [categories]);
+
   const productList = Array.isArray(products) ? products : [];
 
   const priceBounds = useMemo(() => {
@@ -89,14 +93,27 @@ export const useCatalogFilters = ({ store, products }) => {
       return ids.some((id) => activeCategoryIds.includes(id));
     });
 
+    const withCategories = filtered.map((product) => {
+      if (product?.categories?.length) return product;
+      const ids = Array.isArray(product?.categoryIds)
+        ? product.categoryIds
+        : [];
+      const resolvedCategories = ids
+        .map((id) => categoryMap.get(id))
+        .filter(Boolean);
+      return resolvedCategories.length
+        ? { ...product, categories: resolvedCategories }
+        : product;
+    });
+
     // Sorting
     if (sortOrder === "asc") {
-      return [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
+      return [...withCategories].sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sortOrder === "desc") {
-      return [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
+      return [...withCategories].sort((a, b) => (b.price || 0) - (a.price || 0));
     }
 
-    return filtered;
+    return withCategories;
   }, [
     productList,
     searchQuery,
@@ -106,6 +123,7 @@ export const useCatalogFilters = ({ store, products }) => {
     priceBounds.min,
     priceBounds.max,
     sortOrder,
+    categoryMap,
   ]);
 
   const resetFilters = () => {

@@ -1,33 +1,17 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Search,
-  ShoppingCart,
-  Menu,
-  X,
-  ChevronDown,
-  Facebook,
-  Instagram,
-  Twitter,
-  Filter,
-  Check,
-  Star,
-  ExternalLink,
-  Info,
-} from "lucide-react";
+import { Search, X, ExternalLink } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
-import { getProductImageUrl } from "@/shared/services/productService";
 import {
   ProductDetailModal,
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
   ProductCard,
+  StorePurchaseInfo,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
-import { Logo } from "@/shared/ui/atoms/Logo";
-import { appConfig } from "@/shared/lib/env";
+import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
@@ -95,7 +79,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-(--color-bg) text-slate-900"
+      className={`min-h-screen flex flex-col bg-(--color-bg) text-slate-900 ${isPreview ? "pt-32" : "pt-20"}`}
       style={{
         fontFamily,
         "--store-primary": primary,
@@ -173,6 +157,16 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
                       Reiniciar
                     </button>
                   </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Buscar..."
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
+                    />
+                  </div>
                   <CatalogFilters
                     categories={categories}
                     activeCategoryIds={activeCategoryIds}
@@ -193,9 +187,9 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      className="w-full py-4 bg-(--store-primary) text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg"
+                      className="w-full py-4 bg-(--store-primary) text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg whitespace-nowrap"
                     >
-                      <ExternalLink size={20} /> Checkout
+                      <ExternalLink size={20} /> Ir al pago
                     </a>
                   </div>
                 )}
@@ -241,12 +235,21 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
       </div>
 
       {/* Main Layout Area */}
-      <main
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full flex flex-col md:flex-row gap-8 ${isPreview ? "pt-32" : "pt-24"}`}
-      >
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full flex flex-col md:flex-row gap-8">
         {/* Sidebar Controls (Desktop) */}
         <aside className="hidden md:block w-64 shrink-0 space-y-8">
-          <div className="bg-(--color-bg) rounded-lg shadow-sm border border-slate-200/50 p-5">
+          <div className="bg-(--color-bg) rounded-lg shadow-sm border border-slate-200/50 p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                Filtros
+              </span>
+              <button
+                onClick={resetFilters}
+                className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
+              >
+                Reiniciar
+              </button>
+            </div>
             <CatalogFilters
               categories={categories}
               activeCategoryIds={activeCategoryIds}
@@ -266,14 +269,14 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         {/* Product Results */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-900">Products</h2>
+            <h2 className="text-xl font-bold text-slate-900">Productos</h2>
             <span className="text-sm text-slate-500">
-              {filteredProducts?.length || 0} results
+              {filteredProducts?.length || 0} resultados
             </span>
           </div>
 
           {filteredProducts && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id || product.$id}
@@ -305,6 +308,9 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+        <StorePurchaseInfo store={store} />
+      </div>
       <StoreFooter
         store={store}
         config={{

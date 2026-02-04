@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { shareProduct } from "./catalogHooks";
 import { getProductImageUrl } from "@/shared/services/productService";
-import { getTemplate, resolveThemeSettings } from "@/templates/registry";
+import { resolveThemeSettings } from "@/templates/registry";
 
 const formatPrice = (price, currency = "MXN") => {
   if (typeof price !== "number") return "";
@@ -275,41 +275,42 @@ export function ProductDetailModal({
                   </div>
                 </div>
 
-                {/* Description */}
-                <div className="space-y-3">
-                  <h3
-                    className={`text-xs font-bold uppercase tracking-[0.2em] ${mutedText}`}
-                  >
-                    Descripción
-                  </h3>
-                  <p
-                    className={`text-sm leading-relaxed ${isDark ? "text-(--noir-strong)/90" : "text-slate-700"}`}
-                  >
-                    {product.description || "Sin descripción disponible."}
-                  </p>
-                </div>
+                {product.description && (
+                  <div className="space-y-3">
+                    <h3
+                      className={`text-xs font-bold uppercase tracking-[0.2em] ${mutedText}`}
+                    >
+                      Descripcion
+                    </h3>
+                    <p
+                      className={`text-sm leading-relaxed ${isDark ? "text-(--noir-strong)/90" : "text-slate-700"}`}
+                    >
+                      {product.description}
+                    </p>
+                  </div>
+                )}
 
                 {/* Details Section - Premium Design */}
                 <div
                   className={`pt-6 border-t ${isDark ? "border-(--noir-border)" : "border-slate-100"} flex flex-col gap-6`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <Package
-                          className={`w-4 h-4 ${accentColor}`}
-                          style={!isDark ? { color: primary } : {}}
-                        />
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-widest ${mutedText}`}
-                        >
-                          Unidades Disponibles
-                        </span>
+                  <div className="flex items-center justify-between gap-4">
+                    {typeof product.stock === "number" && (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <Package
+                            className={`w-4 h-4 ${accentColor}`}
+                            style={!isDark ? { color: primary } : {}}
+                          />
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-widest ${mutedText}`}
+                          >
+                            Unidades Disponibles
+                          </span>
+                        </div>
+                        <p className="text-xl font-black">{product.stock}</p>
                       </div>
-                      <p className="text-xl font-black">
-                        {product.stock ?? "0"}
-                      </p>
-                    </div>
+                    )}
 
                     <button
                       onClick={() => shareProduct(product)}
@@ -329,28 +330,28 @@ export function ProductDetailModal({
                     </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Section */}
-              {store?.paymentLink && (
-                <div
-                  className={`mt-8 pt-6 border-t ${isDark ? "border-(--noir-border)" : "border-slate-100"}`}
-                >
-                  <a
-                    href={store.paymentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
-                      isDark
-                        ? "bg-(--noir-accent) text-black hover:bg-white"
-                        : "bg-(--modal-primary) text-white hover:opacity-90"
-                    }`}
+                {/* Action Section */}
+                {store?.paymentLink && (
+                  <div
+                    className={`mt-8 pt-6 border-t ${isDark ? "border-(--noir-border)" : "border-slate-100"}`}
                   >
-                    Comprar ahora
-                    <ExternalLink className="w-5 h-5" />
-                  </a>
-                </div>
-              )}
+                    <a
+                      href={store.paymentLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                        isDark
+                          ? "bg-(--noir-accent) text-black hover:bg-white"
+                          : "bg-(--modal-primary) text-white hover:opacity-90"
+                      }`}
+                    >
+                      Comprar ahora
+                      <ExternalLink className="w-5 h-5" />
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>

@@ -2,18 +2,15 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
-  ShoppingBag,
-  Menu,
   X,
-  Zap,
   Layers,
-  Sparkles,
   Cpu,
   ChevronRight,
   Filter,
   ArrowRight,
   Monitor,
   ExternalLink,
+  Share2,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -22,6 +19,8 @@ import {
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
+  StorePurchaseInfo,
+  shareProduct,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
@@ -87,7 +86,7 @@ export function PrismTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-(--prism-bg) text-white selection:bg-(--prism-primary)/30 ${isPreview ? "pt-32" : "pt-20"}`}
+      className={`min-h-screen flex flex-col bg-(--prism-bg) text-white selection:bg-(--prism-primary)/30 ${isPreview ? "pt-24" : "pt-14"}`}
       style={{
         fontFamily,
         "--prism-primary": primary,
@@ -178,7 +177,7 @@ export function PrismTemplate({ store, products, isPreview = false }) {
               href="#catalog"
               className="px-10 py-4 bg-(--prism-primary) text-white rounded-xl font-bold shadow-2xl shadow-(--prism-primary)/20 hover:scale-105 transition-all flex items-center gap-3"
             >
-              Explore Collection <ChevronRight size={20} />
+              Ver productos <ChevronRight size={20} />
             </a>
           </div>
         </div>
@@ -194,9 +193,17 @@ export function PrismTemplate({ store, products, isPreview = false }) {
           <div className="hidden lg:block lg:w-80 shrink-0">
             <div className="sticky top-28 space-y-10">
               <div className="glass-card rounded-3xl p-8">
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-8 flex items-center gap-2">
-                  <Filter size={14} /> Refine Products
-                </h3>
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                    <Filter size={14} /> Filtros
+                  </h3>
+                  <button
+                    onClick={resetFilters}
+                    className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--prism-primary)"
+                  >
+                    Reiniciar
+                  </button>
+                </div>
                 <CatalogFilters
                   categories={categories}
                   activeCategoryIds={activeCategoryIds}
@@ -212,22 +219,6 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                   dark={true}
                 />
               </div>
-
-              {/* Purchase Info */}
-              {store.purchaseInstructions && (
-                <div className="relative group overflow-hidden rounded-3xl p-px">
-                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-(--prism-primary)/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                  <div className="relative glass-card rounded-[23px] p-8">
-                    <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2">
-                      <Zap size={14} className="text-(--prism-primary)" /> Buy
-                      Guide
-                    </h3>
-                    <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap">
-                      {store.purchaseInstructions}
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -236,17 +227,17 @@ export function PrismTemplate({ store, products, isPreview = false }) {
             <div className="flex items-end justify-between mb-12 border-b border-white/5 pb-8">
               <div>
                 <h2 className="text-3xl font-bold text-white mb-2">
-                  Our Goods
+                  Productos
                 </h2>
                 <div className="h-1 w-12 bg-(--prism-primary) rounded-full" />
               </div>
               <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-                {filteredProducts?.length || 0} ITEMS DISCOVERED
+                {filteredProducts?.length || 0} productos
               </span>
             </div>
 
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 md:gap-10">
                 {filteredProducts.map((product) => {
                   const imageId = product.imageFileIds?.[0];
                   const imageUrl = imageId ? getProductImageUrl(imageId) : null;
@@ -276,6 +267,18 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                           </div>
                         )}
 
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                          aria-label="Compartir producto"
+                        >
+                          <Share2 size={16} />
+                        </button>
+
                         {/* Price Overlay */}
                         <div className="absolute inset-x-0 bottom-0 p-6 bg-linear-to-t from-black/80 to-transparent">
                           <span className="text-xl font-bold text-white group-hover:text-(--prism-primary) transition-colors">
@@ -304,16 +307,18 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                               ))}
                             </div>
                           )}
-                        <p className="text-sm text-slate-500 line-clamp-2 mb-6 h-10">
-                          {product.description || ""}
-                        </p>
+                        {product.description && (
+                          <p className="text-sm text-slate-500 line-clamp-2 mb-6 h-10">
+                            {product.description}
+                          </p>
+                        )}
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-(--prism-primary) text-[10px] font-black uppercase tracking-[0.2em]">
-                            Details <ArrowRight size={14} />
+                            Detalles <ArrowRight size={14} />
                           </div>
                           {product.stock > 0 && (
                             <div className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-                              {product.stock} IN STOCK
+                              {product.stock} EN STOCK
                             </div>
                           )}
                         </div>
@@ -328,17 +333,16 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                   <Monitor className="w-10 h-10 text-slate-700" />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-4">
-                  No Signals Found
+                  Sin productos
                 </h3>
                 <p className="text-slate-500 max-w-md mx-auto mb-10">
-                  We couldn't find any products matching your current sensors.
-                  Try broadening your search.
+                  No hay productos que coincidan con tu b?squeda.
                 </p>
                 <button
                   onClick={() => setSearchQuery("")}
                   className="px-8 py-3 glass-card rounded-xl text-sm font-bold text-(--prism-primary) transition-all hover:bg-(--prism-primary) hover:text-white"
                 >
-                  Reset Sensors
+                  Reiniciar filtros
                 </button>
               </div>
             )}
@@ -346,6 +350,9 @@ export function PrismTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+        <StorePurchaseInfo store={store} />
+      </div>
       <StoreFooter
         store={store}
         config={{
@@ -398,6 +405,16 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                       Reiniciar
                     </button>
                   </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Buscar..."
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-white/10 bg-white/5 text-white placeholder:text-slate-500"
+                    />
+                  </div>
                   <CatalogFilters
                     categories={categories}
                     activeCategoryIds={activeCategoryIds}
@@ -421,9 +438,9 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      className="w-full py-4 bg-(--prism-primary) text-white rounded-2xl font-bold flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-(--prism-primary) text-white rounded-2xl font-bold flex items-center justify-center gap-2 whitespace-nowrap"
                     >
-                      <ExternalLink size={20} /> Checkout Now
+                      <ExternalLink size={20} /> Ir al pago
                     </a>
                   </div>
                 )}

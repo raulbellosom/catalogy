@@ -2,8 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
-  ShoppingBag,
-  Menu,
   X,
   Leaf,
   Wind,
@@ -14,6 +12,7 @@ import {
   Filter,
   ArrowRight,
   ExternalLink,
+  Share2,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -22,6 +21,8 @@ import {
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
+  StorePurchaseInfo,
+  shareProduct,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
@@ -53,7 +54,6 @@ const formatPrice = (price, currency = "MXN") => {
 export function NatureTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Settings Resolution
   // Settings Resolution
@@ -182,9 +182,17 @@ export function NatureTemplate({ store, products, isPreview = false }) {
           <div className="hidden lg:block lg:w-72 shrink-0">
             <div className="sticky top-24 space-y-8">
               <div className="bg-white/50 backdrop-blur-sm border border-green-50 rounded-3xl p-6 shadow-sm">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-green-800/60 mb-6 flex items-center gap-2">
-                  <Filter size={14} /> Filtros de calma
-                </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-green-800/60 flex items-center gap-2">
+                    <Filter size={14} /> Filtros
+                  </h3>
+                  <button
+                    onClick={resetFilters}
+                    className="text-[10px] font-bold uppercase tracking-widest text-(--nature-primary)"
+                  >
+                    Reiniciar
+                  </button>
+                </div>
                 <CatalogFilters
                   categories={categories}
                   activeCategoryIds={activeCategoryIds}
@@ -200,17 +208,6 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                 />
               </div>
 
-              {/* Purchase Info Card */}
-              {store.purchaseInstructions && (
-                <div className="bg-orange-50/50 border border-orange-100 rounded-3xl p-6 shadow-sm">
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-[#7c2d12]/60 mb-4 flex items-center gap-2">
-                    <Wind size={14} /> Cómo comprar
-                  </h3>
-                  <p className="text-sm text-[#5d4037] leading-relaxed whitespace-pre-wrap">
-                    {store.purchaseInstructions}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 
@@ -218,15 +215,15 @@ export function NatureTemplate({ store, products, isPreview = false }) {
           <div className="flex-1">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-serif font-bold text-[#1a2e1a]">
-                Nuestra Colección
+                Productos
               </h2>
               <span className="text-sm text-[#4a554a] font-medium italic">
-                {filteredProducts?.length || 0} tesoros encontrados
+                {filteredProducts?.length || 0} productos
               </span>
             </div>
 
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 md:gap-8">
                 {filteredProducts.map((product) => {
                   const imageId = product.imageFileIds?.[0];
                   const imageUrl = imageId ? getProductImageUrl(imageId) : null;
@@ -251,6 +248,18 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                           </div>
                         )}
 
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-[#1a2e1a] flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                          aria-label="Compartir producto"
+                        >
+                          <Share2 size={16} />
+                        </button>
+
                         {/* Price Tag Overlay */}
                         <div className="absolute bottom-4 left-4">
                           <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-bold text-(--nature-primary) shadow-sm">
@@ -266,11 +275,30 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                         <h3 className="font-serif text-lg font-bold text-[#1a2e1a] mb-1 group-hover:text-(--nature-primary) transition-colors">
                           {product.name}
                         </h3>
-                        <p className="text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
-                          {product.description || ""}
-                        </p>
+                        {product.categories && product.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {product.categories.map((cat) => (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  toggleCategory(cat.id);
+                                }}
+                                className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-green-50 text-[#1a2e1a] hover:bg-(--nature-primary) hover:text-white transition-colors"
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {product.description && (
+                          <p className="text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
+                            {product.description}
+                          </p>
+                        )}
                         <div className="flex items-center text-(--nature-primary) text-xs font-bold uppercase tracking-widest gap-1 group-hover:gap-2 transition-all">
-                          Ver más detalles <ChevronRight size={14} />
+                          Ver detalles <ChevronRight size={14} />
                         </div>
                       </div>
                     </div>
@@ -283,7 +311,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                   <Wind className="w-8 h-8 text-green-200" />
                 </div>
                 <h3 className="text-xl font-serif font-bold text-[#1a2e1a]">
-                  Silencio en el bosque...
+                  Sin productos
                 </h3>
                 <p className="text-[#4a554a] mt-2">
                   No hay productos que coincidan con tu búsqueda.
@@ -292,7 +320,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                   onClick={() => setSearchQuery("")}
                   className="mt-8 text-sm font-bold text-(--nature-primary) hover:underline"
                 >
-                  Regresar a la calma
+                  Reiniciar filtros
                 </button>
               </div>
             )}
@@ -300,6 +328,9 @@ export function NatureTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+        <StorePurchaseInfo store={store} />
+      </div>
       <StoreFooter
         store={store}
         config={{
@@ -352,6 +383,16 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                       Reiniciar
                     </button>
                   </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#15803d]/40" />
+                    <input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Buscar..."
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-green-100 bg-white/70 text-[#1a2e1a] placeholder:text-[#15803d]/40"
+                    />
+                  </div>
                   <CatalogFilters
                     categories={categories}
                     activeCategoryIds={activeCategoryIds}
@@ -372,7 +413,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      className="w-full py-4 bg-[#15803d] text-white rounded-full font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20"
+                      className="w-full py-4 bg-[#15803d] text-white rounded-full font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-900/20 whitespace-nowrap"
                     >
                       <ExternalLink size={20} /> Comprar Ahora
                     </a>

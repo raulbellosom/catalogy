@@ -8,6 +8,7 @@ const toneStyles = {
     chip: "border border-(--color-border) text-(--color-fg-secondary) hover:border-(--color-primary)",
     chipActive: "bg-(--color-primary) text-white border-(--color-primary)",
     label: "text-(--color-fg-secondary)",
+    range: "bg-[var(--color-border)] accent-(--color-primary)",
   },
   noir: {
     panel: "bg-[var(--noir-surface)] border border-[var(--noir-border)]",
@@ -17,6 +18,7 @@ const toneStyles = {
     chipActive:
       "bg-[var(--noir-accent)] text-black border-[var(--noir-accent)]",
     label: "text-[var(--noir-muted)]",
+    range: "bg-[var(--noir-border)] accent-(--noir-accent)",
   },
 };
 
@@ -34,14 +36,26 @@ export function CatalogControls({
   onToggleCategory,
   sortOrder,
   setSortOrder,
+  onReset,
 }) {
   const styles = toneStyles[tone] || toneStyles.light;
 
   return (
     <div className={`rounded-2xl p-6 space-y-6 ${styles.panel}`}>
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em]">
-        <SlidersHorizontal className={`h-3.5 w-3.5 ${styles.label}`} />
-        <span className={styles.label}>Filtros</span>
+      <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.2em]">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className={`h-3.5 w-3.5 ${styles.label}`} />
+          <span className={styles.label}>Filtros</span>
+        </div>
+        {onReset && (
+          <button
+            type="button"
+            onClick={onReset}
+            className={`text-[10px] font-bold uppercase tracking-[0.2em] ${styles.label} hover:opacity-80`}
+          >
+            Reiniciar
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -83,7 +97,7 @@ export function CatalogControls({
               step="1"
               value={minPrice}
               onChange={(event) => onMinPriceChange(Number(event.target.value))}
-              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-gray-700 accent-(--noir-accent)"
+              className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${styles.range}`}
             />
           </div>
           <div className="flex-1 space-y-2">
@@ -98,7 +112,7 @@ export function CatalogControls({
               step="1"
               value={maxPrice}
               onChange={(event) => onMaxPriceChange(Number(event.target.value))}
-              className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-gray-700 accent-(--noir-accent)"
+              className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${styles.range}`}
             />
           </div>
         </div>
