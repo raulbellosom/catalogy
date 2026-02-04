@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Search,
-  ShoppingBag,
-  X,
-  Filter,
-  Share2,
-} from "lucide-react";
+import { Search, ShoppingBag, X, Filter, Share2 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import {
@@ -89,6 +83,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--color-bg) text-gray-900 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
+        colorScheme: "light",
         "--minimal-accent": primary,
         "--minimal-secondary": secondary,
         "--store-navbar-height": "4rem",
@@ -230,7 +225,6 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
               {store.description}
             </p>
           )}
-
         </div>
 
         {/* Abstract Background Element */}
@@ -356,23 +350,24 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                         <h3 className="font-medium text-gray-900 group-hover:text-(--minimal-accent) transition-colors">
                           {product.name}
                         </h3>
-                        {product.categories && product.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {product.categories.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  toggleCategory(cat.id);
-                                }}
-                                className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-(--minimal-accent) hover:text-white transition-colors"
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {product.categories &&
+                          product.categories.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {product.categories.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    toggleCategory(cat.id);
+                                  }}
+                                  className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-(--minimal-accent) hover:text-white transition-colors"
+                                >
+                                  {cat.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         <p className="text-sm font-medium text-gray-500">
                           {formatPrice(product.price, product.currency)}
                         </p>

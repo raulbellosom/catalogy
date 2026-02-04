@@ -92,6 +92,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--color-bg) text-[#2d2a26] selection:bg-green-100 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
+        colorScheme: "light",
         "--nature-primary": primary,
         "--nature-secondary": secondary,
         "--store-navbar-height": "4rem",
@@ -209,7 +210,6 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                   primaryColor={primary}
                 />
               </div>
-
             </div>
           </div>
 
@@ -277,23 +277,24 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                         <h3 className="font-serif text-lg font-bold text-[#1a2e1a] mb-1 group-hover:text-(--nature-primary) transition-colors">
                           {product.name}
                         </h3>
-                        {product.categories && product.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {product.categories.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  toggleCategory(cat.id);
-                                }}
-                                className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-green-50 text-[#1a2e1a] hover:bg-(--nature-primary) hover:text-white transition-colors"
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {product.categories &&
+                          product.categories.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {product.categories.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    toggleCategory(cat.id);
+                                  }}
+                                  className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-green-50 text-[#1a2e1a] hover:bg-(--nature-primary) hover:text-white transition-colors"
+                                >
+                                  {cat.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         {product.description && (
                           <p className="text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
                             {product.description}

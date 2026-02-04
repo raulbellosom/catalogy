@@ -57,6 +57,7 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
         backgroundColor: secondaryColor,
         color: "#1c1917",
         fontFamily,
+        colorScheme: "light",
         "--primary": primaryColor,
         "--color-primary": primaryColor,
         "--color-bg-secondary": secondaryColor,

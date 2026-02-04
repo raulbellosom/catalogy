@@ -57,6 +57,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
       style={{
         backgroundColor: secondaryColor,
         fontFamily,
+        colorScheme: "light",
         "--velocity-accent": primaryColor,
         "--color-primary": primaryColor,
         "--color-bg-secondary": secondaryColor,

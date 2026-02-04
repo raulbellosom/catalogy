@@ -15,6 +15,7 @@ import { EtherealTemplate } from "./variants/EtherealTemplate";
 import { VelocityTemplate } from "./variants/VelocityTemplate";
 import { RibbonTemplate } from "./variants/RibbonTemplate";
 import { SketchyTemplate } from "./variants/SketchyTemplate";
+import { CoastalTemplate } from "./variants/CoastalTemplate";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -143,6 +144,18 @@ export const TEMPLATES = {
     defaultSettings: {
       colors: { primary: "#333333", secondary: "#ffffff" },
       font: "inter",
+    },
+  },
+  coastal: {
+    id: "coastal",
+    name: "Coastal",
+    description:
+      "Tropical moderno con gradientes suaves, cards redondeadas y estética vacacional",
+    component: CoastalTemplate,
+    thumbnail: "/templates/coastal-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#0d9488", secondary: "#f0fdfa" },
+      font: "montserrat",
     },
   },
 };

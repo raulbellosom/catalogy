@@ -210,9 +210,10 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
+      className="min-h-screen flex flex-col pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))] bg-white text-black"
       style={{
         fontFamily,
+        colorScheme: "light",
         "--sketchy-primary": primary,
         "--sketchy-secondary": secondary,
         "--store-navbar-height": "5rem",

@@ -89,6 +89,7 @@ export function PrismTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--prism-bg) text-white selection:bg-(--prism-primary)/30 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
+        colorScheme: "dark",
         "--prism-primary": primary,
         "--prism-secondary": secondary,
         "--prism-bg": secondary || "#0f172a",

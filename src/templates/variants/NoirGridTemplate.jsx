@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Image as ImageIcon, Store as StoreIcon, ExternalLink, X, Search } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Store as StoreIcon,
+  ExternalLink,
+  X,
+  Search,
+} from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import {
   CatalogControls,
@@ -69,6 +75,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--noir-bg) text-(--noir-strong) pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
+        colorScheme: "dark",
         "--noir-bg": secondary,
         "--noir-surface": "rgba(255,255,255,0.03)",
         "--noir-surface-2": "rgba(255,255,255,0.06)",
@@ -128,7 +135,6 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                 </div>
               </div>
             </div>
-
           </header>
 
           <div className="hidden md:block">

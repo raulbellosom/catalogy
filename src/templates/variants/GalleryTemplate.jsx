@@ -84,6 +84,7 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--color-bg) text-stone-900 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
+        colorScheme: "light",
         "--gallery-accent": primary,
         "--gallery-contrast": secondary,
         "--store-navbar-height": "4rem",

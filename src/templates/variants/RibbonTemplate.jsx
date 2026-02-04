@@ -58,6 +58,7 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--ribbon-bg) text-(--ribbon-fg) pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
+        colorScheme: "light",
         "--ribbon-primary": primary,
         "--ribbon-bg": secondary,
         "--ribbon-fg": "#0f172a",
@@ -142,7 +143,10 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
         </div>
       </header>
 
-      <main id="catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 w-full">
+      <main
+        id="catalog"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 w-full"
+      >
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <h2 className="text-2xl font-semibold text-slate-900">Productos</h2>
           <span className="text-sm text-slate-500">
