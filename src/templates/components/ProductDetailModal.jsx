@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { shareProduct } from "./catalogHooks";
 import { getProductImageUrl } from "@/shared/services/productService";
+import { getTemplate, resolveThemeSettings } from "@/templates/registry";
 
 const formatPrice = (price, currency = "MXN") => {
   if (typeof price !== "number") return "";
@@ -35,15 +36,11 @@ export function ProductDetailModal({
   const [currentIdx, setCurrentIdx] = useState(0);
   const [zoom, setZoom] = useState(1);
   const isNoir = tone === "noir";
+  const isNature = tone === "nature";
 
   // Resolve settings for colors
-  const settings = store?.settings
-    ? typeof store.settings === "string"
-      ? JSON.parse(store.settings)
-      : store.settings
-    : {};
-  const primary = settings?.colors?.primary || "#3b82f6"; // Default blue-600
-  // const secondary = settings?.colors?.secondary || "#eff6ff";
+  const theme = resolveThemeSettings(store);
+  const primary = theme.colors.primary;
 
   useEffect(() => {
     if (isOpen) {
@@ -71,13 +68,25 @@ export function ProductDetailModal({
   if (!product) return null;
 
   const panelBase = isNoir
-    ? "bg-[var(--noir-surface)] text-[var(--noir-strong)] border-[var(--noir-border)]"
-    : "bg-white text-slate-900 border-slate-200";
+    ? "bg-(--noir-surface) text-(--noir-strong) border-(--noir-border)"
+    : "bg-(--color-bg) text-slate-900 border-slate-200/50";
 
-  const mutedText = isNoir ? "text-[var(--noir-muted)]" : "text-slate-500";
+  const mutedText = isNoir
+    ? "text-(--noir-muted)"
+    : isNature
+      ? "text-green-800/60"
+      : "text-slate-500";
   // Dynamic Accent Color
-  const accentColor = isNoir ? "text-(--noir-accent)" : "";
-  const surface2 = isNoir ? "bg-(--noir-surface-2)" : "bg-slate-100";
+  const accentColor = isNoir
+    ? "text-(--noir-accent)"
+    : isNature
+      ? "text-(--modal-primary)"
+      : "";
+  const surface2 = isNoir
+    ? "bg-(--noir-surface-2)"
+    : isNature
+      ? "bg-green-50/50"
+      : "bg-slate-100";
 
   const imageFileIds = Array.isArray(product.imageFileIds)
     ? product.imageFileIds

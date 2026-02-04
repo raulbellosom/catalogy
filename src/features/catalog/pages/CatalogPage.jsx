@@ -1,7 +1,7 @@
 import { Store as StoreIcon, Loader2, Clock } from "lucide-react";
 import { useSubdomainContext } from "@/app/providers";
 import { useStoreBySlug, useProducts } from "@/shared/hooks";
-import { getTemplate } from "@/templates/registry";
+import { getTemplate, resolveThemeSettings } from "@/templates/registry";
 import { PuckRenderer } from "@/features/editor/components/PuckRenderer";
 import { EmptyCatalog } from "../components/EmptyCatalog";
 import { ProductCard } from "../components/ProductCard";
@@ -37,18 +37,18 @@ export function CatalogPage({ previewSlug }) {
 
   if (loadingStore) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
-        <Loader2 className="w-8 h-8 text-[var(--color-primary)] animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-(--color-bg)">
+        <Loader2 className="w-8 h-8 text-(--color-primary) animate-spin" />
       </div>
     );
   }
 
   if (storeError || !store) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] px-4">
+      <div className="min-h-screen flex items-center justify-center bg-(--color-bg) px-4">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-[var(--color-error-bg)] rounded-full flex items-center justify-center mx-auto mb-4">
-            <StoreIcon className="w-8 h-8 text-[var(--color-error)]" />
+          <div className="w-16 h-16 bg-(--color-error-bg) rounded-full flex items-center justify-center mx-auto mb-4">
+            <StoreIcon className="w-8 h-8 text-(--color-error)" />
           </div>
           <h1 className="text-2xl font-bold text-(--color-fg) mb-2">
             Catálogo no encontrado
@@ -87,46 +87,36 @@ export function CatalogPage({ previewSlug }) {
   const TemplateComponent = template.component;
   const activeRenderer = store?.activeRenderer === "puck" ? "puck" : "template";
 
-  // Theme override from store.settings (optional)
-  const themeStyle = (() => {
-    const settings =
-      typeof store?.settings === "string"
-        ? JSON.parse(store.settings || "{}")
-        : store?.settings || {};
+  const theme = resolveThemeSettings(store);
+  const { colors, font: fontId } = theme;
 
-    const colors = settings.colors || {};
-    const fontId = settings.font;
+  const FONT_MAP = {
+    inter: '"Inter", sans-serif',
+    merriweather: '"Merriweather", serif',
+    jetbrains: '"JetBrains Mono", monospace',
+    roboto: '"Roboto", sans-serif',
+    playfair: '"Playfair Display", serif',
+    montserrat: '"Montserrat", sans-serif',
+  };
 
-    const FONT_MAP = {
-      inter: '"Inter", sans-serif',
-      merriweather: '"Merriweather", serif',
-      jetbrains: '"JetBrains Mono", monospace',
-      roboto: '"Roboto", sans-serif',
-      playfair: '"Playfair Display", serif',
-      montserrat: '"Montserrat", sans-serif',
-    };
+  /** @type {Record<string, string>} */
+  const themeStyle = {};
+  if (colors.primary) {
+    themeStyle["--color-primary"] = colors.primary;
+    themeStyle["--primary"] = colors.primary;
+  }
+  if (colors.secondary) {
+    themeStyle["--color-bg"] = colors.secondary;
+    themeStyle["--background"] = colors.secondary;
+  }
 
-    /** @type {Record<string, string>} */
-    const style = {};
-    if (colors.primary) {
-      style["--color-primary"] = colors.primary;
-      style["--primary"] = colors.primary;
-    }
-    if (colors.secondary) {
-      style["--color-primary-hover"] = colors.secondary;
-      style["--primary-hover"] = colors.secondary;
-    }
+  // Standard theme aliases
+  themeStyle["--border"] = "var(--color-border)";
+  themeStyle["--foreground"] = "var(--color-fg)";
+  themeStyle["--muted"] = "var(--color-bg-tertiary)";
+  themeStyle["--muted-foreground"] = "var(--color-fg-muted)";
 
-    // Standard theme aliases
-    style["--border"] = "var(--color-border)";
-    style["--background"] = "var(--color-bg)";
-    style["--foreground"] = "var(--color-fg)";
-    style["--muted"] = "var(--color-bg-tertiary)";
-    style["--muted-foreground"] = "var(--color-fg-muted)";
-
-    if (fontId && FONT_MAP[fontId]) style["fontFamily"] = FONT_MAP[fontId];
-    return style;
-  })();
+  if (fontId && FONT_MAP[fontId]) themeStyle["fontFamily"] = FONT_MAP[fontId];
 
   return (
     <div

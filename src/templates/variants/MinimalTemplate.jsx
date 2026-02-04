@@ -25,23 +25,10 @@ import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
 import { appConfig } from "@/shared/lib/env";
+import { resolveThemeSettings } from "@/templates/registry";
 
-const resolveSettings = (settings) => {
-  if (!settings) return {};
-  if (typeof settings === "string") {
-    try {
-      return JSON.parse(settings);
-    } catch (error) {
-      console.warn("Error parsing store.settings:", error);
-      return {};
-    }
-  }
-  return settings;
-};
-
-const resolveFontFamily = (settings) => {
-  const font = settings?.font;
-  const id = typeof font === "object" ? font?.id : font;
+// Internal helpers removed in favor of registry.resolveThemeSettings
+const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
     merriweather: "'Merriweather', serif",
@@ -50,7 +37,7 @@ const resolveFontFamily = (settings) => {
     playfair: "'Playfair Display', serif",
     montserrat: "'Montserrat', sans-serif",
   };
-  return map[id] || "'Inter', sans-serif";
+  return map[fontId] || "'Inter', sans-serif";
 };
 
 const formatPrice = (price, currency = "MXN") => {
@@ -69,10 +56,10 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
   const [showFilters, setShowFilters] = useState(true); // Default open on desktop
 
   // Settings Resolution
-  const settings = resolveSettings(store?.settings);
-  const fontFamily = resolveFontFamily(settings);
-  const primary = settings?.colors?.primary || "#000000"; // Minimal defaults to black
-  const secondary = settings?.colors?.secondary || "#333333";
+  const theme = resolveThemeSettings(store);
+  const fontFamily = resolveFontFamily(theme.font);
+  const primary = theme.colors.primary;
+  const secondary = theme.colors.secondary;
   const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
 
   const {
@@ -104,7 +91,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-white text-gray-900 ${isPreview ? "pt-32" : "pt-20"}`}
+      className={`min-h-screen flex flex-col bg-(--color-bg) text-gray-900 ${isPreview ? "pt-32" : "pt-20"}`}
       style={{
         fontFamily,
         "--minimal-accent": primary,
@@ -115,9 +102,9 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         store={store}
         isPreview={isPreview}
         config={{
-          bg: "bg-white/90",
+          bg: "bg-(--color-bg)/80",
           text: "text-gray-900",
-          border: "border-gray-100",
+          border: "border-gray-900/5",
           accent: "text-(--minimal-accent)",
           glass: true,
         }}
@@ -176,7 +163,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
       )}
 
       {/* Hero Section: Simple & Text-based */}
-      <header className="relative bg-white py-16 md:py-24 border-b border-gray-100 overflow-hidden">
+      <header className="relative bg-(--color-bg) py-16 md:py-24 border-b border-gray-900/5 overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6 relative z-10">
           {logoUrl && (
             <div className="flex justify-center mb-6">
@@ -221,7 +208,7 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
       {/* Main Content */}
       <main className="grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {/* Filter Toggle / Sort Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-100 pb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-900/5 pb-4">
           <div>
             <span className="text-sm text-gray-500 font-medium">
               Mostrando {filteredProducts?.length || 0} productos

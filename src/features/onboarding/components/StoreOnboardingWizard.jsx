@@ -21,6 +21,7 @@ import { useCreateStore, useUploadStoreLogo } from "@/shared/hooks";
 import { extractColorsFromImage } from "@/shared/utils/colorExtraction";
 import { appConfig } from "@/shared/lib/env";
 import { useToast } from "@/shared/ui/molecules";
+import { TemplateSelector } from "../../store/components/TemplateSelector";
 
 const STEPS = [
   { id: "welcome", title: "Bienvenida", icon: Store },
@@ -64,43 +65,6 @@ const COLOR_PRESETS = [
   { primary: "#171717", secondary: "#404040", name: "Minimal" },
   { primary: "#ec4899", secondary: "#be185d", name: "Berry" },
 ];
-
-const TemplatePreview = ({ type }) => {
-  if (type === "minimal") {
-    return (
-      <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative w-full h-full">
-        <div className="absolute inset-4 bg-white dark:bg-gray-900 shadow-sm rounded-lg flex flex-col overflow-hidden">
-          <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-t-lg"></div>
-          <div className="p-2 space-y-2">
-            <div className="h-2 w-1/3 bg-gray-200 dark:bg-gray-700 rounded full" />
-            <div className="grid grid-cols-2 gap-2">
-              <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  if (type === "grid") {
-    return (
-      <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative w-full h-full">
-        <div className="absolute inset-4 bg-white dark:bg-gray-900 shadow-sm rounded-lg flex flex-col overflow-hidden">
-          <div className="h-8 w-full bg-gray-200 dark:bg-gray-700 rounded-t-lg mb-2"></div>
-          <div className="p-2 grid grid-cols-3 gap-1">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-sm"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};
 
 export function StoreOnboardingWizard() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -187,8 +151,8 @@ export function StoreOnboardingWizard() {
       if (colors.length > 1) {
         setSecondaryColor(colors[1]);
       } else {
-        // If only one color found, make secondary a darker/lighter variant or just generic
-        setSecondaryColor("#000000"); // Simple fallback
+        // Default background should be clean if only one color extracted
+        setSecondaryColor("#ffffff");
       }
     }
   };
@@ -251,7 +215,7 @@ export function StoreOnboardingWizard() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold">¡Bienvenido a Catalogy!</h2>
-                <p className="text-[var(--color-fg-secondary)]">
+                <p className="text-(--color-fg-secondary)">
                   Vamos a configurar tu primera tienda en pocos pasos.
                 </p>
               </div>
@@ -277,14 +241,14 @@ export function StoreOnboardingWizard() {
               {/* Slug Suggestions */}
               {slugSuggestions.length > 0 && !slug && (
                 <div className="flex flex-wrap gap-2 animate-fadeIn">
-                  <span className="text-xs text-[var(--color-fg-muted)] flex items-center">
+                  <span className="text-xs text-(--color-fg-muted) flex items-center">
                     Sugerencias:
                   </span>
                   {slugSuggestions.map((s) => (
                     <button
                       key={s}
                       onClick={() => setSlug(s)}
-                      className="text-xs px-2 py-1 rounded-md bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors text-[var(--color-fg-secondary)]"
+                      className="text-xs px-2 py-1 rounded-md bg-(--color-bg-secondary) border border-(--color-border) hover:border-(--color-primary) hover:text-(--color-primary) transition-colors text-(--color-fg-secondary)"
                     >
                       {s}
                     </button>
@@ -293,11 +257,11 @@ export function StoreOnboardingWizard() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-[var(--color-fg)] mb-2">
+                <label className="block text-sm font-medium text-(--color-fg) mb-2">
                   Descripción corta (Opcional)
                 </label>
                 <textarea
-                  className="w-full px-4 py-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl text-[var(--color-fg)] placeholder:text-[var(--color-fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] transition-all resize-none"
+                  className="w-full px-4 py-3 bg-(--color-bg) border border-(--color-border) rounded-xl text-(--color-fg) placeholder:text-(--color-fg-muted) focus:outline-none focus:ring-2 focus:ring-(--color-primary)/20 focus:border-(--color-primary) transition-all resize-none"
                   rows={4}
                   placeholder="Lo que vendes y lo que te hace único..."
                   value={description}
@@ -313,7 +277,7 @@ export function StoreOnboardingWizard() {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Sube tu Logo</h2>
-              <p className="text-[var(--color-fg-secondary)]">
+              <p className="text-(--color-fg-secondary)">
                 Esto nos ayudará a personalizar los colores de tu tienda
                 automáticamente.
               </p>
@@ -342,7 +306,7 @@ export function StoreOnboardingWizard() {
           <div className="space-y-8">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Define tu Estilo</h2>
-              <p className="text-[var(--color-fg-secondary)]">
+              <p className="text-(--color-fg-secondary)">
                 Elige los colores y tipografía que representen tu marca.
               </p>
             </div>
@@ -360,7 +324,7 @@ export function StoreOnboardingWizard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Primary Color Input */}
                   <div className="flex flex-col gap-2">
-                    <div className="p-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-card)] flex items-center gap-3">
+                    <div className="p-3 border border-(--color-border) rounded-xl bg-(--color-card) flex items-center gap-3">
                       <div className="relative w-10 h-10 shrink-0">
                         <input
                           type="color"
@@ -370,7 +334,7 @@ export function StoreOnboardingWizard() {
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="text-xs font-medium text-[var(--color-fg-secondary)] block">
+                        <label className="text-xs font-medium text-(--color-fg-secondary) block">
                           Color Primario
                         </label>
                         <span className="text-sm font-mono uppercase">
@@ -386,7 +350,7 @@ export function StoreOnboardingWizard() {
                           <button
                             key={`p-${color}`}
                             onClick={() => setPrimaryColor(color)}
-                            className="w-6 h-6 rounded-full border border-[var(--color-border)] hover:scale-110 transition-transform"
+                            className="w-6 h-6 rounded-full border border-(--color-border) hover:scale-110 transition-transform"
                             style={{ backgroundColor: color }}
                             title={`Usar ${color} como primario`}
                           />
@@ -397,7 +361,7 @@ export function StoreOnboardingWizard() {
 
                   {/* Secondary Color Input */}
                   <div className="flex flex-col gap-2">
-                    <div className="p-3 border border-[var(--color-border)] rounded-xl bg-[var(--color-card)] flex items-center gap-3">
+                    <div className="p-3 border border-(--color-border) rounded-xl bg-(--color-card) flex items-center gap-3">
                       <div className="relative w-10 h-10 shrink-0">
                         <input
                           type="color"
@@ -407,8 +371,8 @@ export function StoreOnboardingWizard() {
                         />
                       </div>
                       <div className="flex-1">
-                        <label className="text-xs font-medium text-[var(--color-fg-secondary)] block">
-                          Color Secundario
+                        <label className="text-xs font-medium text-(--color-fg-secondary) block">
+                          Color de Fondo
                         </label>
                         <span className="text-sm font-mono uppercase">
                           {secondaryColor}
@@ -423,9 +387,9 @@ export function StoreOnboardingWizard() {
                           <button
                             key={`s-${color}`}
                             onClick={() => setSecondaryColor(color)}
-                            className="w-6 h-6 rounded-full border border-[var(--color-border)] hover:scale-110 transition-transform"
+                            className="w-6 h-6 rounded-full border border-(--color-border) hover:scale-110 transition-transform"
                             style={{ backgroundColor: color }}
-                            title={`Usar ${color} como secundario`}
+                            title={`Usar ${color} como fondo`}
                           />
                         ))}
                       </div>
@@ -435,7 +399,7 @@ export function StoreOnboardingWizard() {
 
                 {/* Presets */}
                 <div className="mt-4">
-                  <span className="text-xs text-[var(--color-fg-muted)] block mb-2">
+                  <span className="text-xs text-(--color-fg-muted) block mb-2">
                     O elige un preset:
                   </span>
                   <div className="flex flex-wrap gap-2">
@@ -446,7 +410,7 @@ export function StoreOnboardingWizard() {
                           setPrimaryColor(preset.primary);
                           setSecondaryColor(preset.secondary);
                         }}
-                        className="w-8 h-8 rounded-full border border-[var(--color-border)] overflow-hidden relative group hover:scale-110 transition-transform"
+                        className="w-8 h-8 rounded-full border border-(--color-border) overflow-hidden relative group hover:scale-110 transition-transform"
                         title={preset.name}
                       >
                         <div className="absolute inset-0 flex">
@@ -466,7 +430,7 @@ export function StoreOnboardingWizard() {
               </div>
             </div>
 
-            <div className="h-px bg-[var(--color-border)]" />
+            <div className="h-px bg-(--color-border)" />
 
             {/* Fonts */}
             <div className="space-y-4">
@@ -479,7 +443,7 @@ export function StoreOnboardingWizard() {
                   <button
                     key={font.id}
                     onClick={() => setSelectedFont(font.id)}
-                    className={`p-4 rounded-xl border text-left transition-all ${selectedFont === font.id ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-1 ring-[var(--color-primary)]" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)] bg-[var(--color-card)]"}`}
+                    className={`p-4 rounded-xl border text-left transition-all ${selectedFont === font.id ? "border-(--color-primary) bg-(--color-primary)/5 ring-1 ring-(--color-primary)" : "border-(--color-border) hover:border-(--color-border-hover) bg-(--color-card)"}`}
                   >
                     <div
                       className={`text-xl font-medium mb-1 ${font.class}`}
@@ -487,7 +451,7 @@ export function StoreOnboardingWizard() {
                     >
                       Agc
                     </div>
-                    <div className="text-xs text-[var(--color-fg-secondary)]">
+                    <div className="text-xs text-(--color-fg-secondary)">
                       {font.name}
                     </div>
                   </button>
@@ -502,49 +466,16 @@ export function StoreOnboardingWizard() {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">Elige un Diseño Inicial</h2>
-              <p className="text-[var(--color-fg-secondary)]">
+              <p className="text-(--color-fg-secondary)">
                 Podrás cambiarlo o personalizarlo completamente después.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Minimal Template */}
-              <button
-                onClick={() => setSelectedTemplate("minimal")}
-                className={`group relative overflow-hidden rounded-2xl border-2 transition-all text-left ${selectedTemplate === "minimal" ? "border-[var(--color-primary)]" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}
-              >
-                <TemplatePreview type="minimal" />
-                <div className="p-4">
-                  <h3 className="font-bold">Minimalista</h3>
-                  <p className="text-xs text-[var(--color-fg-secondary)]">
-                    Limpio y directo al grano.
-                  </p>
-                </div>
-                {selectedTemplate === "minimal" && (
-                  <div className="absolute top-2 right-2 bg-[var(--color-primary)] text-white p-1 rounded-full">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-              </button>
-
-              {/* Grid Template - Placeholder */}
-              <button
-                onClick={() => setSelectedTemplate("grid")}
-                className={`group relative overflow-hidden rounded-2xl border-2 transition-all text-left ${selectedTemplate === "grid" ? "border-[var(--color-primary)]" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}
-              >
-                <TemplatePreview type="grid" />
-                <div className="p-4">
-                  <h3 className="font-bold">Galería</h3>
-                  <p className="text-xs text-[var(--color-fg-secondary)]">
-                    Perfecto para mostrar muchos productos.
-                  </p>
-                </div>
-                {selectedTemplate === "grid" && (
-                  <div className="absolute top-2 right-2 bg-[var(--color-primary)] text-white p-1 rounded-full">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-              </button>
+            <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <TemplateSelector
+                value={selectedTemplate}
+                onChange={setSelectedTemplate}
+              />
             </div>
           </div>
         );
@@ -554,14 +485,14 @@ export function StoreOnboardingWizard() {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h2 className="text-2xl font-bold">¡Todo listo!</h2>
-              <p className="text-[var(--color-fg-secondary)]">
+              <p className="text-(--color-fg-secondary)">
                 Revisa que todo esté correcto antes de lanzar tu tienda.
               </p>
             </div>
 
-            <div className="bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-2xl p-6 space-y-4">
+            <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-[var(--color-bg-secondary)] flex items-center justify-center border border-[var(--color-border)] overflow-hidden">
+                <div className="w-16 h-16 rounded-xl bg-(--color-bg-secondary) flex items-center justify-center border border-(--color-border) overflow-hidden">
                   {logoFile ? (
                     <img
                       src={URL.createObjectURL(logoFile)}
@@ -569,47 +500,47 @@ export function StoreOnboardingWizard() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <Store className="w-8 h-8 text-[var(--color-fg-muted)]" />
+                    <Store className="w-8 h-8 text-(--color-fg-muted)" />
                   )}
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">{name}</h3>
-                  <p className="text-sm text-[var(--color-primary)]">
+                  <p className="text-sm text-(--color-primary)">
                     {slug}.{appConfig.baseDomain}
                   </p>
                 </div>
               </div>
 
-              <div className="h-px bg-[var(--color-border)]" />
+              <div className="h-px bg-(--color-border)" />
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-[var(--color-fg-muted)]">Colores:</span>
+                  <span className="text-(--color-fg-muted)">
+                    Colores (Primario / Fondo):
+                  </span>
                   <div className="flex items-center gap-2 mt-1">
                     <div
-                      className="w-6 h-6 rounded-full border border-[var(--color-border)]"
+                      className="w-6 h-6 rounded-full border border-(--color-border)"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <div
-                      className="w-6 h-6 rounded-full border border-[var(--color-border)]"
+                      className="w-6 h-6 rounded-full border border-(--color-border)"
                       style={{ backgroundColor: secondaryColor }}
                     />
                   </div>
                 </div>
                 <div>
-                  <span className="text-[var(--color-fg-muted)]">
-                    Tipografía:
-                  </span>
+                  <span className="text-(--color-fg-muted)">Tipografía:</span>
                   <p className="font-medium">
                     {FONTS.find((f) => f.id === selectedFont)?.name}
                   </p>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-[var(--color-fg-muted)]">
-                    Plantilla:
-                  </span>
-                  <div className="mt-2 border border-[var(--color-border)] rounded-lg overflow-hidden w-full max-w-sm mx-auto">
-                    <TemplatePreview type={selectedTemplate} />
+                  <span className="text-(--color-fg-muted)">Plantilla:</span>
+                  <div className="mt-2 border border-(--color-border) rounded-lg overflow-hidden w-full max-w-sm mx-auto p-2 bg-gray-50">
+                    <p className="text-xs font-bold text-center uppercase tracking-widest text-gray-400">
+                      Template: {selectedTemplate}
+                    </p>
                   </div>
                   <p className="font-medium capitalize mt-1 text-sm text-center">
                     {selectedTemplate}
@@ -631,11 +562,11 @@ export function StoreOnboardingWizard() {
       <div className="mb-8 relative">
         {/* Line behind steps - Absolute Positioned */}
         <div
-          className="absolute top-5 left-4 right-4 h-0.5 bg-[var(--color-bg-tertiary)] -translate-y-1/2 z-0"
+          className="absolute top-5 left-4 right-4 h-0.5 bg-(--color-bg-tertiary) -translate-y-1/2 z-0"
           aria-hidden="true"
         >
           <div
-            className="absolute top-0 left-0 h-full bg-[var(--color-primary)] transition-all duration-500 ease-out"
+            className="absolute top-0 left-0 h-full bg-(--color-primary) transition-all duration-500 ease-out"
             style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
           />
         </div>
@@ -650,13 +581,13 @@ export function StoreOnboardingWizard() {
             return (
               <div key={step.id} className="flex flex-col items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 z-10 border-4 border-[var(--color-bg-secondary)] relative
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 z-10 border-4 border-(--color-bg-secondary) relative
                       ${
                         active
-                          ? "bg-[var(--color-primary)] text-white scale-110 shadow-lg shadow-[var(--color-primary)]/25"
+                          ? "bg-(--color-primary) text-white scale-110 shadow-lg shadow-(--color-primary)/25"
                           : completed
-                            ? "bg-[var(--color-card)] text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/20"
-                            : "bg-[var(--color-bg-tertiary)] text-[var(--color-fg-muted)]"
+                            ? "bg-(--color-card) text-(--color-primary) ring-2 ring-(--color-primary)/20"
+                            : "bg-(--color-bg-tertiary) text-(--color-fg-muted)"
                       }`}
                 >
                   {completed ? (
@@ -666,7 +597,7 @@ export function StoreOnboardingWizard() {
                   )}
                 </div>
                 <span
-                  className={`text-xs mt-2 font-medium transition-colors ${active ? "text-[var(--color-fg)]" : "text-[var(--color-fg-muted)]"}`}
+                  className={`text-xs mt-2 font-medium transition-colors ${active ? "text-(--color-fg)" : "text-(--color-fg-muted)"}`}
                 >
                   {step.title}
                 </span>
@@ -694,7 +625,7 @@ export function StoreOnboardingWizard() {
       </div>
 
       {/* Actions */}
-      <div className="flex justify-between mt-8 pt-6 border-t border-[var(--color-border)]">
+      <div className="flex justify-between mt-8 pt-6 border-t border-(--color-border)">
         <Button
           variant="ghost"
           onClick={prevStep}
@@ -717,7 +648,7 @@ export function StoreOnboardingWizard() {
           <Button
             onClick={handleCreateStore}
             isLoading={isSubmitting}
-            className="shadow-lg shadow-[var(--color-primary)]/25"
+            className="shadow-lg shadow-(--color-primary)/25"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             Crear mi Tienda

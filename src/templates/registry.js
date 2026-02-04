@@ -9,6 +9,7 @@ import { MinimalTemplate } from "./variants/MinimalTemplate";
 import { StorefrontTemplate } from "./variants/StorefrontTemplate";
 import { GalleryTemplate } from "./variants/GalleryTemplate";
 import { NoirGridTemplate } from "./variants/NoirGridTemplate";
+import { NatureTemplate } from "./variants/NatureTemplate";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -30,6 +31,10 @@ export const TEMPLATES = {
     description: "Tipografia simple, fondo limpio, lista directa de productos",
     component: MinimalTemplate,
     thumbnail: "/templates/minimal-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#000000", secondary: "#ffffff" },
+      font: "inter",
+    },
   },
   storefront: {
     id: "storefront",
@@ -37,6 +42,10 @@ export const TEMPLATES = {
     description: "Header prominente con descripcion, estilo tienda clasica",
     component: StorefrontTemplate,
     thumbnail: "/templates/storefront-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#4f46e5", secondary: "#f8fafc" },
+      font: "montserrat",
+    },
   },
   gallery: {
     id: "gallery",
@@ -45,6 +54,10 @@ export const TEMPLATES = {
       "Grid visual, ideal para productos con fuerte componente visual",
     component: GalleryTemplate,
     thumbnail: "/templates/gallery-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#1a1a1a", secondary: "#fafaf9" },
+      font: "montserrat",
+    },
   },
   noir: {
     id: "noir",
@@ -52,6 +65,21 @@ export const TEMPLATES = {
     description: "Estetica oscura con cards premium y enfoque editorial",
     component: NoirGridTemplate,
     thumbnail: "/templates/noir-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#ffffff", secondary: "#0d0f10" },
+      font: "jetbrains",
+    },
+  },
+  nature: {
+    id: "nature",
+    name: "Nature",
+    description: "Diseño orgánico y sereno con tonos tierra y verdes",
+    component: NatureTemplate,
+    thumbnail: "/templates/nature-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#15803d", secondary: "#fdfbf7" },
+      font: "merriweather",
+    },
   },
 };
 
@@ -76,3 +104,46 @@ export const getTemplateList = () => {
  * IDs de templates validos
  */
 export const TEMPLATE_IDS = Object.keys(TEMPLATES);
+
+/**
+ * Resuelve la configuración efectiva de temas (colores y fuentes)
+ * basándose en el flag useTemplateStyles.
+ *
+ * @param {Object} store - Objeto de la tienda
+ * @returns {Object} Settings resueltos { colors: {primary, secondary}, font }
+ */
+export const resolveThemeSettings = (store) => {
+  const settings = (() => {
+    if (!store?.settings) return {};
+    if (typeof store.settings === "string") {
+      try {
+        return JSON.parse(store.settings);
+      } catch (e) {
+        return {};
+      }
+    }
+    return store.settings;
+  })();
+
+  const template = getTemplate(store?.templateId);
+  const defaults = template?.defaultSettings || {};
+
+  if (settings.useTemplateStyles) {
+    return {
+      colors: defaults.colors || { primary: "#000000", secondary: "#4b5563" },
+      font: defaults.font || "inter",
+      useTemplateStyles: true,
+    };
+  }
+
+  return {
+    colors: {
+      primary:
+        settings?.colors?.primary || defaults.colors?.primary || "#000000",
+      secondary:
+        settings?.colors?.secondary || defaults.colors?.secondary || "#4b5563",
+    },
+    font: settings?.font || defaults.font || "inter",
+    useTemplateStyles: false,
+  };
+};

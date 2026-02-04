@@ -17,24 +17,11 @@ import {
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
 import { appConfig } from "@/shared/lib/env";
+import { resolveThemeSettings } from "@/templates/registry";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 
-const resolveSettings = (settings) => {
-  if (!settings) return {};
-  if (typeof settings === "string") {
-    try {
-      return JSON.parse(settings);
-    } catch (error) {
-      console.warn("Error parsing store.settings:", error);
-      return {};
-    }
-  }
-  return settings;
-};
-
-const resolveFontFamily = (settings) => {
-  const font = settings?.font;
-  const id = typeof font === "object" ? font?.id : font;
+// Internal helpers removed in favor of registry.resolveThemeSettings
+const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
     merriweather: "'Merriweather', serif",
@@ -43,15 +30,16 @@ const resolveFontFamily = (settings) => {
     playfair: "'Playfair Display', serif",
     montserrat: "'Montserrat', sans-serif",
   };
-  return map[id] || "'Inter', sans-serif";
+  return map[fontId] || "'Inter', sans-serif";
 };
 
 export function NoirGridTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const settings = resolveSettings(store?.settings);
-  const fontFamily = resolveFontFamily(settings);
-  const primary = settings?.colors?.primary || "var(--color-primary)";
-  const secondary = settings?.colors?.secondary || "var(--color-primary-hover)";
+  // Settings Resolution
+  const theme = resolveThemeSettings(store);
+  const fontFamily = resolveFontFamily(theme.font);
+  const primary = theme.colors.primary;
+  const secondary = theme.colors.secondary;
   const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
   const {
     categories,
@@ -86,9 +74,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
       className="min-h-screen flex flex-col bg-(--noir-bg) text-(--noir-strong)"
       style={{
         fontFamily,
-        "--noir-bg": "#0d0f10",
-        "--noir-surface": "#17191b",
-        "--noir-surface-2": "#1f2326",
+        "--noir-bg": secondary,
+        "--noir-surface": "rgba(255,255,255,0.03)",
+        "--noir-surface-2": "rgba(255,255,255,0.06)",
         "--noir-border": "rgba(255,255,255,0.08)",
         "--noir-muted": "rgba(255,255,255,0.6)",
         "--noir-strong": "#f4f4f5",
@@ -220,7 +208,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
           </section>
 
           {(!filteredProducts || filteredProducts.length === 0) && (
-            <div className="rounded-3xl bg-(--noir-surface) border border-(--noir-border) p-16 text-center">
+            <div className="rounded-3xl bg-(--noir-surface-2) border border-(--noir-border) p-16 text-center">
               <ImageIcon className="h-12 w-12 text-(--noir-muted) mx-auto mb-4 opacity-20" />
               <p className="text-(--noir-muted) font-medium">
                 No encontramos productos con esos filtros.
@@ -231,7 +219,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
       </div>
 
       {/* Footer Personalizado */}
-      <div className="bg-(--noir-surface) pt-12">
+      <div className="bg-(--noir-bg) pt-12">
         <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-8 text-center pb-8 text-(--noir-strong)">
           {/* CTA Reubicado antes del footer */}
           <div className="p-8 rounded-3xl bg-(--noir-surface-2) border border-(--noir-border) max-w-lg w-full">

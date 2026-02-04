@@ -26,23 +26,10 @@ import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
 import { appConfig } from "@/shared/lib/env";
+import { resolveThemeSettings } from "@/templates/registry";
 
-const resolveSettings = (settings) => {
-  if (!settings) return {};
-  if (typeof settings === "string") {
-    try {
-      return JSON.parse(settings);
-    } catch (error) {
-      console.warn("Error parsing store.settings:", error);
-      return {};
-    }
-  }
-  return settings;
-};
-
-const resolveFontFamily = (settings) => {
-  const font = settings?.font;
-  const id = typeof font === "object" ? font?.id : font;
+// Internal helpers removed in favor of registry.resolveThemeSettings
+const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
     merriweather: "'Merriweather', serif",
@@ -51,7 +38,7 @@ const resolveFontFamily = (settings) => {
     playfair: "'Playfair Display', serif",
     montserrat: "'Montserrat', sans-serif",
   };
-  return map[id] || "'Roboto', sans-serif"; // Default to Roboto for standard ecommerce feel
+  return map[fontId] || "'Roboto', sans-serif";
 };
 
 const formatPrice = (price, currency = "MXN") => {
@@ -69,10 +56,11 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const settings = resolveSettings(store?.settings);
-  const fontFamily = resolveFontFamily(settings);
-  const primary = settings?.colors?.primary || "#3b82f6"; // Standard Blue default
-  const secondary = settings?.colors?.secondary || "#eff6ff";
+  // Settings Resolution
+  const theme = resolveThemeSettings(store);
+  const fontFamily = resolveFontFamily(theme.font);
+  const primary = theme.colors.primary;
+  const secondary = theme.colors.secondary;
   const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
 
   const {
@@ -105,7 +93,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-slate-50 text-slate-900"
+      className="min-h-screen flex flex-col bg-(--color-bg) text-slate-900"
       style={{
         fontFamily,
         "--store-primary": primary,
@@ -116,10 +104,11 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         store={store}
         isPreview={isPreview}
         config={{
-          bg: "bg-white",
+          bg: "bg-(--color-bg)/80",
           text: "text-slate-900",
-          border: "border-slate-200",
+          border: "border-slate-200/50",
           accent: "text-(--store-primary)",
+          glass: true,
         }}
         search={{
           query: searchQuery,
@@ -177,7 +166,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
       )}
 
       {/* Hero / Banner Area */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-(--color-bg) border-b border-slate-200/50">
         <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col md:flex-row items-center gap-8">
           <div className="flex-1 space-y-4">
             <span className="inline-block px-3 py-1 bg-(--store-secondary) text-(--store-primary) text-xs font-bold uppercase tracking-wider rounded-full">
@@ -220,7 +209,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
       >
         {/* Sidebar Controls (Desktop) */}
         <aside className="hidden md:block w-64 shrink-0 space-y-8">
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-5">
+          <div className="bg-(--color-bg) rounded-lg shadow-sm border border-slate-200/50 p-5">
             <CatalogFilters
               categories={categories}
               activeCategoryIds={activeCategoryIds}

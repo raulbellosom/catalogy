@@ -1,208 +1,121 @@
-# AI Template Generator Guide - Catalogy
+# PROMPT: AI Template Generator - Catalogy
 
-Este documento define reglas, contexto y limites para generar multiples templates JSX de catalogos en Catalogy.
-El objetivo es crear disenos visuales distintos a partir de una imagen de referencia o una descripcion textual, sin romper el schema ni la logica del sistema.
+Este documento es el **PROMPT DEFINITIVO** para que un agente de IA genere nuevos templates JSX para Catalogy. Cuando se te pida crear un template, debes usar este documento como tu biblia técnica.
 
-## 1. Objetivo del agente
+## 1. Contexto y Objetivo
 
-El agente debe poder:
+Catalogy es una plataforma de catálogos digitales personalizables. Ya contamos con 4 templates base (`Minimal`, `Gallery`, `Storefront`, `NoirGrid`).
+**Tu objetivo:** Crear un nuevo template JSX que sea visualmente innovador, premium y único, basándote en una imagen de referencia, una descripción de texto, o ambas.
 
-- Analizar una imagen de referencia ubicada en `/refs/` o un prompt descriptivo.
-- Disenar un layout visual unico que se parezca al estilo de referencia, sin copiarlo exactamente.
-- Implementar ese layout como un template JSX determinista.
-- Renderizar correctamente logo, nombre, descripcion y catalogo de productos.
-- Respetar estrictamente el schema de datos existente.
-- No agregar edicion, dependencias nuevas ni logica de negocio.
+## 2. Pila Tecnológica
 
-## 2. Que ES un template en Catalogy
+- **Framework:** React (JSX).
+- **Estilos:** TailwindCSS (Obligatorio). No uses CSS plano a menos que sea estrictamente necesario para animaciones complejas.
+- **Iconos:** `lucide-react`.
+- **Componentes Compartidos:** DEBES reutilizar los componentes en `src/templates/components/` para mantener la lógica de filtros y modales consistente.
 
-Un template en Catalogy es:
+## 3. Fuente de Verdad: Schema de Datos
 
-- Un archivo JSX puro.
-- Solo lectura.
-- Sin Puck.
-- Sin estado persistente.
-- Sin edicion visual.
-- Sin fetch internos.
+Los datos vienen de Appwrite y se pasan al template como props: `{ store, products }`.
 
-Un template:
+### 3.1 Prop `store`
 
-- Solo renderiza datos existentes.
-- No los modifica.
-- No inventa campos.
-
-## 3. Que NO es un template
-
-El agente NO debe:
-
-- Usar Puck Editor.
-- Crear bloques editables.
-- Agregar formularios o paneles de configuracion.
-- Agregar logica de administracion.
-- Usar datos que no existan en el schema.
-- Suponer categorias, ratings, descuentos, stock visible o carrito.
-
-## 4. Datos disponibles (fuente de verdad)
-
-### 4.1 Store (stores collection)
-
-El template solo puede usar estos campos:
-
-```
-store = {
-  name: string
-  description?: string
-  logoFileId?: string
-  categoriesJson?: string
-  purchaseInstructions?: string
-  paymentLink?: string
-  settings?: object | string
+```typescript
+interface Store {
+  name: string;
+  description?: string;
+  logoFileId?: string;
+  categoriesJson: string; // Parsear: Array<{id: string, name: string}>
+  purchaseInstructions?: string; // Instrucciones de pago/entrega
+  paymentLink?: string; // Link externo de pago
+  settings: string; // JSON con: { colors: { primary, secondary }, font: { id, family }, ... }. Nota: secondary se usa como color de fondo.
+  published: boolean;
+  enabled: boolean;
 }
 ```
 
-Notas:
+### 3.2 Prop `products`
 
-- `settings` es opcional.
-- Si `settings` es string, debe parsearse de forma segura.
-- `categoriesJson` contiene un arreglo de categorias `{ id, name }`.
-- Si falta un valor, usar un fallback visual (no inventar datos).
-
-### 4.2 Products (products collection)
-
-```
-product = {
-  name: string
-  description?: string
-  price: number
-  currency: string
-  imageFileId?: string
-  categoryIds?: string[]
+```typescript
+interface Product {
+  $id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  imageFileIds: string[]; // Hasta 4 imágenes
+  categoryIds: string[];
+  stock: number;
+  status: boolean; // Si es false, no mostrar (ya llega filtrado usualmente)
+  sortOrder: number;
 }
 ```
 
-Notas:
+## 4. Requerimientos de UI Obligatorios
 
-- `enabled` ya viene filtrado.
-- El orden llega definido por `sortOrder`.
-- `stock` no se muestra salvo requerimiento explicito.
+### 4.1 Layout General
 
-## 5. Reglas de renderizado obligatorias
+- **Sticky Navbar:** Logo, nombre de la tienda, y acceso rápido a búsqueda/carrito (si aplica).
+- **Hero/Header:** Presentación impactante de la tienda usando `store.name` y `store.description`.
+- **Responsive:** Diseño Mobile-First impecable.
+- **Sticky Footer:** Información de contacto, links de pago (`paymentLink`) e instrucciones (`purchaseInstructions`).
 
-Todo template DEBE renderizar como minimo:
+### 4.2 Controles de Catálogo (Local)
 
-- Logo de la tienda (o placeholder visual si no existe).
-- Nombre de la tienda.
-- Descripcion de la tienda (opcional, nunca obligatoria).
-- Catalogo de productos con cards consistentes y responsive.
-- Controles locales: buscador, filtros por categoria y rango de precios.
-- Boton de compartir por producto (link a `/product/:id`).
-- Instrucciones de compra si existen en el store.
+Debes implementar los siguientes filtros de manera **LOCAL** (ya están resueltos en `useCatalog` o `CatalogControls`):
 
-## 6. Uso de settings (colores y fuentes)
+- **Buscador:** Texto libre sobre nombre/descripción.
+- **Categorías:** Basado en `store.categoriesJson`.
+- **Ordenamiento:** Precio (Mayor a menor), Precio (Menor a mayor) y Orden Normal.
+- **Rango de Precios:** Slider o inputs min/max.
 
-El template debe respetar la personalizacion guardada en `store.settings` cuando exista.
+### 4.3 Visualización de Productos
 
-Reglas:
+- **Product Card:** Diseño innovador con estados hover, visualización clara del precio y badge de categoría.
+- **Product Detail Modal:** Al hacer click, abrir el modal que incluya:
+  - Visualizador de imágenes (Carousel si hay > 1).
+  - Descripción extendida.
+  - Stock disponible ("Disponibles").
+  - Botón de compartir.
 
-- Usar colores de `settings.colors.primary` y `settings.colors.secondary` si existen.
-- Usar `var(--color-primary)` y `var(--color-primary-hover)` como fallback.
-- Usar una fuente Google Fonts segun `settings.font.id`.
+## 5. Diseño y Estética Premium
 
-Font IDs existentes en el sistema:
+- **Innovación:** No te limites a una grid simple. Juega con layouts asimétricos, bento grids, o sliders laterales cuando sea apropiado.
+- **Branding:** Usa `store.settings.colors.primary` para todos los acentos (botones, bordes, hovers) y `store.settings.colors.secondary` para el COLOR DE FONDO principal del template y del navbar (aplicando efectos como glassmorphism o bordes sutiles para distinguirlos).
+- **Tipografía:** Respeta el font de `store.settings.font.family` (ej: Inter, Montserrat, Playfair Display).
+- **Micro-interacciones:** Agrega transiciones suaves (`transition-all duration-300`), efectos de blur (glassmorphism), y sombras profundas.
 
-- `inter` -> `'Inter', sans-serif`
-- `merriweather` -> `'Merriweather', serif`
-- `jetbrains` -> `'JetBrains Mono', monospace`
-- `roboto` -> `'Roboto', sans-serif`
-- `playfair` -> `'Playfair Display', serif`
-- `montserrat` -> `'Montserrat', sans-serif`
+## 6. Componentes Reutilizables
 
-Si no hay fuente seleccionada, usar `'Inter', sans-serif`.
+Importa y usa estos componentes para asegurar que la funcionalidad sea robusta:
 
-## 7. Uso de imagenes
+- `StoreNavbar`, `StoreFooter`: Para la estructura base.
+- `CatalogControls`: Para la barra de búsqueda y filtros.
+- `ProductGrid`: Para el listado responsivo.
+- `ProductCard`: El contenedor individual de producto.
+- `ProductDetailModal`: El modal con toda la info.
+- `useCatalog`: Hook especializado para la lógica de búsqueda, filtrado y ordenamiento local.
 
-Todas las imagenes provienen de Appwrite Storage.
+## 7. Instrucciones para la Generación
 
-- `logoFileId` -> bucket de logos.
-- `imageFileId` -> bucket de productos.
-- No usar URLs externas.
-- No hardcodear imagenes.
+1. **Analiza la Entrada:** Si hay imagen, extrae la jerarquía visual y paleta de colores. Si hay texto, interpreta el "vibe" (ej: "lujo", "industrial", "artesanal").
+2. **Estructura el Archivo:** Crea un único componente funcional que reciba `{ store, products }`.
+3. **Lógica Local:** Inicializa `useCatalog(products)` para manejar los filtros.
+4. **Exportación y Registro:**
+   - El archivo debe guardarse en `src/templates/variants/NombreNuevoTemplate.jsx`.
+   - DEBES registrarlo en `src/templates/registry.js`.
+   - Al registrarlo, es OBLIGATORIO definir `defaultSettings` con una paleta de colores (primario y secundario) y una fuente coherente con el diseño generado.
+     ```javascript
+     defaultSettings: {
+       colors: {
+         primary: "#...", // Color de acento
+         secondary: "#..." // Color de fondo (background)
+       },
+       font: "inter" // o merriweather, montserrat, jetbrains, playfair, roboto
+     }
+     ```
+5. **Persistencia:** El template debe estar preparado para leer `store.settings.useTemplateStyles`. Si es `true`, debe usar sus propios estilos internos o los `defaultSettings` del registry. Si es `false`, debe usar los colores elegidos por el usuario en `store.settings.colors`.
 
-## 8. Estilo basado en imagen o prompt
+---
 
-Cuando haya referencia visual:
-
-- No copiar exactamente la imagen.
-- Extraer solo estilo, paleta, tipografia y jerarquia.
-- Adaptar la composicion a los datos reales.
-- Evitar simular categorias o filtros si no existen datos.
-
-Cuando haya solo texto:
-
-- Convertir la descripcion en un layout coherente y unico.
-- Priorizar legibilidad y consistencia.
-
-## 9. Estructura esperada de archivos
-
-- Crear el template en `src/templates/variants/`.
-- Exportarlo desde `src/templates/variants/index.js`.
-- Registrarlo en `src/templates/registry.js`.
-- Actualizar preview en `src/features/store/components/TemplateSelector.jsx`.
-
-## 10. Restricciones tecnicas
-
-El agente DEBE respetar:
-
-- React + JSX.
-- TailwindCSS.
-- Sin librerias externas nuevas.
-- Sin fetch internos.
-- Sin hooks de edicion.
-
-Los templates deben ser:
-
-- Deterministas.
-- Predecibles.
-- Reutilizables.
-
-## 11. Entrada esperada para el agente
-
-El agente puede recibir:
-
-- Texto descriptivo.
-- Imagen de referencia en `/refs/`.
-
-Ejemplo de prompt:
-
-"Disena un catalogo moderno, minimalista, con mucho espacio en blanco, productos grandes y enfoque en branding."
-
-## 12. Salida esperada del agente
-
-El agente debe entregar:
-
-- Nombre del template.
-- Breve explicacion del diseno.
-- Archivo JSX completo.
-- Registro actualizado en `src/templates/registry.js`.
-
-## 13. Errores comunes a evitar
-
-- Inventar campos.
-- Suponer categorias.
-- Suponer descuentos o ratings.
-- Agregar botones de compra si no existen.
-- Simular carrito.
-
-## 14. Principio fundamental
-
-El template solo cambia la forma, nunca el fondo.
-Los datos mandan. El diseno se adapta.
-
-## 15. Uso futuro
-
-Este documento sirve como:
-
-- Prompt base para agentes de diseno.
-- Contrato para generacion automatica de templates.
-- Referencia para validacion de PRs.
-- Base para IA con vision (image -> JSX).
+**Nota:** El diseño debe ser tan impactante que el usuario se sienta orgulloso de compartir su link de Catalogy.

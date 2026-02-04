@@ -21,23 +21,10 @@ import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";
 import { Logo } from "@/shared/ui/atoms/Logo";
 import { appConfig } from "@/shared/lib/env";
+import { resolveThemeSettings } from "@/templates/registry";
 
-const resolveSettings = (settings) => {
-  if (!settings) return {};
-  if (typeof settings === "string") {
-    try {
-      return JSON.parse(settings);
-    } catch (error) {
-      console.warn("Error parsing store.settings:", error);
-      return {};
-    }
-  }
-  return settings;
-};
-
-const resolveFontFamily = (settings) => {
-  const font = settings?.font;
-  const id = typeof font === "object" ? font?.id : font;
+// Internal helpers removed in favor of registry.resolveThemeSettings
+const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
     merriweather: "'Merriweather', serif",
@@ -46,7 +33,7 @@ const resolveFontFamily = (settings) => {
     playfair: "'Playfair Display', serif",
     montserrat: "'Montserrat', sans-serif",
   };
-  return map[id] || "'Playfair Display', serif"; // Default to Playfair for Gallery/Art feel
+  return map[fontId] || "'Playfair Display', serif";
 };
 
 const formatPrice = (price, currency = "MXN") => {
@@ -63,11 +50,11 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const settings = resolveSettings(store?.settings);
-  const fontFamily = resolveFontFamily(settings);
-  // Default to a dark/elegant theme if not specified for Gallery feel
-  const primary = settings?.colors?.primary || "#1a1a1a";
-  const secondary = settings?.colors?.secondary || "#f5f5f5";
+  // Settings Resolution
+  const theme = resolveThemeSettings(store);
+  const fontFamily = resolveFontFamily(theme.font);
+  const primary = theme.colors.primary;
+  const secondary = theme.colors.secondary;
   const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
 
   const {
@@ -100,7 +87,7 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-stone-50 text-stone-900 ${isPreview ? "pt-32" : "pt-24"}`}
+      className={`min-h-screen flex flex-col bg-(--color-bg) text-stone-900 ${isPreview ? "pt-32" : "pt-24"}`}
       style={{
         fontFamily,
         "--gallery-accent": primary,
@@ -111,10 +98,11 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         store={store}
         isPreview={isPreview}
         config={{
-          bg: "bg-white",
+          bg: "bg-(--color-bg)/80",
           text: "text-stone-900",
-          border: "border-stone-200",
+          border: "border-stone-200/50",
           accent: "text-(--gallery-accent)",
+          glass: true,
         }}
         // Custom search mechanism for Gallery (Right aligned)
         actions={
@@ -169,7 +157,7 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         />
 
         {/* Reusing CatalogFilters but constrained width */}
-        <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-sm border border-stone-100">
+        <div className="w-full max-w-md bg-(--color-bg) p-6 rounded-xl shadow-sm border border-stone-200/50">
           <CatalogFilters
             categories={categories}
             activeCategoryIds={activeCategoryIds}

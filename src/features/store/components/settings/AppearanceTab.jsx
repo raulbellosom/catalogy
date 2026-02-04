@@ -4,6 +4,7 @@ import { ImageUpload } from "@/shared/ui/molecules/ImageUpload";
 import { TemplateSelector } from "../../components/TemplateSelector";
 import { StickySaveButton } from "./StickySaveButton";
 import { useToast } from "@/shared/ui/molecules";
+import { TEMPLATES } from "@/templates/registry";
 import { useUpdateStore, useUploadStoreLogo } from "@/shared/hooks";
 import {
   getStoreLogoUrl,
@@ -59,6 +60,7 @@ export function AppearanceTab({ store }) {
     COLOR_PRESETS[0].secondary,
   );
   const [selectedFont, setSelectedFont] = useState(FONTS[0].id);
+  const [useTemplateStyles, setUseTemplateStyles] = useState(false);
 
   // Logo State
   const [currentLogoId, setCurrentLogoId] = useState("");
@@ -85,8 +87,21 @@ export function AppearanceTab({ store }) {
       if (settings.colors?.secondary)
         setSecondaryColor(settings.colors.secondary);
       if (settings.font) setSelectedFont(settings.font);
+      if (settings.useTemplateStyles !== undefined)
+        setUseTemplateStyles(settings.useTemplateStyles);
     }
   }, [store]);
+
+  useEffect(() => {
+    if (useTemplateStyles && templateId) {
+      const template = TEMPLATES[templateId];
+      if (template?.defaultSettings) {
+        setPrimaryColor(template.defaultSettings.colors.primary);
+        setSecondaryColor(template.defaultSettings.colors.secondary);
+        setSelectedFont(template.defaultSettings.font);
+      }
+    }
+  }, [templateId, useTemplateStyles]);
 
   const handleLogoUpload = (file) => {
     setPendingLogoFile(file);
@@ -101,26 +116,28 @@ export function AppearanceTab({ store }) {
     setLogoPreviewUrl(null);
   };
 
+  const getInitialSettings = () => {
+    if (typeof store?.settings === "string") {
+      try {
+        return JSON.parse(store.settings || "{}");
+      } catch (e) {
+        return {};
+      }
+    }
+    return store?.settings || {};
+  };
+
+  const initialSettings = getInitialSettings();
+
   const hasChanges =
     templateId !== (store?.templateId || "minimal") ||
     activeRenderer !== (store?.activeRenderer || "template") ||
     !!pendingLogoFile ||
     currentLogoId !== (store?.logoFileId || "") ||
-    primaryColor !==
-      (typeof store?.settings === "string"
-        ? JSON.parse(store?.settings || "{}")
-        : store?.settings || {}
-      ).colors?.primary ||
-    secondaryColor !==
-      (typeof store?.settings === "string"
-        ? JSON.parse(store?.settings || "{}")
-        : store?.settings || {}
-      ).colors?.secondary ||
-    selectedFont !==
-      (typeof store?.settings === "string"
-        ? JSON.parse(store?.settings || "{}")
-        : store?.settings || {}
-      ).font;
+    primaryColor !== initialSettings.colors?.primary ||
+    secondaryColor !== initialSettings.colors?.secondary ||
+    selectedFont !== initialSettings.font ||
+    useTemplateStyles !== !!initialSettings.useTemplateStyles;
 
   const rendererLabel =
     activeRenderer === "puck"
@@ -153,6 +170,7 @@ export function AppearanceTab({ store }) {
             secondary: secondaryColor,
           },
           font: selectedFont,
+          useTemplateStyles,
         },
       };
 
@@ -272,7 +290,30 @@ export function AppearanceTab({ store }) {
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="p-4 bg-(--color-primary)/5 border border-(--color-primary)/20 rounded-xl flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-(--color-fg)">
+                Usar estilos predeterminados del tema
+              </p>
+              <p className="text-xs text-(--color-fg-secondary)">
+                Aplica automáticamente la fuente y colores recomendados para el
+                tema seleccionado.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useTemplateStyles}
+                onChange={(e) => setUseTemplateStyles(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-(--color-primary)"></div>
+            </label>
+          </div>
+
+          <div
+            className={`space-y-6 transition-all duration-300 ${useTemplateStyles ? "opacity-40 grayscale pointer-events-none" : ""}`}
+          >
             {/* Colors Section */}
             <div className="space-y-4">
               <h4 className="text-sm font-bold flex items-center gap-2">
@@ -313,7 +354,7 @@ export function AppearanceTab({ store }) {
                   </div>
                   <div className="flex-1">
                     <label className="text-xs font-medium text-(--color-fg-secondary) block">
-                      Color Secundario
+                      Color de Fondo
                     </label>
                     <span className="text-sm font-mono uppercase text-(--color-fg)">
                       {secondaryColor}
