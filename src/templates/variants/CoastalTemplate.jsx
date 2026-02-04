@@ -171,9 +171,10 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
     resetFilters,
   } = useCatalogFilters({ store, products });
 
-  // Featured products for hero carousel (products with images)
+  // Featured products for hero carousel (products with images, sorted by sortOrder, max 5)
   const heroProducts = (products || [])
     .filter((p) => p.imageFileIds && p.imageFileIds.length > 0)
+    .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999))
     .slice(0, 5);
 
   // Auto-advance carousel
@@ -382,7 +383,13 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
 
       {/* ========== HERO CAROUSEL SECTION ========== */}
       {heroProducts.length > 0 && (
-        <section className="relative overflow-hidden">
+        <section
+          className="relative overflow-hidden"
+          style={{
+            minHeight:
+              "calc(100dvh - var(--store-navbar-height) - var(--store-navbar-offset) - env(safe-area-inset-top))",
+          }}
+        >
           {/* Background Image with Overlay */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -398,16 +405,16 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                   heroProducts[heroIndex]?.imageFileIds?.[0],
                 )}
                 alt=""
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
             </motion.div>
           </AnimatePresence>
 
           {/* Content */}
-          <div className="relative z-10 max-w-7xl mx-auto px-4 py-16 md:py-24">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div className="relative z-10 max-w-7xl mx-auto px-4 py-8 md:py-24 h-full flex flex-col justify-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center flex-1">
               {/* Left: Product Info */}
               <AnimatePresence mode="wait">
                 <motion.div
@@ -416,16 +423,16 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 30 }}
                   transition={{ duration: 0.5 }}
-                  className="text-white"
+                  className="text-white px-2 sm:px-0"
                 >
                   {/* Title */}
-                  <h2 className="text-3xl md:text-5xl font-bold mb-3 leading-tight">
+                  <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-3 leading-tight">
                     {heroProducts[heroIndex]?.name}
                   </h2>
 
                   {/* Category */}
                   {heroProducts[heroIndex]?.categories?.[0] && (
-                    <p className="text-white/70 text-sm mb-4 flex items-center gap-2">
+                    <p className="text-white/70 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center gap-2">
                       <span
                         className="w-2 h-2 rounded-full"
                         style={{ backgroundColor: primary }}
@@ -436,15 +443,15 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
 
                   {/* Description */}
                   {heroProducts[heroIndex]?.description && (
-                    <p className="text-white/80 text-base md:text-lg leading-relaxed mb-6 line-clamp-3 max-w-lg">
+                    <p className="text-white/80 text-sm sm:text-base md:text-lg leading-relaxed mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3 max-w-lg">
                       {heroProducts[heroIndex].description}
                     </p>
                   )}
 
                   {/* Price */}
-                  <div className="mb-8">
+                  <div className="mb-5 sm:mb-8">
                     <span
-                      className="text-3xl md:text-4xl font-bold"
+                      className="text-2xl sm:text-3xl md:text-4xl font-bold"
                       style={{ color: primary }}
                     >
                       {formatPrice(
@@ -455,10 +462,11 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
                     <CoastalButton
                       variant="primary"
-                      size="lg"
+                      size="md"
+                      className="text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4"
                       onClick={() =>
                         setSelectedProduct(heroProducts[heroIndex])
                       }
@@ -467,8 +475,8 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                     </CoastalButton>
                     <CoastalButton
                       variant="outline"
-                      size="lg"
-                      className="border-white/30 text-white hover:bg-white hover:text-gray-900"
+                      size="md"
+                      className="border-white/30 text-white hover:bg-white hover:text-gray-900 text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4"
                       onClick={(e) => {
                         e.stopPropagation();
                         shareProduct(heroProducts[heroIndex]);
@@ -556,61 +564,61 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                 </AnimatePresence>
               </div>
             </div>
-
-            {/* Carousel Controls */}
-            {heroProducts.length > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-10">
-                {/* Dots */}
-                <div className="flex items-center gap-2">
-                  {heroProducts.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => goToSlide(idx)}
-                      className={`transition-all duration-300 rounded-full ${
-                        idx === heroIndex
-                          ? "w-8 h-2"
-                          : "w-2 h-2 bg-white/40 hover:bg-white/60"
-                      }`}
-                      style={
-                        idx === heroIndex ? { backgroundColor: primary } : {}
-                      }
-                      aria-label={`Ir al slide ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-
-                {/* Play/Pause */}
-                <button
-                  onClick={() => setIsCarouselPaused(!isCarouselPaused)}
-                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-                  aria-label={isCarouselPaused ? "Reproducir" : "Pausar"}
-                >
-                  {isCarouselPaused ? (
-                    <Play className="w-4 h-4" />
-                  ) : (
-                    <Pause className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* Navigation Arrows */}
+          {/* Carousel Controls - At absolute bottom of section */}
+          {heroProducts.length > 1 && (
+            <div className="absolute bottom-3 sm:bottom-4 left-0 right-0 flex items-center justify-center gap-3 sm:gap-4 z-30">
+              {/* Dots */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {heroProducts.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => goToSlide(idx)}
+                    className={`transition-all duration-300 rounded-full ${
+                      idx === heroIndex
+                        ? "w-6 sm:w-8 h-1.5 sm:h-2"
+                        : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/60"
+                    }`}
+                    style={
+                      idx === heroIndex ? { backgroundColor: primary } : {}
+                    }
+                    aria-label={`Ir al slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Play/Pause */}
+              <button
+                onClick={() => setIsCarouselPaused(!isCarouselPaused)}
+                className="p-1.5 sm:p-2 rounded-full bg-black/30 hover:bg-black/50 text-white transition-colors backdrop-blur-sm"
+                aria-label={isCarouselPaused ? "Reproducir" : "Pausar"}
+              >
+                {isCarouselPaused ? (
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+                ) : (
+                  <Pause className="w-3 h-3 sm:w-4 sm:h-4" />
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Navigation Arrows - Centered vertically */}
           {heroProducts.length > 1 && (
             <>
               <button
                 onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all hover:scale-110"
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-sm transition-all hover:scale-110"
                 aria-label="Anterior"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
               </button>
               <button
                 onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all hover:scale-110"
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 rounded-full bg-white/15 hover:bg-white/25 text-white backdrop-blur-sm transition-all hover:scale-110"
                 aria-label="Siguiente"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
               </button>
             </>
           )}

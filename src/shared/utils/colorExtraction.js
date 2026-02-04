@@ -1,4 +1,84 @@
 /**
+ * Converts a hex color to RGB values
+ * @param {string} hex - Hex color string (e.g., "#ff0000" or "ff0000")
+ * @returns {{r: number, g: number, b: number}} RGB values
+ */
+export function hexToRgb(hex) {
+  const cleanHex = hex.replace("#", "");
+  const bigint = parseInt(cleanHex, 16);
+  return {
+    r: (bigint >> 16) & 255,
+    g: (bigint >> 8) & 255,
+    b: bigint & 255,
+  };
+}
+
+/**
+ * Calculates the relative luminance of a color
+ * Based on WCAG 2.1 formula: https://www.w3.org/WAI/GL/wiki/Relative_luminance
+ * @param {string} hex - Hex color string
+ * @returns {number} Luminance value between 0 (darkest) and 1 (lightest)
+ */
+export function getLuminance(hex) {
+  const { r, g, b } = hexToRgb(hex);
+
+  // Convert RGB to sRGB
+  const srgb = [r, g, b].map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+
+  // Calculate luminance
+  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+}
+
+/**
+ * Calculates the contrast ratio between two colors
+ * Based on WCAG 2.1: https://www.w3.org/WAI/GL/wiki/Contrast_ratio
+ * @param {string} hex1 - First hex color
+ * @param {string} hex2 - Second hex color
+ * @returns {number} Contrast ratio (1 to 21)
+ */
+export function getContrastRatio(hex1, hex2) {
+  const l1 = getLuminance(hex1);
+  const l2 = getLuminance(hex2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Determines if a color is considered "dark" based on its luminance
+ * @param {string} hex - Hex color string
+ * @param {number} threshold - Luminance threshold (default: 0.5)
+ * @returns {boolean} True if the color is dark
+ */
+export function isColorDark(hex) {
+  return getLuminance(hex) < 0.5;
+}
+
+/**
+ * Gets the appropriate contrasting text color (black or white) for a background
+ * @param {string} bgHex - Background hex color
+ * @returns {string} "#ffffff" for dark backgrounds, "#000000" for light backgrounds
+ */
+export function getContrastingTextColor(bgHex) {
+  return isColorDark(bgHex) ? "#ffffff" : "#000000";
+}
+
+/**
+ * Checks if the contrast ratio meets WCAG AA standards
+ * @param {string} textHex - Text color hex
+ * @param {string} bgHex - Background color hex
+ * @param {boolean} isLargeText - Whether it's large text (14pt bold or 18pt+)
+ * @returns {boolean} True if contrast meets AA standards
+ */
+export function meetsContrastAA(textHex, bgHex, isLargeText = false) {
+  const ratio = getContrastRatio(textHex, bgHex);
+  return isLargeText ? ratio >= 3 : ratio >= 4.5;
+}
+
+/**
  * Extracts dominant colors from an image file using an off-screen canvas
  * @param {File} file - The image file to process
  * @param {number} maxColors - Maximum number of colors to extract (default: 5)
