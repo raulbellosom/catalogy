@@ -9,3 +9,4 @@ export * from "./StorePurchaseInfo";
 export * from "./StoreNavbar";
 export * from "./CatalogFilters";
 export * from "./CatalogFilters";
+export * from "./catalogHooks";

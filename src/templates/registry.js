@@ -11,6 +11,8 @@ import { GalleryTemplate } from "./variants/GalleryTemplate";
 import { NoirGridTemplate } from "./variants/NoirGridTemplate";
 import { NatureTemplate } from "./variants/NatureTemplate";
 import { PrismTemplate } from "./variants/PrismTemplate";
+import { EtherealTemplate } from "./variants/EtherealTemplate";
+import { VelocityTemplate } from "./variants/VelocityTemplate";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -92,6 +94,30 @@ export const TEMPLATES = {
     defaultSettings: {
       colors: { primary: "#8b5cf6", secondary: "#0f172a" },
       font: "montserrat",
+    },
+  },
+  ethereal: {
+    id: "ethereal",
+    name: "Ethereal",
+    description:
+      "Lujo minimalista, tipografía serif y elegancia para perfumes y joyería",
+    component: EtherealTemplate,
+    thumbnail: "/templates/ethereal-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#BFA181", secondary: "#FAFAF9" },
+      font: "playfair",
+    },
+  },
+  velocity: {
+    id: "velocity",
+    name: "Velocity",
+    description:
+      "Diseño automotriz de alto impacto, grids amplios y estética técnica",
+    component: VelocityTemplate,
+    thumbnail: "/templates/velocity-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#DC2626", secondary: "#F8FAFC" },
+      font: "inter",
     },
   },
 };

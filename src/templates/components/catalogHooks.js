@@ -108,6 +108,14 @@ export const useCatalogFilters = ({ store, products }) => {
     sortOrder,
   ]);
 
+  const resetFilters = () => {
+    setSearchQuery("");
+    setActiveCategoryIds([]);
+    setMinPrice(0);
+    setMaxPrice(priceBounds.max);
+    setSortOrder("none");
+  };
+
   return {
     categories,
     searchQuery,
@@ -122,8 +130,11 @@ export const useCatalogFilters = ({ store, products }) => {
     filteredProducts,
     sortOrder,
     setSortOrder,
+    resetFilters,
   };
 };
+
+export const useCatalog = useCatalogFilters;
 
 export const getProductShareUrl = (productId) => {
   if (!productId) return "";
