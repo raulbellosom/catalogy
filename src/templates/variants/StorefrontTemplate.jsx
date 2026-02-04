@@ -22,6 +22,7 @@ import {
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
+  ProductCard,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters, useProductShare } from "../components/catalogHooks";

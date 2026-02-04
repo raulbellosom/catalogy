@@ -9,6 +9,7 @@ import {
   Info,
   ChevronRight,
   Filter,
+  ExternalLink,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
