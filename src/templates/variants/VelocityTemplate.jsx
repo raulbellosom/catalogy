@@ -53,7 +53,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen text-slate-900 ${isPreview ? "pt-10" : ""}`}
+      className="min-h-screen text-slate-900 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         backgroundColor: secondaryColor,
         fontFamily,
@@ -62,6 +62,8 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
         "--color-bg-secondary": secondaryColor,
         "--color-border": `${primaryColor}40`,
         "--color-fg": "#0f172a",
+        "--store-navbar-height": "4rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <style>{`

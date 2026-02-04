@@ -86,12 +86,14 @@ export function PrismTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-(--prism-bg) text-white selection:bg-(--prism-primary)/30 ${isPreview ? "pt-24" : "pt-14"}`}
+      className="min-h-screen flex flex-col bg-(--prism-bg) text-white selection:bg-(--prism-primary)/30 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
         "--prism-primary": primary,
         "--prism-secondary": secondary,
         "--prism-bg": secondary || "#0f172a",
+        "--store-navbar-height": "4rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <style>{`

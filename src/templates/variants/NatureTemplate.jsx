@@ -89,11 +89,13 @@ export function NatureTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-(--color-bg) text-[#2d2a26] selection:bg-green-100 ${isPreview ? "pt-32" : "pt-20"}`}
+      className="min-h-screen flex flex-col bg-(--color-bg) text-[#2d2a26] selection:bg-green-100 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
         "--nature-primary": primary,
         "--nature-secondary": secondary,
+        "--store-navbar-height": "4rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <style>{`

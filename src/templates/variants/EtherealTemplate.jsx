@@ -52,7 +52,7 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen selection:bg-opacity-20 ${isPreview ? "pt-10" : ""}`}
+      className="min-h-screen selection:bg-opacity-20 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         backgroundColor: secondaryColor,
         color: "#1c1917",
@@ -67,6 +67,8 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
         "--muted": "#f5f5f4",
         "--muted-foreground": "#78716c",
         "--foreground": "#1c1917",
+        "--store-navbar-height": "4rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <style>{`

@@ -13,6 +13,8 @@ import { NatureTemplate } from "./variants/NatureTemplate";
 import { PrismTemplate } from "./variants/PrismTemplate";
 import { EtherealTemplate } from "./variants/EtherealTemplate";
 import { VelocityTemplate } from "./variants/VelocityTemplate";
+import { RibbonTemplate } from "./variants/RibbonTemplate";
+import { SketchyTemplate } from "./variants/SketchyTemplate";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -117,6 +119,29 @@ export const TEMPLATES = {
     thumbnail: "/templates/velocity-thumb.png",
     defaultSettings: {
       colors: { primary: "#DC2626", secondary: "#F8FAFC" },
+      font: "inter",
+    },
+  },
+  ribbon: {
+    id: "ribbon",
+    name: "Ribbon",
+    description: "Editorial limpio con cintas suaves y grid aireado",
+    component: RibbonTemplate,
+    thumbnail: "/templates/ribbon-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#1f7a5f", secondary: "#fbfaf7" },
+      font: "playfair",
+    },
+  },
+  sketchy: {
+    id: "sketchy",
+    name: "Sketchy",
+    description:
+      "Estilo dibujado a mano con bordes irregulares y aspecto artesanal",
+    component: SketchyTemplate,
+    thumbnail: "/templates/sketchy-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#333333", secondary: "#ffffff" },
       font: "inter",
     },
   },

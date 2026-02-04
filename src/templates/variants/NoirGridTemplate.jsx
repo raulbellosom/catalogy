@@ -66,7 +66,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-(--noir-bg) text-(--noir-strong)"
+      className="min-h-screen flex flex-col bg-(--noir-bg) text-(--noir-strong) pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
         "--noir-bg": secondary,
@@ -77,6 +77,8 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
         "--noir-strong": "#f4f4f5",
         "--noir-accent": primary,
         "--noir-accent-soft": secondary,
+        "--store-navbar-height": "4rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <StoreNavbar
@@ -96,9 +98,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
 
-      <div
-        className={`mx-auto max-w-6xl px-4 py-8 ${isPreview ? "pt-32" : "pt-24"} flex-1 w-full`}
-      >
+      <div className="mx-auto max-w-6xl px-4 pb-8 pt-8 flex-1 w-full">
         <main className="flex flex-col gap-8">
           {/* Header de la tienda fusionado */}
           <header className="flex flex-col gap-8 rounded-3xl bg-(--noir-surface) border border-(--noir-border) p-8 md:p-10">

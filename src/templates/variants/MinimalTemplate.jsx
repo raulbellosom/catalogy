@@ -86,11 +86,13 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className={`min-h-screen flex flex-col bg-(--color-bg) text-gray-900 ${isPreview ? "pt-32" : "pt-20"}`}
+      className="min-h-screen flex flex-col bg-(--color-bg) text-gray-900 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
         "--minimal-accent": primary,
         "--minimal-secondary": secondary,
+        "--store-navbar-height": "4rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <StoreNavbar

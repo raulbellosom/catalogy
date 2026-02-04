@@ -10,3 +10,5 @@ export { GalleryTemplate } from "./GalleryTemplate";
 export { NoirGridTemplate } from "./NoirGridTemplate";
 export { NatureTemplate } from "./NatureTemplate";
 export { PrismTemplate } from "./PrismTemplate";
+export { RibbonTemplate } from "./RibbonTemplate";
+export { SketchyTemplate } from "./SketchyTemplate";
