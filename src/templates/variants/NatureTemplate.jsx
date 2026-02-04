@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Filter,
   ArrowRight,
+  ExternalLink,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
