@@ -125,7 +125,7 @@ export async function createStore(data) {
       activeRenderer: activeRenderer || "template",
       categoriesJson: categoriesJson || "[]",
       purchaseInstructions: purchaseInstructions?.trim() || "",
-      paymentLink: paymentLink?.trim() || "",
+      paymentLink: paymentLink?.trim() || null,
       settings: data.settings ? JSON.stringify(data.settings) : "{}",
       published: false,
       enabled: true,
@@ -175,7 +175,7 @@ export async function updateStore(storeId, data) {
     updateData.purchaseInstructions = data.purchaseInstructions?.trim() || "";
   }
   if (data.paymentLink !== undefined) {
-    updateData.paymentLink = data.paymentLink?.trim() || "";
+    updateData.paymentLink = data.paymentLink?.trim() || null;
   }
   if (data.settings) updateData.settings = JSON.stringify(data.settings);
   if (data.categoriesJson !== undefined) {

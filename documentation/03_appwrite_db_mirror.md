@@ -185,7 +185,7 @@ Document ID:
 | activeRenderer       | enum    | no       | template | template,puck | decide que render se publica                 |
 | categoriesJson       | string  | no       | "[]"     | size=2000     | JSON de categorias propias de la tienda      |
 | purchaseInstructions | string  | no       | ""       | size=2000     | instrucciones de compra                      |
-| paymentLink          | URL     | no       | ""       |               | link de pago opcional                        |
+| paymentLink          | URL     | no       | null     |               | link de pago opcional                        |
 | settings             | string  | no       | "{}"     | size=2000     | JSON de configuracion (colores, fonts)       |
 | puckData             | string  | no       | null     | size=100000   | JSON de configuracion Puck Editor            |
 | published            | boolean | no       | false    |               | si el catalogo es publico                    |
