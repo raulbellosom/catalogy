@@ -121,6 +121,7 @@ export function StoreOnboardingWizard() {
   const [selectedTemplate, setSelectedTemplate] = useState("minimal");
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   // Mutations
   const createStore = useCreateStore();
