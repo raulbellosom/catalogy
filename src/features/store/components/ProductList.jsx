@@ -174,7 +174,7 @@ export function ProductList({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
           <SortableContext items={productIds} strategy={rectSortingStrategy}>
             {products.map((product, index) => (
               <SortableCard
@@ -504,7 +504,7 @@ const ProductCard = React.forwardRef(
           <GripVertical className="w-4 h-4" />
         </div>
 
-        <div className="aspect-square bg-(--color-bg-secondary) relative overflow-hidden">
+        <div className="aspect-4/3 bg-(--color-bg-secondary) relative overflow-hidden">
           <ImageCarousel
             images={imageUrls}
             alt={product.name}
