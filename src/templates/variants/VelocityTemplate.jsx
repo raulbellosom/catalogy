@@ -12,6 +12,7 @@ import {
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -47,6 +48,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const primaryColor = theme.colors.primary;
   const secondaryColor = theme.colors.secondary;
   const fontFamily = resolveFontFamily(theme.font);
@@ -91,10 +93,14 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
         store={store}
         isPreview={isPreview}
         onMobileMenuToggle={() => setIsMobileMenuOpen(true)}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         config={{
           bg: "bg-slate-900",
           text: "text-white",
@@ -178,29 +184,38 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
       {/* Showroom / Content */}
       <main className="max-w-[1600px] mx-auto px-4 md:px-8 py-16">
         {/* Controls Bar */}
-        <div className="bg-white p-4 shadow-xl border border-slate-100 rounded-sm mb-12 sticky top-20 z-30 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="w-full md:w-auto flex-1">
-            <CatalogControls
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              activeCategoryIds={activeCategoryIds}
-              onToggleCategory={toggleCategory}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={setMinPrice}
-              onMaxPriceChange={setMaxPrice}
-              priceBounds={priceBounds}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              categories={categories}
-              tone="noir"
-              onReset={resetFilters}
-            />
+        {(catalog.showSearch || catalog.showFilters) && (
+          <div className="bg-white p-4 shadow-xl border border-slate-100 rounded-sm mb-12 sticky top-20 z-30 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="w-full md:w-auto flex-1">
+              <CatalogControls
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                categories={categories}
+                tone="noir"
+                onReset={resetFilters}
+                showSearch={catalog.showSearch}
+                showFilters={catalog.showFilters}
+                showSort={catalog.showSort}
+                showPrice={catalog.showFilters}
+                showCategories={catalog.showFilters}
+              />
+            </div>
+            {catalog.showProductCount && (
+              <div className="text-xs font-bold uppercase text-slate-400 hidden md:block">
+                {filteredProducts ? filteredProducts.length : 0} Productos
+              </div>
+            )}
           </div>
-          <div className="text-xs font-bold uppercase text-slate-400 hidden md:block">
-            {filteredProducts ? filteredProducts.length : 0} Productos
-          </div>
-        </div>
+        )}
 
         {/* Wide Grid Layout */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -225,17 +240,19 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      shareProduct(product);
-                    }}
-                    className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                    aria-label="Compartir producto"
-                  >
-                    <Share2 size={16} />
-                  </button>
+                  {catalog.showShareButton && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        shareProduct(product);
+                      }}
+                      className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                      aria-label="Compartir producto"
+                    >
+                      <Share2 size={16} />
+                    </button>
+                  )}
 
                   {/* Status Badge */}
                   <div className="absolute top-4 left-4">
@@ -270,7 +287,9 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                   </div>
 
                   {/* Categories as Specs Tags */}
-                  {product.categories && product.categories.length > 0 && (
+                  {catalog.showFilters &&
+                    product.categories &&
+                    product.categories.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
                       {product.categories.slice(0, 3).map((cat) => (
                         <button
@@ -320,9 +339,14 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
 
       {/* Shared Footer */}
       <div id="footer">
-        <div className="max-w-[1600px] mx-auto px-4 md:px-8 pb-12">
-          <StorePurchaseInfo store={store} />
-        </div>
+        {catalog.showPurchaseInfo && (
+          <div className="max-w-[1600px] mx-auto px-4 md:px-8 pb-12">
+            <StorePurchaseInfo
+              store={store}
+              showPaymentButton={catalog.showPaymentButton}
+            />
+          </div>
+        )}
         <StoreFooter
           store={store}
           config={{
@@ -351,24 +375,31 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
             </button>
 
             <div className="space-y-10">
-              <CatalogControls
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                activeCategoryIds={activeCategoryIds}
-                onToggleCategory={toggleCategory}
-                minPrice={minPrice}
-                maxPrice={maxPrice}
-                onMinPriceChange={setMinPrice}
-                onMaxPriceChange={setMaxPrice}
-                priceBounds={priceBounds}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                categories={categories}
-                tone="light"
-                onReset={resetFilters}
-              />
+              {(catalog.showSearch || catalog.showFilters) && (
+                <CatalogControls
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  activeCategoryIds={activeCategoryIds}
+                  onToggleCategory={toggleCategory}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  onMinPriceChange={setMinPrice}
+                  onMaxPriceChange={setMaxPrice}
+                  priceBounds={priceBounds}
+                  sortOrder={sortOrder}
+                  setSortOrder={setSortOrder}
+                  categories={categories}
+                  tone="light"
+                  onReset={resetFilters}
+                  showSearch={catalog.showSearch}
+                  showFilters={catalog.showFilters}
+                  showSort={catalog.showSort}
+                  showPrice={catalog.showFilters}
+                  showCategories={catalog.showFilters}
+                />
+              )}
 
-              {store?.paymentLink && (
+              {store?.paymentLink && catalog.showPaymentButton && (
                 <a
                   href={store.paymentLink}
                   target="_blank"
@@ -389,6 +420,8 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
           store={store}
+          showShareButton={catalog.showShareButton}
+          showPaymentButton={catalog.showPaymentButton}
         />
       )}
     </div>

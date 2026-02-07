@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
@@ -22,6 +22,7 @@ import {
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { Logo } from "@/shared/ui/atoms/Logo";
 
 /**
@@ -170,6 +171,7 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -198,6 +200,10 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
     images: [],
     index: 0,
   });
+
+  useEffect(() => {
+    setShowFilters(catalog.showFilters);
+  }, [catalog.showFilters]);
 
   const openViewer = (index, images) => {
     setViewer({ isOpen: true, images, index });
@@ -255,7 +261,7 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
             <a href="#catalog" className="hover:text-white transition-colors">
               Productos
             </a>
-            {store?.paymentLink && (
+            {store?.paymentLink && catalog.showPaymentButton && (
               <a
                 href={store.paymentLink}
                 target="_blank"
@@ -268,18 +274,20 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
           </div>
 
           {/* Search */}
-          <div className="flex-1 max-w-md mx-4 hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <SketchyInput
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 py-2 text-sm"
-              />
+          {catalog.showSearch && (
+            <div className="flex-1 max-w-md mx-4 hidden md:block">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <SketchyInput
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 py-2 text-sm"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button
@@ -317,45 +325,48 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Mobile Search */}
-              <div className="mb-6">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <SketchyInput
-                    type="text"
-                    placeholder="Buscar..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 py-2 text-sm"
-                  />
+              {catalog.showSearch && (
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <SketchyInput
+                      type="text"
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 py-2 text-sm"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Mobile Filters */}
-              <div className="space-y-6">
-                <CatalogFilters
-                  categories={categories}
-                  activeCategoryIds={activeCategoryIds}
-                  onToggleCategory={toggleCategory}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  onMinPriceChange={setMinPrice}
-                  onMaxPriceChange={setMaxPrice}
-                  priceBounds={priceBounds}
-                  sortOrder={sortOrder}
-                  setSortOrder={setSortOrder}
-                  primaryColor={primary}
-                />
+              {catalog.showFilters && (
+                <div className="space-y-6">
+                  <CatalogFilters
+                    categories={categories}
+                    activeCategoryIds={activeCategoryIds}
+                    onToggleCategory={toggleCategory}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onMinPriceChange={setMinPrice}
+                    onMaxPriceChange={setMaxPrice}
+                    priceBounds={priceBounds}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    primaryColor={primary}
+                    showSort={catalog.showSort}
+                  />
 
-                <SketchyButton
-                  variant="ghost"
-                  onClick={resetFilters}
-                  className="w-full flex items-center justify-center gap-2"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reiniciar filtros
-                </SketchyButton>
-              </div>
+                  <SketchyButton
+                    variant="ghost"
+                    onClick={resetFilters}
+                    className="w-full flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reiniciar filtros
+                  </SketchyButton>
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -377,7 +388,7 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
           )}
 
           {/* Quick Category Pills */}
-          {categories.length > 0 && (
+          {catalog.showFilters && categories.length > 0 && (
             <div className="flex flex-wrap justify-center gap-2 mt-8">
               {categories.slice(0, 6).map((cat) => (
                 <SketchyBadge
@@ -398,47 +409,55 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
       <main id="catalog" className="flex-1 px-4 pb-20">
         <div className="max-w-7xl mx-auto">
           {/* Desktop Controls */}
-          <div className="hidden md:flex items-center justify-between gap-4 mb-8 pb-6 border-b-3 border-black">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-bold text-gray-600 uppercase tracking-wider">
-                {filteredProducts.length} productos
-              </span>
+          {(catalog.showFilters || catalog.showProductCount) && (
+            <div className="hidden md:flex items-center justify-between gap-4 mb-8 pb-6 border-b-3 border-black">
+              {catalog.showProductCount && (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-bold text-gray-600 uppercase tracking-wider">
+                    {filteredProducts.length} productos
+                  </span>
+                </div>
+              )}
+
+              {catalog.showFilters && (
+                <div className="flex items-center gap-3">
+                  {catalog.showSort && (
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value)}
+                      className="h-[42px] px-5 border-3 border-black bg-white text-sm font-bold shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5 outline-none transition-all cursor-pointer"
+                    >
+                      <option value="none">Relevancia</option>
+                      <option value="asc">Menor precio</option>
+                      <option value="desc">Mayor precio</option>
+                    </select>
+                  )}
+
+                  <SketchyButton
+                    variant="secondary"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2"
+                  >
+                    <Filter className="w-4 h-4" />
+                    Filtros
+                  </SketchyButton>
+
+                  <SketchyButton
+                    variant="ghost"
+                    onClick={resetFilters}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reiniciar
+                  </SketchyButton>
+                </div>
+              )}
             </div>
-
-            <div className="flex items-center gap-3">
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="h-[42px] px-5 border-3 border-black bg-white text-sm font-bold shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5 outline-none transition-all cursor-pointer"
-              >
-                <option value="none">Relevancia</option>
-                <option value="asc">Menor precio</option>
-                <option value="desc">Mayor precio</option>
-              </select>
-
-              <SketchyButton
-                variant="secondary"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Filter className="w-4 h-4" />
-                Filtros
-              </SketchyButton>
-
-              <SketchyButton
-                variant="ghost"
-                onClick={resetFilters}
-                className="flex items-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reiniciar
-              </SketchyButton>
-            </div>
-          </div>
+          )}
 
           {/* Desktop Filters Panel */}
           <AnimatePresence>
-            {showFilters && (
+            {catalog.showFilters && showFilters && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
@@ -448,20 +467,22 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
                 <SketchyCard hover={false} className="p-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Sort */}
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
-                        Ordenar Por
-                      </h3>
-                      <select
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value)}
-                        className="w-full h-[42px] px-4 border-3 border-black bg-white text-sm font-bold shadow-[3px_3px_0_0_black] outline-none cursor-pointer"
-                      >
-                        <option value="none">Relevancia</option>
-                        <option value="asc">Menor precio</option>
-                        <option value="desc">Mayor precio</option>
-                      </select>
-                    </div>
+                    {catalog.showSort && (
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+                          Ordenar Por
+                        </h3>
+                        <select
+                          value={sortOrder}
+                          onChange={(e) => setSortOrder(e.target.value)}
+                          className="w-full h-[42px] px-4 border-3 border-black bg-white text-sm font-bold shadow-[3px_3px_0_0_black] outline-none cursor-pointer"
+                        >
+                          <option value="none">Relevancia</option>
+                          <option value="asc">Menor precio</option>
+                          <option value="desc">Mayor precio</option>
+                        </select>
+                      </div>
+                    )}
 
                     {/* Price Range */}
                     <div>
@@ -568,17 +589,19 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
                       )}
 
                       {/* Share Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          shareProduct(product);
-                        }}
-                        className="absolute top-2 right-2 p-2 bg-white border-2 border-black shadow-[2px_2px_0_0_black] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-                        aria-label="Compartir producto"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
+                      {catalog.showShareButton && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-white border-2 border-black shadow-[2px_2px_0_0_black] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                          aria-label="Compartir producto"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -588,19 +611,21 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
                       </h3>
 
                       {/* Category Tags */}
-                      {product.categories && product.categories.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {product.categories.slice(0, 2).map((cat) => (
-                            <button
-                              key={cat.id || cat.name}
-                              onClick={(e) => handleCategoryClick(e, cat.id)}
-                              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 border border-black/20 hover:bg-black hover:text-white transition-colors"
-                            >
-                              {cat.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {catalog.showFilters &&
+                        product.categories &&
+                        product.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {product.categories.slice(0, 2).map((cat) => (
+                              <button
+                                key={cat.id || cat.name}
+                                onClick={(e) => handleCategoryClick(e, cat.id)}
+                                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 border border-black/20 hover:bg-black hover:text-white transition-colors"
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
                       {/* Price */}
                       <div
@@ -644,11 +669,16 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
       </main>
 
       {/* ========== PURCHASE INFO ========== */}
-      <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
-        <div className="border-3 border-black bg-white shadow-[6px_6px_0_0_black] p-6 md:p-8">
-          <StorePurchaseInfo store={store} />
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
+          <div className="border-3 border-black bg-white shadow-[6px_6px_0_0_black] p-6 md:p-8">
+            <StorePurchaseInfo
+              store={store}
+              showPaymentButton={catalog.showPaymentButton}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ========== FOOTER ========== */}
       <footer className="bg-[#333] border-t-4 border-black py-12 mt-auto">
@@ -665,7 +695,7 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
             </p>
           )}
 
-          {store?.paymentLink && (
+          {store?.paymentLink && catalog.showPaymentButton && (
             <a
               href={store.paymentLink}
               target="_blank"
@@ -695,6 +725,8 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="light"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
 
       {/* ========== IMAGE VIEWER ========== */}

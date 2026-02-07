@@ -27,6 +27,7 @@ import {
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { Logo } from "@/shared/ui/atoms/Logo";
 import { appConfig } from "@/shared/lib/env";
 
@@ -149,6 +150,7 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -187,6 +189,10 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
 
     return () => clearInterval(interval);
   }, [heroProducts.length, isCarouselPaused]);
+
+  useEffect(() => {
+    setShowFilters(catalog.showFilters);
+  }, [catalog.showFilters]);
 
   const goToSlide = useCallback((index) => {
     setHeroIndex(index);
@@ -263,22 +269,24 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
           </div>
 
           {/* Desktop Search */}
-          <div className="flex-1 max-w-lg mx-4 hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
-              />
+          {catalog.showSearch && (
+            <div className="flex-1 max-w-lg mx-4 hidden md:block">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {store?.paymentLink && (
+            {store?.paymentLink && catalog.showPaymentButton && (
               <CoastalButton
                 variant="primary"
                 size="md"
@@ -326,56 +334,59 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Mobile Search */}
-              <div className="mb-6">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                  />
+              {catalog.showSearch && (
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Mobile Filters */}
-              <div className="space-y-6">
-                <CatalogFilters
-                  categories={categories}
-                  activeCategoryIds={activeCategoryIds}
-                  onToggleCategory={toggleCategory}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  onMinPriceChange={setMinPrice}
-                  onMaxPriceChange={setMaxPrice}
-                  priceBounds={priceBounds}
-                  sortOrder={sortOrder}
-                  setSortOrder={setSortOrder}
-                  primaryColor={primary}
-                />
+              {catalog.showFilters && (
+                <div className="space-y-6">
+                  <CatalogFilters
+                    categories={categories}
+                    activeCategoryIds={activeCategoryIds}
+                    onToggleCategory={toggleCategory}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onMinPriceChange={setMinPrice}
+                    onMaxPriceChange={setMaxPrice}
+                    priceBounds={priceBounds}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    primaryColor={primary}
+                    showSort={catalog.showSort}
+                  />
 
-                <CoastalButton
-                  variant="ghost"
-                  onClick={resetFilters}
-                  className="w-full"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Reiniciar filtros
-                </CoastalButton>
-
-                {store?.paymentLink && (
                   <CoastalButton
-                    variant="primary"
+                    variant="ghost"
+                    onClick={resetFilters}
                     className="w-full"
-                    onClick={() => window.open(store.paymentLink, "_blank")}
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    Ir a pagar
+                    <RotateCcw className="w-4 h-4" />
+                    Reiniciar filtros
                   </CoastalButton>
-                )}
-              </div>
+
+                  {store?.paymentLink && catalog.showPaymentButton && (
+                    <CoastalButton
+                      variant="primary"
+                      className="w-full"
+                      onClick={() => window.open(store.paymentLink, "_blank")}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Ir a pagar
+                    </CoastalButton>
+                  )}
+                </div>
+              )}
             </motion.div>
           </>
         )}
@@ -431,7 +442,8 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                   </h2>
 
                   {/* Category */}
-                  {heroProducts[heroIndex]?.categories?.[0] && (
+                  {catalog.showFilters &&
+                    heroProducts[heroIndex]?.categories?.[0] && (
                     <p className="text-white/70 text-xs sm:text-sm mb-3 sm:mb-4 flex items-center gap-2">
                       <span
                         className="w-2 h-2 rounded-full"
@@ -473,18 +485,20 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                     >
                       Ver Detalles
                     </CoastalButton>
-                    <CoastalButton
-                      variant="outline"
-                      size="md"
-                      className="border-white/30 text-white hover:bg-white hover:text-gray-900 text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        shareProduct(heroProducts[heroIndex]);
-                      }}
-                    >
-                      <Share2 className="w-4 h-4" />
-                      Compartir
-                    </CoastalButton>
+                    {catalog.showShareButton && (
+                      <CoastalButton
+                        variant="outline"
+                        size="md"
+                        className="border-white/30 text-white hover:bg-white hover:text-gray-900 text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          shareProduct(heroProducts[heroIndex]);
+                        }}
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Compartir
+                      </CoastalButton>
+                    )}
                   </div>
                 </motion.div>
               </AnimatePresence>
@@ -626,127 +640,147 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
       )}
 
       {/* ========== SEARCH & FILTERS SECTION ========== */}
-      <section className="px-4 py-10">
-        <div className="max-w-7xl mx-auto">
-          {/* Store Info (only if no hero) */}
-          {heroProducts.length === 0 && (
-            <div className="text-center mb-10">
-              <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-                {store?.name || "Store"}
-              </h1>
-              {store?.description && (
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                  {store.description}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto mb-8">
-            <div
-              className="bg-white rounded-2xl shadow-xl p-2 border border-gray-100"
-              style={{
-                boxShadow: `0 20px 40px -10px ${primary}15`,
-              }}
-            >
-              <div className="flex flex-col md:flex-row gap-2">
-                {/* Search Input */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Buscar en el catálogo..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 transition-all"
-                  />
-                </div>
-
-                {/* Sort Select */}
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="px-4 py-4 bg-gray-50 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 cursor-pointer transition-all"
-                >
-                  <option value="none">Relevancia</option>
-                  <option value="asc">Menor precio</option>
-                  <option value="desc">Mayor precio</option>
-                </select>
-
-                {/* Search Button */}
-                <CoastalButton variant="primary" size="lg">
-                  <Search className="w-5 h-5" />
-                  <span className="hidden md:inline">Buscar</span>
-                </CoastalButton>
+      {(catalog.showSearch || catalog.showFilters) && (
+        <section className="px-4 py-10">
+          <div className="max-w-7xl mx-auto">
+            {/* Store Info (only if no hero) */}
+            {heroProducts.length === 0 && (
+              <div className="text-center mb-10">
+                <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
+                  {store?.name || "Store"}
+                </h1>
+                {store?.description && (
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                    {store.description}
+                  </p>
+                )}
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Category Pills - Horizontal Scroll */}
-          {categories.length > 0 && (
-            <div className="relative">
-              <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-1">
-                {/* All Categories Button */}
-                <CategoryPill
-                  active={activeCategoryIds.length === 0}
-                  icon={Home}
-                  onClick={() => {
-                    if (activeCategoryIds.length > 0) {
-                      resetFilters();
-                    }
+            {/* Search Bar */}
+            {(catalog.showSearch || catalog.showSort) && (
+              <div className="max-w-3xl mx-auto mb-8">
+                <div
+                  className="bg-white rounded-2xl shadow-xl p-2 border border-gray-100"
+                  style={{
+                    boxShadow: `0 20px 40px -10px ${primary}15`,
                   }}
                 >
-                  Todos
-                </CategoryPill>
+                  <div className="flex flex-col md:flex-row gap-2">
+                    {/* Search Input */}
+                    {catalog.showSearch && (
+                      <div className="flex-1 relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Buscar en el catálogo..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-xl text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 transition-all"
+                        />
+                      </div>
+                    )}
 
-                {categories.map((cat) => (
-                  <CategoryPill
-                    key={cat.id}
-                    active={activeCategoryIds.includes(cat.id)}
-                    onClick={() => toggleCategory(cat.id)}
-                  >
-                    {cat.name}
-                  </CategoryPill>
-                ))}
+                    {/* Sort Select */}
+                    {catalog.showSort && (
+                      <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                        className="px-4 py-4 bg-gray-50 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 cursor-pointer transition-all"
+                      >
+                        <option value="none">Relevancia</option>
+                        <option value="asc">Menor precio</option>
+                        <option value="desc">Mayor precio</option>
+                      </select>
+                    )}
+
+                    {/* Search Button */}
+                    {catalog.showSearch && (
+                      <CoastalButton variant="primary" size="lg">
+                        <Search className="w-5 h-5" />
+                        <span className="hidden md:inline">Buscar</span>
+                      </CoastalButton>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+
+            {/* Category Pills - Horizontal Scroll */}
+            {catalog.showFilters && categories.length > 0 && (
+              <div className="relative">
+                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-1">
+                  {/* All Categories Button */}
+                  <CategoryPill
+                    active={activeCategoryIds.length === 0}
+                    icon={Home}
+                    onClick={() => {
+                      if (activeCategoryIds.length > 0) {
+                        resetFilters();
+                      }
+                    }}
+                  >
+                    Todos
+                  </CategoryPill>
+
+                  {categories.map((cat) => (
+                    <CategoryPill
+                      key={cat.id}
+                      active={activeCategoryIds.includes(cat.id)}
+                      onClick={() => toggleCategory(cat.id)}
+                    >
+                      {cat.name}
+                    </CategoryPill>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ========== MAIN CATALOG ========== */}
       <main id="catalog" className="flex-1 px-4 pb-20">
         <div className="max-w-7xl mx-auto">
           {/* Controls Bar */}
-          <div className="flex items-center justify-between gap-4 mb-8">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5" style={{ color: primary }} />
-              <span className="text-sm font-semibold text-gray-700">
-                {filteredProducts.length} productos encontrados
-              </span>
-            </div>
+          {(catalog.showFilters || catalog.showProductCount) && (
+            <div className="flex items-center justify-between gap-4 mb-8">
+              {catalog.showProductCount && (
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5" style={{ color: primary }} />
+                  <span className="text-sm font-semibold text-gray-700">
+                    {filteredProducts.length} productos encontrados
+                  </span>
+                </div>
+              )}
 
-            <div className="hidden md:flex items-center gap-3">
-              <CoastalButton
-                variant={showFilters ? "primary" : "secondary"}
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <Filter className="w-4 h-4" />
-                Filtros
-              </CoastalButton>
+              {catalog.showFilters && (
+                <div className="hidden md:flex items-center gap-3">
+                  <CoastalButton
+                    variant={showFilters ? "primary" : "secondary"}
+                    size="sm"
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    <Filter className="w-4 h-4" />
+                    Filtros
+                  </CoastalButton>
 
-              <CoastalButton variant="ghost" size="sm" onClick={resetFilters}>
-                <RotateCcw className="w-4 h-4" />
-                Reiniciar
-              </CoastalButton>
+                  <CoastalButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetFilters}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reiniciar
+                  </CoastalButton>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Desktop Filters Panel */}
           <AnimatePresence>
-            {showFilters && (
+            {catalog.showFilters && showFilters && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
@@ -756,20 +790,22 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Sort */}
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
-                        Ordenar Por
-                      </h3>
-                      <select
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value)}
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
-                      >
-                        <option value="none">Relevancia</option>
-                        <option value="asc">Menor precio</option>
-                        <option value="desc">Mayor precio</option>
-                      </select>
-                    </div>
+                    {catalog.showSort && (
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
+                          Ordenar Por
+                        </h3>
+                        <select
+                          value={sortOrder}
+                          onChange={(e) => setSortOrder(e.target.value)}
+                          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer"
+                        >
+                          <option value="none">Relevancia</option>
+                          <option value="asc">Menor precio</option>
+                          <option value="desc">Mayor precio</option>
+                        </select>
+                      </div>
+                    )}
 
                     {/* Price Range */}
                     <div>
@@ -878,17 +914,19 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                       )}
 
                       {/* Share Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          shareProduct(product);
-                        }}
-                        className="absolute top-3 left-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm transition-all"
-                        aria-label="Compartir producto"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
+                      {catalog.showShareButton && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="absolute top-3 left-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-600 hover:text-gray-900 hover:bg-white shadow-sm transition-all"
+                          aria-label="Compartir producto"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -906,23 +944,25 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                       </div>
 
                       {/* Category Tags */}
-                      {product.categories && product.categories.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {product.categories.slice(0, 2).map((cat) => (
-                            <button
-                              key={cat.id || cat.name}
-                              onClick={(e) => handleCategoryClick(e, cat.id)}
-                              className="text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors"
-                              style={{
-                                backgroundColor: `${primary}15`,
-                                color: primary,
-                              }}
-                            >
-                              {cat.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {catalog.showFilters &&
+                        product.categories &&
+                        product.categories.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {product.categories.slice(0, 2).map((cat) => (
+                              <button
+                                key={cat.id || cat.name}
+                                onClick={(e) => handleCategoryClick(e, cat.id)}
+                                className="text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors"
+                                style={{
+                                  backgroundColor: `${primary}15`,
+                                  color: primary,
+                                }}
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
                       {/* Description */}
                       {product.description && (
@@ -975,16 +1015,21 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
       </main>
 
       {/* ========== PURCHASE INFO ========== */}
-      <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
-        <div
-          className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-100"
-          style={{
-            boxShadow: `0 20px 40px -10px ${primary}10`,
-          }}
-        >
-          <StorePurchaseInfo store={store} />
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
+          <div
+            className="bg-white rounded-3xl shadow-xl p-6 md:p-8 border border-gray-100"
+            style={{
+              boxShadow: `0 20px 40px -10px ${primary}10`,
+            }}
+          >
+          <StorePurchaseInfo
+            store={store}
+            showPaymentButton={catalog.showPaymentButton}
+          />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ========== FOOTER ========== */}
       <footer
@@ -1003,7 +1048,7 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
             </p>
           )}
 
-          {store?.paymentLink && (
+          {store?.paymentLink && catalog.showPaymentButton && (
             <CoastalButton
               variant="primary"
               size="lg"
@@ -1071,6 +1116,8 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="light"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
 
       {/* ========== IMAGE VIEWER ========== */}

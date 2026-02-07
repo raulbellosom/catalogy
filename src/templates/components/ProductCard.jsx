@@ -47,6 +47,8 @@ export function ProductCard({
   product,
   size = "medium",
   showDescription = true,
+  showShareButton = true,
+  showCategories = true,
   onClick,
   onImageClick,
   onCategoryClick,
@@ -92,14 +94,16 @@ export function ProductCard({
     >
       {/* Imagen */}
       <div className="aspect-square relative overflow-hidden">
-        <button
-          type="button"
-          onClick={handleShare}
-          className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-(--card)/80 border border-(--border) flex items-center justify-center text-(--muted-foreground) hover:text-(--primary)"
-          aria-label="Compartir producto"
-        >
-          <Share2 className="h-4 w-4" />
-        </button>
+        {showShareButton && (
+          <button
+            type="button"
+            onClick={handleShare}
+            className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-(--card)/80 border border-(--border) flex items-center justify-center text-(--muted-foreground) hover:text-(--primary)"
+            aria-label="Compartir producto"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+        )}
         <ProductImageCarousel
           imageFileIds={imageFileIds}
           legacyImageFileId={legacyImageFileId}
@@ -119,7 +123,7 @@ export function ProductCard({
           >
             {product.name}
           </h3>
-          {product.categories && product.categories.length > 0 && (
+          {showCategories && product.categories && product.categories.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {product.categories.map((cat) => (
                 <button

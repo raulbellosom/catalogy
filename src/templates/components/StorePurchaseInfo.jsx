@@ -1,8 +1,12 @@
 import { Info, CreditCard, ExternalLink } from "lucide-react";
 
-export function StorePurchaseInfo({ store, tone = "light" }) {
+export function StorePurchaseInfo({
+  store,
+  tone = "light",
+  showPaymentButton = true,
+}) {
   const instructions = store?.purchaseInstructions?.trim();
-  const paymentLink = store?.paymentLink?.trim();
+  const paymentLink = showPaymentButton ? store?.paymentLink?.trim() : null;
   if (!instructions && !paymentLink) return null;
 
   const isNoir = tone === "noir";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, ExternalLink, Filter } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
 import { useCatalogFilters } from "../components/catalogHooks";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -31,6 +32,7 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -52,6 +54,12 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
     setSortOrder,
     resetFilters,
   } = useCatalogFilters({ store, products });
+
+  useEffect(() => {
+    if (!catalog.showFilters) {
+      setFiltersOpen(false);
+    }
+  }, [catalog.showFilters]);
 
   return (
     <div
@@ -86,13 +94,18 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
           accent: "text-(--ribbon-primary)",
           glass: true,
         }}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
         actions={
-          store?.paymentLink && (
+          store?.paymentLink &&
+          catalog.showPaymentButton && (
             <a
               href={store.paymentLink}
               target="_blank"
@@ -129,16 +142,18 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
                 </p>
               )}
             </div>
-            <div className="hidden md:block w-56 shrink-0">
-              <div className="ribbon-frame bg-white/70 border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Productos
-                </p>
-                <p className="text-3xl font-bold text-(--ribbon-primary)">
-                  {filteredProducts?.length || 0}
-                </p>
+            {catalog.showProductCount && (
+              <div className="hidden md:block w-56 shrink-0">
+                <div className="ribbon-frame bg-white/70 border border-slate-200/60 rounded-2xl p-6 shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Productos
+                  </p>
+                  <p className="text-3xl font-bold text-(--ribbon-primary)">
+                    {filteredProducts?.length || 0}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </header>
@@ -149,12 +164,14 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
       >
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <h2 className="text-2xl font-semibold text-slate-900">Productos</h2>
-          <span className="text-sm text-slate-500">
-            {filteredProducts?.length || 0} productos
-          </span>
+          {catalog.showProductCount && (
+            <span className="text-sm text-slate-500">
+              {filteredProducts?.length || 0} productos
+            </span>
+          )}
         </div>
 
-        {categories?.length > 0 && (
+        {catalog.showFilters && categories?.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((cat) => {
               const isActive = activeCategoryIds.includes(cat.id);
@@ -175,34 +192,38 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-3">
-            <select
-              value={sortOrder}
-              onChange={(event) => setSortOrder(event.target.value)}
-              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-slate-200 bg-white/70 text-slate-600"
-            >
-              <option value="none">Relevancia</option>
-              <option value="asc">Menor precio</option>
-              <option value="desc">Mayor precio</option>
-            </select>
+        {catalog.showFilters && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              {catalog.showSort && (
+                <select
+                  value={sortOrder}
+                  onChange={(event) => setSortOrder(event.target.value)}
+                  className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-slate-200 bg-white/70 text-slate-600"
+                >
+                  <option value="none">Relevancia</option>
+                  <option value="asc">Menor precio</option>
+                  <option value="desc">Mayor precio</option>
+                </select>
+              )}
+              <button
+                onClick={() => setFiltersOpen((prev) => !prev)}
+                className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-slate-200 text-slate-600 hover:bg-slate-900 hover:text-white transition-colors flex items-center gap-2"
+              >
+                <Filter className="h-3.5 w-3.5" />
+                Filtros
+              </button>
+            </div>
             <button
-              onClick={() => setFiltersOpen((prev) => !prev)}
-              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-slate-200 text-slate-600 hover:bg-slate-900 hover:text-white transition-colors flex items-center gap-2"
+              onClick={resetFilters}
+              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold text-slate-900"
             >
-              <Filter className="h-3.5 w-3.5" />
-              Filtros
+              Reiniciar
             </button>
           </div>
-          <button
-            onClick={resetFilters}
-            className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold text-slate-900"
-          >
-            Reiniciar
-          </button>
-        </div>
+        )}
 
-        {filtersOpen && (
+        {catalog.showFilters && filtersOpen && (
           <div className="mb-8">
             <div className="bg-white/80 border border-slate-200/60 rounded-2xl p-6 shadow-sm">
               <CatalogFilters
@@ -217,6 +238,7 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
                 primaryColor={primary}
+                showSort={catalog.showSort}
               />
             </div>
           </div>
@@ -228,8 +250,12 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
               <ProductCard
                 key={product.id || product.$id}
                 product={product}
-                onCategoryClick={(id) => toggleCategory(id)}
+                onCategoryClick={
+                  catalog.showFilters ? (id) => toggleCategory(id) : undefined
+                }
                 onClick={() => setSelectedProduct(product)}
+                showShareButton={catalog.showShareButton}
+                showCategories={catalog.showFilters}
               />
             ))}
           </div>
@@ -240,9 +266,14 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
         )}
       </main>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-        <StorePurchaseInfo store={store} />
-      </div>
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+          <StorePurchaseInfo
+            store={store}
+            showPaymentButton={catalog.showPaymentButton}
+          />
+        </div>
+      )}
       <StoreFooter
         store={store}
         config={{
@@ -281,43 +312,52 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
               </button>
 
               <div className="space-y-10">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                      Búsqueda y Filtros
-                    </h3>
-                    <button
-                      onClick={resetFilters}
-                      className="text-[10px] font-bold uppercase tracking-widest text-slate-900"
-                    >
-                      Reiniciar
-                    </button>
+                {(catalog.showSearch || catalog.showFilters) && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Búsqueda y Filtros
+                      </h3>
+                      <button
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold uppercase tracking-widest text-slate-900"
+                      >
+                        Reiniciar
+                      </button>
+                    </div>
+                    {catalog.showSearch && (
+                      <div className="relative">
+                        <input
+                          type="search"
+                          value={searchQuery}
+                          onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                          }
+                          placeholder="Buscar..."
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
+                        />
+                      </div>
+                    )}
+                    {catalog.showFilters && (
+                      <CatalogFilters
+                        categories={categories}
+                        activeCategoryIds={activeCategoryIds}
+                        onToggleCategory={toggleCategory}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        onMinPriceChange={setMinPrice}
+                        onMaxPriceChange={setMaxPrice}
+                        priceBounds={priceBounds}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        primaryColor={primary}
+                        showSort={catalog.showSort}
+                      />
+                    )}
                   </div>
-                  <div className="relative">
-                    <input
-                      type="search"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Buscar..."
-                      className="w-full px-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
-                    />
-                  </div>
-                  <CatalogFilters
-                    categories={categories}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={toggleCategory}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    primaryColor={primary}
-                  />
-                </div>
+                )}
 
-                {store?.paymentLink && (
+                {store?.paymentLink && catalog.showPaymentButton && (
                   <div className="pt-8 border-t border-slate-100">
                     <a
                       href={store.paymentLink}
@@ -341,6 +381,8 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="ribbon"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
     </div>
   );

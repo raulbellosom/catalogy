@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Tag, Plus, Check, X, Edit3 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { Input } from "@/shared/ui/atoms/Input";
 import { StickySaveButton } from "./StickySaveButton";
 import { useToast } from "@/shared/ui/molecules";
 import { useUpdateStore, useUpdateProduct } from "@/shared/hooks";
+import { SettingsSectionLayout } from "./layout/SettingsSectionLayout";
+import { useSectionScrollSpy } from "./layout/useSectionScrollSpy";
+import { SettingsSection } from "./layout/SettingsSection";
 
 const safeParseCategories = (raw) => {
   if (!raw) return [];
@@ -42,6 +45,7 @@ export function CategoriesTab({ store, products }) {
   const toast = useToast();
   const updateStore = useUpdateStore();
   const updateProduct = useUpdateProduct(store?.$id);
+  const sectionScrollRef = useRef(null);
 
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -110,6 +114,31 @@ export function CategoriesTab({ store, products }) {
   );
   const currentCategoriesJson = JSON.stringify(categories);
   const hasChanges = currentCategoriesJson !== storedCategoriesJson;
+
+  const sections = useMemo(
+    () => [
+      {
+        id: "categories-manage",
+        label: "Gestionar categorías",
+        icon: Tag,
+        hint: "Crear y editar",
+      },
+    ],
+    [],
+  );
+
+  const { activeSection } = useSectionScrollSpy(
+    sections.map((section) => section.id),
+    sectionScrollRef,
+  );
+
+  const handleSectionSelect = (id) => {
+    const root = sectionScrollRef.current;
+    const element = root?.querySelector(`#${id}`) || document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   // However, since we save immediately, `hasChanges` will likely be false most of the time.
   // Unless we decide NOT to save immediately in this refactor?
@@ -288,34 +317,33 @@ export function CategoriesTab({ store, products }) {
     }
   };
 
-  // If we have manual changes that are somehow not saved immediately (not possible in this logic but for consistency)
+  // Form submission handler (not used for immediate saves but for consistency)
   const handleSave = async (e) => {
     if (e?.preventDefault) e.preventDefault();
-    // This is here mainly to satisfy the form onSubmit if user presses Enter in inputs not handled otherwise
   };
 
   return (
-    <form
-      onSubmit={handleSave}
-      className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-    >
-      <div className="lg:col-span-2 space-y-6">
-        <div className="bg-(--color-card) border border-(--color-card-border) rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-(--color-fg) mb-1">
-                Categorias de productos
-              </h3>
-              <p className="text-sm text-(--color-fg-secondary)">
-                Crea categorias propias para filtrar tu catalogo.
-              </p>
-            </div>
-            <Tag className="w-5 h-5 text-(--color-primary) opacity-60" />
-          </div>
-
+    <form onSubmit={handleSave} className="space-y-6">
+      <SettingsSectionLayout
+        sections={sections}
+        activeSection={activeSection}
+        onSectionSelect={handleSectionSelect}
+        containerRef={sectionScrollRef}
+        sidebarTitle="Categorías"
+        sidebarSubtitle="Organiza tus productos por categorías."
+        sidebarFooter={
+          <StickySaveButton isSubmitting={isSubmitting} hasChanges={hasChanges} />
+        }
+      >
+        <SettingsSection
+          id="categories-manage"
+          title="Categorías de productos"
+          description="Crea categorías propias para filtrar tu catálogo."
+          icon={Tag}
+        >
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
-              label="Nueva categoria"
+              label="Nueva categoría"
               placeholder="Ej. Plantas de interior"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
@@ -390,7 +418,7 @@ export function CategoriesTab({ store, products }) {
                         type="button"
                         onClick={() => handleEditCategory(category)}
                         className="text-(--color-fg-muted) hover:text-(--color-primary)"
-                        aria-label="Editar categoria"
+                        aria-label="Editar categoría"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -398,7 +426,7 @@ export function CategoriesTab({ store, products }) {
                         type="button"
                         onClick={() => handleRemoveCategory(category.id)}
                         className="text-(--color-fg-muted) hover:text-(--color-error)"
-                        aria-label="Eliminar categoria"
+                        aria-label="Eliminar categoría"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -409,15 +437,11 @@ export function CategoriesTab({ store, products }) {
             </div>
           ) : (
             <p className="text-sm text-(--color-fg-secondary)">
-              Aun no tienes categorias creadas.
+              Aún no tienes categorías creadas.
             </p>
           )}
-        </div>
-      </div>
-
-      <div className="lg:col-span-1 space-y-6 h-full">
-        <StickySaveButton isSubmitting={isSubmitting} hasChanges={hasChanges} />
-      </div>
+        </SettingsSection>
+      </SettingsSectionLayout>
     </form>
   );
 }

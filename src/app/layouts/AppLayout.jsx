@@ -20,6 +20,7 @@ import {
   User,
   Sparkles,
   Tag,
+  Palette,
 } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { useIsAdmin, useUserStore, useProfile } from "@/shared/hooks";
@@ -45,6 +46,12 @@ const NAV_ITEMS = [
     to: "/app/store?tab=general",
     label: "Mi tienda",
     icon: Store,
+    exact: false,
+  },
+  {
+    to: "/app/store?tab=appearance",
+    label: "Apariencia",
+    icon: Palette,
     exact: false,
   },
   {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, ShoppingBag, X, Filter, Share2 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
@@ -14,6 +14,7 @@ import {
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
 const resolveFontFamily = (fontId) => {
@@ -41,7 +42,8 @@ const formatPrice = (price, currency = "MXN") => {
 export function MinimalTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showFilters, setShowFilters] = useState(true); // Default open on desktop
+  const catalog = resolveCatalogSettings(store);
+  const [showFilters, setShowFilters] = useState(catalog.showFilters);
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
@@ -49,6 +51,10 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
   const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
+
+  useEffect(() => {
+    setShowFilters(catalog.showFilters);
+  }, [catalog.showFilters]);
 
   const {
     categories,
@@ -66,6 +72,8 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
     setSortOrder,
     resetFilters,
   } = useCatalogFilters({ store, products });
+
+  const showMobileFilters = catalog.showSearch || catalog.showFilters;
 
   // ImageViewer State
   const [viewer, setViewer] = useState({
@@ -100,13 +108,18 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
           accent: "text-(--minimal-accent)",
           glass: true,
         }}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
         actions={
-          store?.paymentLink && (
+          store?.paymentLink &&
+          catalog.showPaymentButton && (
             <div className="hidden md:flex items-center gap-6">
               <a
                 href={store.paymentLink}
@@ -150,44 +163,53 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
               </button>
 
               <div className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                      Búsqueda y Filtros
-                    </h3>
-                    <button
-                      onClick={resetFilters}
-                      className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
-                    >
-                      Reiniciar
-                    </button>
+                {showMobileFilters && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                        Búsqueda y Filtros
+                      </h3>
+                      <button
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
+                      >
+                        Reiniciar
+                      </button>
+                    </div>
+                    {catalog.showSearch && (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="search"
+                          value={searchQuery}
+                          onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                          }
+                          placeholder="Buscar..."
+                          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400"
+                        />
+                      </div>
+                    )}
+                    {catalog.showFilters && (
+                      <CatalogFilters
+                        categories={categories}
+                        activeCategoryIds={activeCategoryIds}
+                        onToggleCategory={toggleCategory}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        onMinPriceChange={setMinPrice}
+                        onMaxPriceChange={setMaxPrice}
+                        priceBounds={priceBounds}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        primaryColor={primary}
+                        showSort={catalog.showSort}
+                      />
+                    )}
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                      type="search"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Buscar..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400"
-                    />
-                  </div>
-                  <CatalogFilters
-                    categories={categories}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={toggleCategory}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    primaryColor={primary}
-                  />
-                </div>
+                )}
 
-                {store?.paymentLink && (
+                {store?.paymentLink && catalog.showPaymentButton && (
                   <div className="pt-8 border-t border-gray-100">
                     <a
                       href={store.paymentLink}
@@ -234,66 +256,74 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
 
       {/* Main Content */}
       <main className="grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        {/* Filter Toggle / Sort Bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-900/5 pb-4">
-          <div>
-            <span className="text-sm text-gray-500 font-medium">
-              Mostrando {filteredProducts?.length || 0} productos
-            </span>
-          </div>
+        {(catalog.showProductCount || catalog.showFilters) && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-900/5 pb-4">
+            {catalog.showProductCount && (
+              <div>
+                <span className="text-sm text-gray-500 font-medium">
+                  Mostrando {filteredProducts?.length || 0} productos
+                </span>
+              </div>
+            )}
 
-          <div className="hidden md:flex items-center gap-2">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`group flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all border ${
-                showFilters
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-              }`}
-              style={
-                showFilters
-                  ? { backgroundColor: primary, borderColor: primary }
-                  : {}
-              }
-            >
-              <Filter className="w-4 h-4" />
-              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
-            </button>
+            {catalog.showFilters && (
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`group flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all border ${
+                    showFilters
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
+                  }`}
+                  style={
+                    showFilters
+                      ? { backgroundColor: primary, borderColor: primary }
+                      : {}
+                  }
+                >
+                  <Filter className="w-4 h-4" />
+                  {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Sidebar Filters */}
-          <aside
-            className={`hidden lg:block lg:w-72 space-y-12 transition-all duration-300 ease-in-out ${
-              showFilters ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                Filtros
-              </span>
-              <button
-                onClick={resetFilters}
-                className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
-              >
-                Reiniciar
-              </button>
-            </div>
-            <CatalogFilters
-              categories={categories}
-              activeCategoryIds={activeCategoryIds}
-              onToggleCategory={toggleCategory}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={setMinPrice}
-              onMaxPriceChange={setMaxPrice}
-              priceBounds={priceBounds}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              primaryColor={primary}
-            />
-          </aside>
+          {catalog.showFilters && (
+            <aside
+              className={`hidden lg:block lg:w-72 space-y-12 transition-all duration-300 ease-in-out ${
+                showFilters ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                  Filtros
+                </span>
+                <button
+                  onClick={resetFilters}
+                  className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
+                >
+                  Reiniciar
+                </button>
+              </div>
+              <CatalogFilters
+                categories={categories}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                primaryColor={primary}
+                showSort={catalog.showSort}
+              />
+            </aside>
+          )}
 
           {/* Product Grid */}
           <div className="flex-1">
@@ -325,17 +355,19 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            shareProduct(product);
-                          }}
-                          className="absolute right-3 top-3 h-8 w-8 rounded-full bg-white/90 text-gray-700 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                          aria-label="Compartir producto"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
+                        {catalog.showShareButton && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              shareProduct(product);
+                            }}
+                            className="absolute right-3 top-3 h-8 w-8 rounded-full bg-white/90 text-gray-700 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                            aria-label="Compartir producto"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        )}
 
                         {/* Overlay Action */}
                         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -350,7 +382,8 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
                         <h3 className="font-medium text-gray-900 group-hover:text-(--minimal-accent) transition-colors">
                           {product.name}
                         </h3>
-                        {product.categories &&
+                        {catalog.showFilters &&
+                          product.categories &&
                           product.categories.length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {product.categories.map((cat) => (
@@ -399,9 +432,14 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-        <StorePurchaseInfo store={store} />
-      </div>
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+          <StorePurchaseInfo
+            store={store}
+            showPaymentButton={catalog.showPaymentButton}
+          />
+        </div>
+      )}
       <StoreFooter
         store={store}
         config={{
@@ -426,6 +464,8 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="minimal"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
     </div>
   );

@@ -34,6 +34,8 @@ export function ProductDetailModal({
   store,
   tone = "light",
   panelBgColor, // Optional: override background color for contrast calculation
+  showShareButton = true,
+  showPaymentButton = true,
 }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [zoom, setZoom] = useState(1);
@@ -540,31 +542,33 @@ export function ProductDetailModal({
                       </div>
                     )}
 
-                    <button
-                      onClick={() => shareProduct(product)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${needsLightText ? "border-white/20 hover:border-white/40" : "border-slate-200"} ${surface2} transition-all group`}
-                      style={
-                        !needsLightText
-                          ? { borderColor: "rgba(0,0,0,0.1)" }
-                          : {}
-                      }
-                    >
-                      <Share2
-                        className={`w-4 h-4 group-hover:scale-110 transition-transform ${accentColor}`}
-                        style={!needsLightText ? { color: primary } : {}}
-                      />
-                      <span
-                        className={`text-xs font-bold ${accentColor}`}
-                        style={!needsLightText ? { color: primary } : {}}
+                    {showShareButton && (
+                      <button
+                        onClick={() => shareProduct(product)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${needsLightText ? "border-white/20 hover:border-white/40" : "border-slate-200"} ${surface2} transition-all group`}
+                        style={
+                          !needsLightText
+                            ? { borderColor: "rgba(0,0,0,0.1)" }
+                            : {}
+                        }
                       >
-                        Compartir
-                      </span>
-                    </button>
+                        <Share2
+                          className={`w-4 h-4 group-hover:scale-110 transition-transform ${accentColor}`}
+                          style={!needsLightText ? { color: primary } : {}}
+                        />
+                        <span
+                          className={`text-xs font-bold ${accentColor}`}
+                          style={!needsLightText ? { color: primary } : {}}
+                        >
+                          Compartir
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Action Section */}
-                {store?.paymentLink && (
+                {store?.paymentLink && showPaymentButton && (
                   <div
                     className={`mt-6 sm:mt-8 pt-4 sm:pt-6 border-t ${needsLightText ? "border-white/20" : "border-slate-100"}`}
                   >

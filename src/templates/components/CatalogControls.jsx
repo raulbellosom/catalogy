@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal } from "lucide-react";
+﻿import { Search, SlidersHorizontal } from "lucide-react";
 
 const toneStyles = {
   light: {
@@ -37,88 +37,109 @@ export function CatalogControls({
   sortOrder,
   setSortOrder,
   onReset,
+  showSearch = true,
+  showFilters = true,
+  showSort = true,
+  showPrice = true,
+  showCategories = true,
 }) {
   const styles = toneStyles[tone] || toneStyles.light;
+  const showHeader = showSearch || showFilters;
+  const showRange = showFilters && showPrice;
+  const showCategoryChips = showFilters && showCategories;
 
   return (
     <div className={`rounded-2xl p-6 space-y-6 ${styles.panel}`}>
-      <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.2em]">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className={`h-3.5 w-3.5 ${styles.label}`} />
-          <span className={styles.label}>Filtros</span>
-        </div>
-        {onReset && (
-          <button
-            type="button"
-            onClick={onReset}
-            className={`text-[10px] font-bold uppercase tracking-[0.2em] ${styles.label} hover:opacity-80`}
-          >
-            Reiniciar
-          </button>
-        )}
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex-1 flex gap-4">
-          <div className="relative flex-1">
-            <Search
-              className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${styles.label}`}
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Buscar..."
-              className={`w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all ${styles.input}`}
-            />
+      {showHeader && (
+        <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className={`h-3.5 w-3.5 ${styles.label}`} />
+            <span className={styles.label}>Filtros</span>
           </div>
-          {/* Sort Dropdown */}
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder && setSortOrder(e.target.value)}
-            className={`px-4 py-3 rounded-xl text-sm outline-none min-w-[140px] cursor-pointer ${styles.input}`}
-          >
-            <option value="none">Relevancia</option>
-            <option value="asc">Menor precio</option>
-            <option value="desc">Mayor precio</option>
-          </select>
+          {onReset && (
+            <button
+              type="button"
+              onClick={onReset}
+              className={`text-[10px] font-bold uppercase tracking-[0.2em] ${styles.label} hover:opacity-80`}
+            >
+              Reiniciar
+            </button>
+          )}
         </div>
+      )}
 
-        <div className="flex flex-col sm:flex-row gap-6 min-w-[300px]">
-          <div className="flex-1 space-y-2">
-            <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
-              <span className={styles.label}>Precio Min</span>
-              <span className="font-bold">{formatPrice(minPrice)}</span>
+      {(showSearch || showSort) && (
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 flex gap-4">
+            {showSearch && (
+              <div className="relative flex-1">
+                <Search
+                  className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${styles.label}`}
+                />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => onSearchChange(event.target.value)}
+                  placeholder="Buscar..."
+                  className={`w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none transition-all ${styles.input}`}
+                />
+              </div>
+            )}
+            {showSort && (
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder && setSortOrder(e.target.value)}
+                className={`px-4 py-3 rounded-xl text-sm outline-none min-w-[140px] cursor-pointer ${styles.input}`}
+              >
+                <option value="none">Relevancia</option>
+                <option value="asc">Menor precio</option>
+                <option value="desc">Mayor precio</option>
+              </select>
+            )}
+          </div>
+
+          {showRange && (
+            <div className="flex flex-col sm:flex-row gap-6 min-w-[300px]">
+              <div className="flex-1 space-y-2">
+                <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
+                  <span className={styles.label}>Precio Min</span>
+                  <span className="font-bold">{formatPrice(minPrice)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={priceBounds.max}
+                  step="1"
+                  value={minPrice}
+                  onChange={(event) =>
+                    onMinPriceChange(Number(event.target.value))
+                  }
+                  className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${styles.range}`}
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
+                  <span className={styles.label}>Precio Max</span>
+                  <span className="font-bold">{formatPrice(maxPrice)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={priceBounds.max}
+                  step="1"
+                  value={maxPrice}
+                  onChange={(event) =>
+                    onMaxPriceChange(Number(event.target.value))
+                  }
+                  className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${styles.range}`}
+                />
+              </div>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={priceBounds.max}
-              step="1"
-              value={minPrice}
-              onChange={(event) => onMinPriceChange(Number(event.target.value))}
-              className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${styles.range}`}
-            />
-          </div>
-          <div className="flex-1 space-y-2">
-            <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
-              <span className={styles.label}>Precio Max</span>
-              <span className="font-bold">{formatPrice(maxPrice)}</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={priceBounds.max}
-              step="1"
-              value={maxPrice}
-              onChange={(event) => onMaxPriceChange(Number(event.target.value))}
-              className={`w-full h-1.5 rounded-lg appearance-none cursor-pointer ${styles.range}`}
-            />
-          </div>
+          )}
         </div>
-      </div>
+      )}
 
-      {categories?.length > 0 && (
+      {showCategoryChips && categories?.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-(--noir-border) transition-all">
           {categories.map((category) => {
             const isActive = activeCategoryIds.includes(category.id);

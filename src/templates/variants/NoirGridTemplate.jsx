@@ -18,6 +18,7 @@ import {
 } from "../components";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
@@ -38,6 +39,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -98,10 +100,14 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
           accent: "text-(--noir-accent)",
           glass: true,
         }}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
 
@@ -137,24 +143,31 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
             </div>
           </header>
 
-          <div className="hidden md:block">
-            <CatalogControls
-              tone="noir"
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={setMinPrice}
-              onMaxPriceChange={setMaxPrice}
-              priceBounds={priceBounds}
-              categories={categories}
-              activeCategoryIds={activeCategoryIds}
-              onToggleCategory={toggleCategory}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              onReset={resetFilters}
-            />
-          </div>
+          {(catalog.showSearch || catalog.showFilters) && (
+            <div className="hidden md:block">
+              <CatalogControls
+                tone="noir"
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                categories={categories}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                onReset={resetFilters}
+                showSearch={catalog.showSearch}
+                showFilters={catalog.showFilters}
+                showSort={catalog.showSort}
+                showPrice={catalog.showFilters}
+                showCategories={catalog.showFilters}
+              />
+            </div>
+          )}
 
           <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredProducts?.map((product) => (
@@ -163,9 +176,13 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                 product={product}
                 tone="noir"
                 size="full"
-                onCategoryClick={(id) => toggleCategory(id)}
+                onCategoryClick={
+                  catalog.showFilters ? (id) => toggleCategory(id) : undefined
+                }
                 onImageClick={(index, images) => openViewer(index, images)}
                 onClick={() => setSelectedProduct(product)}
+                showShareButton={catalog.showShareButton}
+                showCategories={catalog.showFilters}
               />
             ))}
           </section>
@@ -183,9 +200,15 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
 
       {/* Footer Personalizado */}
       <div className="bg-(--noir-bg) pt-12">
-        <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-8 text-center pb-8 text-(--noir-strong)">
-          <StorePurchaseInfo store={store} tone="noir" />
-        </div>
+        {catalog.showPurchaseInfo && (
+          <div className="mx-auto max-w-6xl px-4 flex flex-col items-center gap-8 text-center pb-8 text-(--noir-strong)">
+            <StorePurchaseInfo
+              store={store}
+              tone="noir"
+              showPaymentButton={catalog.showPaymentButton}
+            />
+          </div>
+        )}
 
         <StoreFooter
           store={store}
@@ -227,45 +250,53 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                 </button>
 
                 <div className="space-y-12 text-(--noir-strong)">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-(--noir-border) pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-(--noir-muted)">
-                        Búsqueda y Filtros
-                      </h3>
-                      <button
-                        onClick={resetFilters}
-                        className="text-[10px] font-bold uppercase tracking-widest text-(--noir-accent)"
-                      >
-                        Reiniciar
-                      </button>
+                  {(catalog.showSearch || catalog.showFilters) && (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between border-b border-(--noir-border) pb-2">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-(--noir-muted)">
+                          Búsqueda y Filtros
+                        </h3>
+                        <button
+                          onClick={resetFilters}
+                          className="text-[10px] font-bold uppercase tracking-widest text-(--noir-accent)"
+                        >
+                          Reiniciar
+                        </button>
+                      </div>
+                      {catalog.showSearch && (
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--noir-muted)" />
+                          <input
+                            type="search"
+                            value={searchQuery}
+                            onChange={(event) =>
+                              setSearchQuery(event.target.value)
+                            }
+                            placeholder="Buscar..."
+                            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-(--noir-border) bg-(--noir-surface-2) text-(--noir-strong) placeholder:text-(--noir-muted)"
+                          />
+                        </div>
+                      )}
+                      {catalog.showFilters && (
+                        <CatalogFilters
+                          categories={categories}
+                          activeCategoryIds={activeCategoryIds}
+                          onToggleCategory={toggleCategory}
+                          minPrice={minPrice}
+                          maxPrice={maxPrice}
+                          onMinPriceChange={setMinPrice}
+                          onMaxPriceChange={setMaxPrice}
+                          priceBounds={priceBounds}
+                          sortOrder={sortOrder}
+                          setSortOrder={setSortOrder}
+                          primaryColor={primary}
+                          showSort={catalog.showSort}
+                        />
+                      )}
                     </div>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--noir-muted)" />
-                      <input
-                        type="search"
-                        value={searchQuery}
-                        onChange={(event) => setSearchQuery(event.target.value)}
-                        placeholder="Buscar..."
-                        className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-(--noir-border) bg-(--noir-surface-2) text-(--noir-strong) placeholder:text-(--noir-muted)"
-                      />
-                    </div>
-                    <CatalogFilters
-                      categories={categories}
-                      activeCategoryIds={activeCategoryIds}
-                      onToggleCategory={toggleCategory}
-                      minPrice={minPrice}
-                      maxPrice={maxPrice}
-                      onMinPriceChange={setMinPrice}
-                      onMaxPriceChange={setMaxPrice}
-                      priceBounds={priceBounds}
-                      sortOrder={sortOrder}
-                      setSortOrder={setSortOrder}
-                      primaryColor={primary}
-                      dark={true}
-                    />
-                  </div>
+                  )}
 
-                  {store?.paymentLink && (
+                  {store?.paymentLink && catalog.showPaymentButton && (
                     <div className="pt-8 border-t border-(--noir-border)">
                       <a
                         href={store.paymentLink}
@@ -295,6 +326,8 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="noir"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
     </div>
   );

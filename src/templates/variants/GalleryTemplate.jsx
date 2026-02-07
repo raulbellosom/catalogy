@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Grid, Maximize2, X, Share2, ExternalLink } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
@@ -14,6 +14,7 @@ import {
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
 const resolveFontFamily = (fontId) => {
@@ -45,6 +46,7 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -74,6 +76,12 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
     index: 0,
   });
 
+  useEffect(() => {
+    if (!catalog.showFilters) {
+      setDesktopFiltersOpen(false);
+    }
+  }, [catalog.showFilters]);
+
   const openViewer = (index, images, e) => {
     e.stopPropagation();
     setViewer({ isOpen: true, images, index });
@@ -101,10 +109,14 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
           accent: "text-(--gallery-accent)",
           glass: true,
         }}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
 
@@ -119,52 +131,56 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
 
       {/* Masonry-like Grid (CSS Grid) */}
       <main className="px-4 md:px-6 pb-20 max-w-7xl mx-auto">
-        <div className="hidden md:flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex flex-wrap gap-2">
-            {categories?.map((cat) => {
-              const isActive = activeCategoryIds.includes(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold transition-colors ${
-                    isActive
-                      ? "bg-stone-900 text-white"
-                      : "bg-white/70 text-stone-500 border border-stone-200 hover:bg-stone-900 hover:text-white"
-                  }`}
+        {catalog.showFilters && (
+          <div className="hidden md:flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div className="flex flex-wrap gap-2">
+              {categories?.map((cat) => {
+                const isActive = activeCategoryIds.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold transition-colors ${
+                      isActive
+                        ? "bg-stone-900 text-white"
+                        : "bg-white/70 text-stone-500 border border-stone-200 hover:bg-stone-900 hover:text-white"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {catalog.showSort && (
+                <select
+                  value={sortOrder}
+                  onChange={(event) => setSortOrder(event.target.value)}
+                  className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-stone-200 bg-white/70 text-stone-600"
                 >
-                  {cat.name}
-                </button>
-              );
-            })}
+                  <option value="none">Relevancia</option>
+                  <option value="asc">Menor precio</option>
+                  <option value="desc">Mayor precio</option>
+                </select>
+              )}
+              <button
+                onClick={() => setDesktopFiltersOpen((prev) => !prev)}
+                className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white transition-colors"
+              >
+                Filtros
+              </button>
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold text-stone-900"
+              >
+                Reiniciar
+              </button>
+            </div>
           </div>
+        )}
 
-          <div className="flex items-center gap-3">
-            <select
-              value={sortOrder}
-              onChange={(event) => setSortOrder(event.target.value)}
-              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-stone-200 bg-white/70 text-stone-600"
-            >
-              <option value="none">Relevancia</option>
-              <option value="asc">Menor precio</option>
-              <option value="desc">Mayor precio</option>
-            </select>
-            <button
-              onClick={() => setDesktopFiltersOpen((prev) => !prev)}
-              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-stone-200 text-stone-600 hover:bg-stone-900 hover:text-white transition-colors"
-            >
-              Filtros
-            </button>
-            <button
-              onClick={resetFilters}
-              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold text-stone-900"
-            >
-              Reiniciar
-            </button>
-          </div>
-        </div>
-
-        {desktopFiltersOpen && (
+        {catalog.showFilters && desktopFiltersOpen && (
           <div className="hidden md:block mb-10">
             <div className="bg-white/80 border border-stone-200/60 rounded-2xl p-6 shadow-sm">
               <CatalogFilters
@@ -179,6 +195,7 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                 sortOrder={sortOrder}
                 setSortOrder={setSortOrder}
                 primaryColor={primary}
+                showSort={catalog.showSort}
               />
             </div>
           </div>
@@ -216,17 +233,19 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      shareProduct(product);
-                    }}
-                    className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-stone-800 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                    aria-label="Compartir producto"
-                  >
-                    <Share2 size={16} />
-                  </button>
+                  {catalog.showShareButton && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        shareProduct(product);
+                      }}
+                      className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-stone-800 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                      aria-label="Compartir producto"
+                    >
+                      <Share2 size={16} />
+                    </button>
+                  )}
 
                   {/* Hover Overlay info */}
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8">
@@ -234,7 +253,9 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                       {product.name}
                     </h3>
 
-                    {product.categories && product.categories.length > 0 && (
+                    {catalog.showFilters &&
+                      product.categories &&
+                      product.categories.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
                         {product.categories.map((cat) => (
                           <button
@@ -287,9 +308,14 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         )}
       </main>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-10 w-full">
-        <StorePurchaseInfo store={store} />
-      </div>
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 md:px-6 pb-10 w-full">
+          <StorePurchaseInfo
+            store={store}
+            showPaymentButton={catalog.showPaymentButton}
+          />
+        </div>
+      )}
       <StoreFooter
         store={store}
         config={{
@@ -330,44 +356,53 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
               </button>
 
               <div className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
-                      Búsqueda y Filtros
-                    </h3>
-                    <button
-                      onClick={resetFilters}
-                      className="text-[10px] font-bold uppercase tracking-widest text-stone-900"
-                    >
-                      Reiniciar
-                    </button>
+                {(catalog.showSearch || catalog.showFilters) && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 font-sans">
+                        Búsqueda y Filtros
+                      </h3>
+                      <button
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold uppercase tracking-widest text-stone-900"
+                      >
+                        Reiniciar
+                      </button>
+                    </div>
+                    {catalog.showSearch && (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+                        <input
+                          type="search"
+                          value={searchQuery}
+                          onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                          }
+                          placeholder="Buscar..."
+                          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-stone-200 bg-stone-50 text-stone-900 placeholder:text-stone-400"
+                        />
+                      </div>
+                    )}
+                    {catalog.showFilters && (
+                      <CatalogFilters
+                        categories={categories}
+                        activeCategoryIds={activeCategoryIds}
+                        onToggleCategory={toggleCategory}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        onMinPriceChange={setMinPrice}
+                        onMaxPriceChange={setMaxPrice}
+                        priceBounds={priceBounds}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        primaryColor={primary}
+                        showSort={catalog.showSort}
+                      />
+                    )}
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
-                    <input
-                      type="search"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Buscar..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-stone-200 bg-stone-50 text-stone-900 placeholder:text-stone-400"
-                    />
-                  </div>
-                  <CatalogFilters
-                    categories={categories}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={toggleCategory}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    primaryColor={primary}
-                  />
-                </div>
+                )}
 
-                {store?.paymentLink && (
+                {store?.paymentLink && catalog.showPaymentButton && (
                   <div className="pt-8 border-t border-stone-100">
                     <a
                       href={store.paymentLink}
@@ -397,6 +432,8 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="gallery" // We can add a gallery tone to the modal or fallback
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
     </div>
   );

@@ -66,35 +66,27 @@ export function ImageViewerModal({
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      // Save current scroll position
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
-    } else {
-      // Restore scroll position
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
+    if (!isOpen) return;
+
+    // Save current scroll position
+    const scrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.overflow = "hidden";
+
+    // Cleanup function
     return () => {
-      const scrollY = document.body.style.top;
+      const savedScrollY = document.body.style.top;
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
       document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+
+      if (savedScrollY) {
+        window.scrollTo(0, parseInt(savedScrollY || "0") * -1);
       }
     };
   }, [isOpen]);
@@ -111,7 +103,7 @@ export function ImageViewerModal({
       document.addEventListener("keydown", handleEscape);
       return () => document.removeEventListener("keydown", handleEscape);
     }
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   // Handle arrow keys for gallery navigation
   useEffect(() => {
@@ -123,7 +115,7 @@ export function ImageViewerModal({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isGalleryMode, currentIndex]);
+  }, [isOpen, isGalleryMode, nextImage, prevImage]);
 
   // Reset state when modal opens/closes or image changes
   useEffect(() => {

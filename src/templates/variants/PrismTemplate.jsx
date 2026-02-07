@@ -25,6 +25,7 @@ import {
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -51,10 +52,10 @@ const formatPrice = (price, currency = "MXN") => {
 export function PrismTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -135,10 +136,14 @@ export function PrismTemplate({ store, products, isPreview = false }) {
           accent: "text-(--prism-primary)",
           glass: true,
         }}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
       />
 
@@ -193,37 +198,39 @@ export function PrismTemplate({ store, products, isPreview = false }) {
       >
         <div className="flex flex-col lg:flex-row gap-16">
           {/* Sidebar / Filters - Hidden on Mobile */}
-          <div className="hidden lg:block lg:w-80 shrink-0">
-            <div className="sticky top-28 space-y-10">
-              <div className="glass-card rounded-3xl p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
-                    <Filter size={14} /> Filtros
-                  </h3>
-                  <button
-                    onClick={resetFilters}
-                    className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--prism-primary)"
-                  >
-                    Reiniciar
-                  </button>
+          {catalog.showFilters && (
+            <div className="hidden lg:block lg:w-80 shrink-0">
+              <div className="sticky top-28 space-y-10">
+                <div className="glass-card rounded-3xl p-8">
+                  <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 flex items-center gap-2">
+                      <Filter size={14} /> Filtros
+                    </h3>
+                    <button
+                      onClick={resetFilters}
+                      className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--prism-primary)"
+                    >
+                      Reiniciar
+                    </button>
+                  </div>
+                  <CatalogFilters
+                    categories={categories}
+                    activeCategoryIds={activeCategoryIds}
+                    onToggleCategory={toggleCategory}
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    onMinPriceChange={setMinPrice}
+                    onMaxPriceChange={setMaxPrice}
+                    priceBounds={priceBounds}
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    primaryColor={primary}
+                    showSort={catalog.showSort}
+                  />
                 </div>
-                <CatalogFilters
-                  categories={categories}
-                  activeCategoryIds={activeCategoryIds}
-                  onToggleCategory={toggleCategory}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  onMinPriceChange={setMinPrice}
-                  onMaxPriceChange={setMaxPrice}
-                  priceBounds={priceBounds}
-                  sortOrder={sortOrder}
-                  setSortOrder={setSortOrder}
-                  primaryColor={primary}
-                  dark={true}
-                />
               </div>
             </div>
-          </div>
+          )}
 
           {/* Product Grid */}
           <div className="flex-1">
@@ -234,9 +241,11 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                 </h2>
                 <div className="h-1 w-12 bg-(--prism-primary) rounded-full" />
               </div>
-              <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
-                {filteredProducts?.length || 0} productos
-              </span>
+              {catalog.showProductCount && (
+                <span className="text-xs font-bold tracking-widest text-slate-500 uppercase">
+                  {filteredProducts?.length || 0} productos
+                </span>
+              )}
             </div>
 
             {filteredProducts && filteredProducts.length > 0 ? (
@@ -270,17 +279,19 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                           </div>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            shareProduct(product);
-                          }}
-                          className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                          aria-label="Compartir producto"
-                        >
-                          <Share2 size={16} />
-                        </button>
+                        {catalog.showShareButton && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              shareProduct(product);
+                            }}
+                            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                            aria-label="Compartir producto"
+                          >
+                            <Share2 size={16} />
+                          </button>
+                        )}
 
                         {/* Price Overlay */}
                         <div className="absolute inset-x-0 bottom-0 p-6 bg-linear-to-t from-black/80 to-transparent">
@@ -294,7 +305,8 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                         <h3 className="text-lg font-bold text-white mb-1 group-hover:text-(--prism-primary) transition-colors line-clamp-1">
                           {product.name}
                         </h3>
-                        {product.categories &&
+                        {catalog.showFilters &&
+                          product.categories &&
                           product.categories.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">
                               {product.categories.map((cat) => (
@@ -353,9 +365,14 @@ export function PrismTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-        <StorePurchaseInfo store={store} />
-      </div>
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+          <StorePurchaseInfo
+            store={store}
+            showPaymentButton={catalog.showPaymentButton}
+          />
+        </div>
+      )}
       <StoreFooter
         store={store}
         config={{
@@ -396,47 +413,55 @@ export function PrismTemplate({ store, products, isPreview = false }) {
               </button>
 
               <div className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                      Búsqueda y Filtros
-                    </h3>
-                    <button
-                      onClick={resetFilters}
-                      className="text-[10px] font-bold uppercase tracking-widest text-(--prism-primary)"
-                    >
-                      Reiniciar
-                    </button>
+                {(catalog.showSearch || catalog.showFilters) && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                        Búsqueda y Filtros
+                      </h3>
+                      <button
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold uppercase tracking-widest text-(--prism-primary)"
+                      >
+                        Reiniciar
+                      </button>
+                    </div>
+                    {catalog.showSearch && (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          type="search"
+                          value={searchQuery}
+                          onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                          }
+                          placeholder="Buscar..."
+                          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-white/10 bg-white/5 text-white placeholder:text-slate-500"
+                        />
+                      </div>
+                    )}
+                    {catalog.showFilters && (
+                      <CatalogFilters
+                        categories={categories}
+                        activeCategoryIds={activeCategoryIds}
+                        onToggleCategory={(id) => {
+                          toggleCategory(id);
+                        }}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        onMinPriceChange={setMinPrice}
+                        onMaxPriceChange={setMaxPrice}
+                        priceBounds={priceBounds}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        primaryColor={primary}
+                        showSort={catalog.showSort}
+                      />
+                    )}
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                    <input
-                      type="search"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Buscar..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-white/10 bg-white/5 text-white placeholder:text-slate-500"
-                    />
-                  </div>
-                  <CatalogFilters
-                    categories={categories}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={(id) => {
-                      toggleCategory(id);
-                    }}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    primaryColor={primary}
-                    dark={true}
-                  />
-                </div>
+                )}
 
-                {store?.paymentLink && (
+                {store?.paymentLink && catalog.showPaymentButton && (
                   <div className="pt-8 border-t border-white/10">
                     <a
                       href={store.paymentLink}
@@ -466,6 +491,8 @@ export function PrismTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="prism"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
     </div>
   );

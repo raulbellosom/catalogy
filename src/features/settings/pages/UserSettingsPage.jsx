@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   User,
   Palette,
@@ -31,6 +31,8 @@ export function UserSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
+
+
   // Form Data
   const [formData, setFormData] = useState({
     firstName: "",
@@ -39,13 +41,11 @@ export function UserSettingsPage() {
     avatarFileId: "",
   });
 
-  // Helper to get avatar URL
-  const getAvatarUrl = (fileId) => {
-    if (!fileId) return null;
-    return storage.getFilePreview(BUCKETS.AVATARS, fileId).href;
-  };
-
-  const [avatarPreview, setAvatarPreview] = useState(null);
+  // Helper to get avatar URL - memoized to prevent recreating URLs
+  const avatarPreview = useMemo(() => {
+    if (!formData.avatarFileId) return null;
+    return storage.getFilePreview(BUCKETS.AVATARS, formData.avatarFileId).href;
+  }, [formData.avatarFileId]);
 
   // Load Profile
   useEffect(() => {
@@ -62,10 +62,6 @@ export function UserSettingsPage() {
           phone: profile.phone || "",
           avatarFileId: profile.avatarFileId || "",
         });
-
-        if (profile.avatarFileId) {
-          setAvatarPreview(getAvatarUrl(profile.avatarFileId));
-        }
       } catch (error) {
         console.error("Error loading profile:", error);
         toast.error("No se pudo cargar la información del perfil");
@@ -109,7 +105,6 @@ export function UserSettingsPage() {
 
       // 4. Update local state
       setFormData((prev) => ({ ...prev, avatarFileId: newFileId }));
-      setAvatarPreview(getAvatarUrl(newFileId));
 
       toast.success("Tu foto de perfil ha sido actualizada", "Imagen guardada");
     } catch (error) {
@@ -198,10 +193,7 @@ export function UserSettingsPage() {
                   currentImageUrl={avatarPreview}
                   onUpload={handleAvatarUpload}
                   isUploading={false}
-                  onImageClick={(src) => {
-                    setAvatarPreview(src); // Ensure preview is sync
-                    setIsViewerOpen(true);
-                  }}
+                  onImageClick={() => setIsViewerOpen(true)}
                 />
                 <p className="text-xs text-center text-[var(--color-fg-muted)] mt-2">
                   Recomendado: 800x800px. JPG, PNG.
@@ -322,13 +314,15 @@ export function UserSettingsPage() {
         )}
       </div>
 
-      {/* Image Viewer Modal */}
-      <ImageViewerModal
-        isOpen={isViewerOpen}
-        onClose={() => setIsViewerOpen(false)}
-        src={avatarPreview}
-        alt="Foto de perfil"
-      />
+      {/* Image Viewer Modal - solo renderizar cuando está abierto */}
+      {isViewerOpen && (
+        <ImageViewerModal
+          isOpen={isViewerOpen}
+          onClose={() => setIsViewerOpen(false)}
+          src={avatarPreview}
+          alt="Foto de perfil"
+        />
+      )}
     </div>
   );
 }

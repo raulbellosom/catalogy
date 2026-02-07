@@ -11,6 +11,7 @@ import {
 } from "../components";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -46,6 +47,7 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const primaryColor = theme.colors.primary;
   const secondaryColor = theme.colors.secondary;
   const fontFamily = resolveFontFamily(theme.font);
@@ -98,10 +100,14 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
         store={store}
         isPreview={isPreview}
         onMobileMenuToggle={() => setIsMobileMenuOpen(true)}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         config={{
           bg: "bg-stone-50/80",
           text: "text-stone-900",
@@ -169,27 +175,34 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-16">
         {/* Filters & Controls */}
-        <div
-          className="mb-12 sticky top-20 z-30 py-4 transition-all duration-300 bg-opacity-95 backdrop-blur-sm shadow-sm rounded-xl px-6 border border-stone-100"
-          style={{ backgroundColor: secondaryColor }}
-        >
-          <CatalogControls
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            activeCategoryIds={activeCategoryIds}
-            onToggleCategory={toggleCategory}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            onMinPriceChange={setMinPrice}
-            onMaxPriceChange={setMaxPrice}
-            priceBounds={priceBounds}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            categories={categories}
-            tone="light"
-            onReset={resetFilters}
-          />
-        </div>
+        {(catalog.showSearch || catalog.showFilters) && (
+          <div
+            className="mb-12 sticky top-20 z-30 py-4 transition-all duration-300 bg-opacity-95 backdrop-blur-sm shadow-sm rounded-xl px-6 border border-stone-100"
+            style={{ backgroundColor: secondaryColor }}
+          >
+            <CatalogControls
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              activeCategoryIds={activeCategoryIds}
+              onToggleCategory={toggleCategory}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              onMinPriceChange={setMinPrice}
+              onMaxPriceChange={setMaxPrice}
+              priceBounds={priceBounds}
+              sortOrder={sortOrder}
+              setSortOrder={setSortOrder}
+              categories={categories}
+              tone="light"
+              onReset={resetFilters}
+              showSearch={catalog.showSearch}
+              showFilters={catalog.showFilters}
+              showSort={catalog.showSort}
+              showPrice={catalog.showFilters}
+              showCategories={catalog.showFilters}
+            />
+          </div>
+        )}
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
@@ -200,8 +213,12 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
                 product={product}
                 size="full"
                 tone="light"
-                onCategoryClick={(id) => toggleCategory(id)}
+                onCategoryClick={
+                  catalog.showFilters ? (id) => toggleCategory(id) : undefined
+                }
                 onClick={() => setSelectedProduct(product)}
+                showShareButton={catalog.showShareButton}
+                showCategories={catalog.showFilters}
               />
             ))}
         </div>
@@ -223,9 +240,14 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
 
       {/* Shared Footer */}
       <div id="footer">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12">
-          <StorePurchaseInfo store={store} />
-        </div>
+        {catalog.showPurchaseInfo && (
+          <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12">
+            <StorePurchaseInfo
+              store={store}
+              showPaymentButton={catalog.showPaymentButton}
+            />
+          </div>
+        )}
         <StoreFooter
           store={store}
           config={{
@@ -254,24 +276,31 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
             </button>
 
             <div className="space-y-10">
-              <CatalogControls
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                activeCategoryIds={activeCategoryIds}
-                onToggleCategory={toggleCategory}
-                minPrice={minPrice}
-                maxPrice={maxPrice}
-                onMinPriceChange={setMinPrice}
-                onMaxPriceChange={setMaxPrice}
-                priceBounds={priceBounds}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                categories={categories}
-                tone="light"
-                onReset={resetFilters}
-              />
+              {(catalog.showSearch || catalog.showFilters) && (
+                <CatalogControls
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  activeCategoryIds={activeCategoryIds}
+                  onToggleCategory={toggleCategory}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  onMinPriceChange={setMinPrice}
+                  onMaxPriceChange={setMaxPrice}
+                  priceBounds={priceBounds}
+                  sortOrder={sortOrder}
+                  setSortOrder={setSortOrder}
+                  categories={categories}
+                  tone="light"
+                  onReset={resetFilters}
+                  showSearch={catalog.showSearch}
+                  showFilters={catalog.showFilters}
+                  showSort={catalog.showSort}
+                  showPrice={catalog.showFilters}
+                  showCategories={catalog.showFilters}
+                />
+              )}
 
-              {store?.paymentLink && (
+              {store?.paymentLink && catalog.showPaymentButton && (
                 <a
                   href={store.paymentLink}
                   target="_blank"
@@ -293,6 +322,8 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
           isOpen={!!selectedProduct}
           onClose={() => setSelectedProduct(null)}
           store={store}
+          showShareButton={catalog.showShareButton}
+          showPaymentButton={catalog.showPaymentButton}
         />
       )}
     </div>

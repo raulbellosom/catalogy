@@ -11,8 +11,16 @@ import { useAuth } from "@/app/providers/AuthProvider";
  * @property {boolean} isLoading - True while determining domain context
  */
 
+// Default value to prevent null context errors
+const defaultValue = {
+  isRootDomain: true,
+  isStoreDomain: false,
+  slug: null,
+  isLoading: true,
+};
+
 const SubdomainContext = createContext(
-  /** @type {SubdomainContextValue | null} */ (null),
+  /** @type {SubdomainContextValue} */ (defaultValue),
 );
 
 /**
@@ -54,14 +62,8 @@ export function SubdomainProvider({ children }) {
   } catch (error) {
     console.error("SubdomainProvider error:", error);
     // Provide fallback context if initialization fails
-    const fallbackValue = {
-      isRootDomain: true,
-      isStoreDomain: false,
-      slug: null,
-      isLoading: false,
-    };
     return (
-      <SubdomainContext.Provider value={fallbackValue}>
+      <SubdomainContext.Provider value={defaultValue}>
         {children}
       </SubdomainContext.Provider>
     );
@@ -74,10 +76,5 @@ export function SubdomainProvider({ children }) {
  */
 export function useSubdomainContext() {
   const context = useContext(SubdomainContext);
-  if (!context) {
-    throw new Error(
-      "useSubdomainContext must be used within SubdomainProvider",
-    );
-  }
   return context;
 }

@@ -13,6 +13,7 @@ import {
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
+import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
 // Internal helpers removed in favor of registry.resolveThemeSettings
 const resolveFontFamily = (fontId) => {
@@ -43,6 +44,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
 
   // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
   const secondary = theme.colors.secondary;
@@ -99,13 +101,18 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
           accent: "text-(--store-primary)",
           glass: true,
         }}
-        search={{
-          query: searchQuery,
-          onQueryChange: setSearchQuery,
-        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
         actions={
-          store?.paymentLink && (
+          store?.paymentLink &&
+          catalog.showPaymentButton && (
             <a
               href={store.paymentLink}
               target="_blank"
@@ -148,44 +155,53 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
               </button>
 
               <div className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                      Búsqueda y Filtros
-                    </h3>
-                    <button
-                      onClick={resetFilters}
-                      className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
-                    >
-                      Reiniciar
-                    </button>
+                {(catalog.showSearch || catalog.showFilters) && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Búsqueda y Filtros
+                      </h3>
+                      <button
+                        onClick={resetFilters}
+                        className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
+                      >
+                        Reiniciar
+                      </button>
+                    </div>
+                    {catalog.showSearch && (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                          type="search"
+                          value={searchQuery}
+                          onChange={(event) =>
+                            setSearchQuery(event.target.value)
+                          }
+                          placeholder="Buscar..."
+                          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
+                        />
+                      </div>
+                    )}
+                    {catalog.showFilters && (
+                      <CatalogFilters
+                        categories={categories}
+                        activeCategoryIds={activeCategoryIds}
+                        onToggleCategory={toggleCategory}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        onMinPriceChange={setMinPrice}
+                        onMaxPriceChange={setMaxPrice}
+                        priceBounds={priceBounds}
+                        sortOrder={sortOrder}
+                        setSortOrder={setSortOrder}
+                        primaryColor={primary}
+                        showSort={catalog.showSort}
+                      />
+                    )}
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      type="search"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Buscar..."
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
-                    />
-                  </div>
-                  <CatalogFilters
-                    categories={categories}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={toggleCategory}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    primaryColor={primary}
-                  />
-                </div>
+                )}
 
-                {store?.paymentLink && (
+                {store?.paymentLink && catalog.showPaymentButton && (
                   <div className="pt-8 border-t border-slate-100">
                     <a
                       href={store.paymentLink}
@@ -212,7 +228,7 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
             <p className="text-lg text-slate-600 max-w-xl">
               {store?.description || ""}
             </p>
-            {store?.paymentLink && (
+            {store?.paymentLink && catalog.showPaymentButton && (
               <div className="pt-4">
                 <a
                   href={store.paymentLink}
@@ -240,42 +256,47 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
       {/* Main Layout Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full flex flex-col md:flex-row gap-8">
         {/* Sidebar Controls (Desktop) */}
-        <aside className="hidden md:block w-64 shrink-0 space-y-8">
-          <div className="bg-(--color-bg) rounded-lg shadow-sm border border-slate-200/50 p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Filtros
-              </span>
-              <button
-                onClick={resetFilters}
-                className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
-              >
-                Reiniciar
-              </button>
+        {catalog.showFilters && (
+          <aside className="hidden md:block w-64 shrink-0 space-y-8">
+            <div className="bg-(--color-bg) rounded-lg shadow-sm border border-slate-200/50 p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Filtros
+                </span>
+                <button
+                  onClick={resetFilters}
+                  className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
+                >
+                  Reiniciar
+                </button>
+              </div>
+              <CatalogFilters
+                categories={categories}
+                activeCategoryIds={activeCategoryIds}
+                onToggleCategory={toggleCategory}
+                minPrice={minPrice}
+                maxPrice={maxPrice}
+                onMinPriceChange={setMinPrice}
+                onMaxPriceChange={setMaxPrice}
+                priceBounds={priceBounds}
+                sortOrder={sortOrder}
+                setSortOrder={setSortOrder}
+                primaryColor={primary}
+                showSort={catalog.showSort}
+              />
             </div>
-            <CatalogFilters
-              categories={categories}
-              activeCategoryIds={activeCategoryIds}
-              onToggleCategory={toggleCategory}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={setMinPrice}
-              onMaxPriceChange={setMaxPrice}
-              priceBounds={priceBounds}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              primaryColor={primary}
-            />
-          </div>
-        </aside>
+          </aside>
+        )}
 
         {/* Product Results */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-slate-900">Productos</h2>
-            <span className="text-sm text-slate-500">
-              {filteredProducts?.length || 0} resultados
-            </span>
+            {catalog.showProductCount && (
+              <span className="text-sm text-slate-500">
+                {filteredProducts?.length || 0} resultados
+              </span>
+            )}
           </div>
 
           {filteredProducts && filteredProducts.length > 0 ? (
@@ -284,11 +305,15 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
                 <ProductCard
                   key={product.id || product.$id}
                   product={product}
-                  onCategoryClick={(id) => toggleCategory(id)}
+                  onCategoryClick={
+                    catalog.showFilters ? (id) => toggleCategory(id) : undefined
+                  }
                   onClick={() => setSelectedProduct(product)}
                   onImageClick={(index, images, e) =>
                     openViewer(index, images, e)
                   }
+                  showShareButton={catalog.showShareButton}
+                  showCategories={catalog.showFilters}
                 />
               ))}
             </div>
@@ -311,9 +336,14 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         </div>
       </main>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-        <StorePurchaseInfo store={store} />
-      </div>
+      {catalog.showPurchaseInfo && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
+          <StorePurchaseInfo
+            store={store}
+            showPaymentButton={catalog.showPaymentButton}
+          />
+        </div>
+      )}
       <StoreFooter
         store={store}
         config={{
@@ -338,6 +368,8 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         onClose={() => setSelectedProduct(null)}
         store={store}
         tone="storefront"
+        showShareButton={catalog.showShareButton}
+        showPaymentButton={catalog.showPaymentButton}
       />
     </div>
   );

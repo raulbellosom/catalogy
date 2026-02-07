@@ -186,12 +186,19 @@ Document ID:
 | categoriesJson       | string  | no       | "[]"     | size=2000     | JSON de categorias propias de la tienda      |
 | purchaseInstructions | string  | no       | ""       | size=2000     | instrucciones de compra                      |
 | paymentLink          | URL     | no       | null     |               | link de pago opcional                        |
-| settings             | string  | no       | "{}"     | size=2000     | JSON de configuracion (colores, fonts)       |
+| settings             | string  | no       | "{}"     | size=2000     | JSON de configuracion (colores, fonts, catalog controls) |
 | puckData             | string  | no       | null     | size=100000   | JSON de configuracion Puck Editor            |
 | published            | boolean | no       | false    |               | si el catalogo es publico                    |
 | enabled              | boolean | no       | true     |               | soft delete                                  |
 
 Indexes:
+
+Settings JSON (stores.settings):
+
+- colors: { primary, secondary }
+- font: string (id de fuente)
+- useTemplateStyles: boolean
+- catalog: { showSearch, showFilters, showSort, showProductCount, showShareButton, showPurchaseInfo, showPaymentButton }
 
 | Index Name           | Type   | Attributes             | Notes                       |
 | -------------------- | ------ | ---------------------- | --------------------------- |

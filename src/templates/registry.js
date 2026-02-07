@@ -16,6 +16,7 @@ import { VelocityTemplate } from "./variants/VelocityTemplate";
 import { RibbonTemplate } from "./variants/RibbonTemplate";
 import { SketchyTemplate } from "./variants/SketchyTemplate";
 import { CoastalTemplate } from "./variants/CoastalTemplate";
+import { resolveStoreSettings } from "@/shared/utils/storeSettings";
 
 /**
  * @typedef {Object} TemplateConfig
@@ -190,17 +191,7 @@ export const TEMPLATE_IDS = Object.keys(TEMPLATES);
  * @returns {Object} Settings resueltos { colors: {primary, secondary}, font }
  */
 export const resolveThemeSettings = (store) => {
-  const settings = (() => {
-    if (!store?.settings) return {};
-    if (typeof store.settings === "string") {
-      try {
-        return JSON.parse(store.settings);
-      } catch (e) {
-        return {};
-      }
-    }
-    return store.settings;
-  })();
+  const settings = resolveStoreSettings(store);
 
   const template = getTemplate(store?.templateId);
   const defaults = template?.defaultSettings || {};
