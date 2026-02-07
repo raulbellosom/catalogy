@@ -42,11 +42,13 @@ export function CatalogControls({
   showSort = true,
   showPrice = true,
   showCategories = true,
+  orientation = "horizontal",
 }) {
   const styles = toneStyles[tone] || toneStyles.light;
   const showHeader = showSearch || showFilters;
   const showRange = showFilters && showPrice;
   const showCategoryChips = showFilters && showCategories;
+  const isVertical = orientation === "vertical";
 
   return (
     <div className={`rounded-2xl p-6 space-y-6 ${styles.panel}`}>
@@ -69,8 +71,14 @@ export function CatalogControls({
       )}
 
       {(showSearch || showSort) && (
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 flex gap-4">
+        <div
+          className={`flex flex-col ${
+            isVertical ? "gap-6" : "lg:flex-row gap-6"
+          }`}
+        >
+          <div
+            className={`flex-1 flex ${isVertical ? "flex-col gap-4" : "gap-4"}`}
+          >
             {showSearch && (
               <div className="relative flex-1">
                 <Search
@@ -99,7 +107,11 @@ export function CatalogControls({
           </div>
 
           {showRange && (
-            <div className="flex flex-col sm:flex-row gap-6 min-w-[300px]">
+            <div
+              className={`flex flex-col ${
+                isVertical ? "gap-6" : "sm:flex-row gap-6 min-w-[300px]"
+              }`}
+            >
               <div className="flex-1 space-y-2">
                 <div className="flex justify-between items-center text-[10px] uppercase tracking-widest">
                   <span className={styles.label}>Precio Min</span>

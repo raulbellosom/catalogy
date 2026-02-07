@@ -12,6 +12,7 @@ import {
   ChevronUp,
   ChevronDown,
   GripVertical,
+  Star,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -23,6 +24,7 @@ import {
   useSensors,
   DragOverlay,
   defaultDropAnimationSideEffects,
+  KeyboardSensor,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -30,6 +32,7 @@ import {
   verticalListSortingStrategy,
   rectSortingStrategy,
   useSortable,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -59,6 +62,9 @@ export function ProductList({
   onReorderEnd, // For DND (Backend sync)
   actionLoadingId = null,
   actionType = null,
+  featuredProductIds = [],
+  onToggleFeatured,
+  dndIdSuffix = "",
 }) {
   const [activeId, setActiveId] = useState(null);
 
@@ -74,9 +80,15 @@ export function ProductList({
         tolerance: 5,
       },
     }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
   );
 
-  const productIds = useMemo(() => products.map((p) => p.$id), [products]);
+  const productIds = useMemo(
+    () => products.map((p) => p.$id + dndIdSuffix),
+    [products, dndIdSuffix],
+  );
 
   const handleDragStart = (event) => {
     setActiveId(event.active.id);
@@ -84,16 +96,16 @@ export function ProductList({
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    setActiveId(null);
 
     if (over && active.id !== over.id) {
       const oldIndex = productIds.indexOf(active.id);
       const newIndex = productIds.indexOf(over.id);
 
-      const newOrder = arrayMove(products, oldIndex, newIndex);
-      onReorderList(newOrder); // Immediate UI update
-      onReorderEnd(newOrder); // Backend sync
+      const newOrderedList = arrayMove(products, oldIndex, newIndex);
+      onReorderList(newOrderedList); // Immediate UI update
+      onReorderEnd(newOrderedList); // Backend sync
     }
+    setActiveId(null);
   };
 
   if (!products || products.length === 0) {
@@ -101,7 +113,7 @@ export function ProductList({
   }
 
   const activeProduct = activeId
-    ? products.find((p) => p.$id === activeId)
+    ? products.find((p) => p.$id + dndIdSuffix === activeId)
     : null;
 
   return (
@@ -155,7 +167,8 @@ export function ProductList({
                 >
                   {products.map((product, index) => (
                     <SortableRow
-                      key={product.$id}
+                      key={product.$id + dndIdSuffix}
+                      id={product.$id + dndIdSuffix}
                       product={product}
                       categories={categories}
                       onEdit={onEdit}
@@ -166,6 +179,8 @@ export function ProductList({
                       actionType={actionType}
                       isFirst={index === 0}
                       isLast={index === products.length - 1}
+                      isFeatured={featuredProductIds.includes(product.$id)}
+                      onToggleFeatured={onToggleFeatured}
                     />
                   ))}
                 </SortableContext>
@@ -178,7 +193,8 @@ export function ProductList({
           <SortableContext items={productIds} strategy={rectSortingStrategy}>
             {products.map((product, index) => (
               <SortableCard
-                key={product.$id}
+                key={product.$id + dndIdSuffix}
+                id={product.$id + dndIdSuffix}
                 product={product}
                 categories={categories}
                 index={index}
@@ -187,6 +203,8 @@ export function ProductList({
                 onToggleStatus={onToggleStatus}
                 isActionLoading={actionLoadingId === product.$id}
                 actionType={actionType}
+                isFeatured={featuredProductIds.includes(product.$id)}
+                onToggleFeatured={onToggleFeatured}
               />
             ))}
           </SortableContext>
@@ -241,7 +259,7 @@ function SortableRow(props) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.product.$id });
+  } = useSortable({ id: props.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -268,7 +286,7 @@ function SortableCard(props) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.product.$id });
+  } = useSortable({ id: props.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -305,6 +323,8 @@ const ProductRow = React.forwardRef(
       dragHandleProps,
       style,
       isOverlay = false,
+      isFeatured = false,
+      onToggleFeatured,
     },
     ref,
   ) => {
@@ -353,8 +373,20 @@ const ProductRow = React.forwardRef(
             </div>
           </td>
           <td className="px-6 py-4">
-            <div className="text-sm font-medium text-(--color-fg)">
-              {product.name}
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-medium text-(--color-fg)">
+                {product.name}
+              </div>
+              {!isOverlay && onToggleFeatured && (
+                <button
+                  onClick={() => onToggleFeatured(product)}
+                  className={`p-1 rounded-full transition-colors ${isFeatured ? "text-yellow-400 hover:text-yellow-500" : "text-gray-300 hover:text-yellow-400"}`}
+                >
+                  <Star
+                    className={`w-4 h-4 ${isFeatured ? "fill-current" : ""}`}
+                  />
+                </button>
+              )}
             </div>
             {product.description && (
               <div className="text-xs text-(--color-fg-secondary) truncate max-w-[200px]">
@@ -477,6 +509,8 @@ const ProductCard = React.forwardRef(
       dragHandleProps,
       style,
       isOverlay = false,
+      isFeatured = false,
+      onToggleFeatured,
     },
     ref,
   ) => {
@@ -529,6 +563,22 @@ const ProductCard = React.forwardRef(
                 <Edit className="w-5 h-5 text-(--color-primary)" />
               </Button>
             </div>
+          )}
+
+          {!isOverlay && onToggleFeatured && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFeatured(product);
+              }}
+              className={`absolute top-2 left-2 z-30 p-2 rounded-full shadow-lg transition-all ${
+                isFeatured
+                  ? "bg-yellow-400 text-white"
+                  : "bg-white/80 text-gray-400 hover:text-yellow-400"
+              }`}
+            >
+              <Star className={`w-4 h-4 ${isFeatured ? "fill-current" : ""}`} />
+            </button>
           )}
         </div>
 

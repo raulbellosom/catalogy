@@ -6,7 +6,7 @@
  */
 
 import { motion } from "motion/react";
-import { Tag, Share2 } from "lucide-react";
+import { Tag, Share2, Sparkles } from "lucide-react";
 import { shareProduct } from "./catalogHooks";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { ProductImageCarousel } from "./ProductImageCarousel";
@@ -55,6 +55,7 @@ export function ProductCard({
   onShare,
   shared = false,
   tone = "light",
+  isFeatured = false,
 }) {
   const isNoir = tone === "noir";
   const handleShare = async (event) => {
@@ -112,6 +113,23 @@ export function ProductCard({
           tone={tone}
           onImageClick={onImageClick}
         />
+        {/* Featured Badge */}
+        {isFeatured && (
+          <div className="absolute top-2 left-2 z-10 pointer-events-none">
+            <span
+              className={`
+              flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm
+              ${
+                isNoir
+                  ? "bg-(--noir-accent) text-black"
+                  : "bg-yellow-400 text-white"
+              }
+            `}
+            >
+              <Sparkles className="w-3 h-3" /> Destacado
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Contenido */}
@@ -123,23 +141,25 @@ export function ProductCard({
           >
             {product.name}
           </h3>
-          {showCategories && product.categories && product.categories.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {product.categories.map((cat) => (
-                <button
-                  key={cat.id || cat.name}
-                  onClick={(e) => handleCategoryClick(e, cat.id)}
-                  className={`text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded transition-colors ${
-                    isNoir
-                      ? "bg-(--noir-surface-2) text-(--noir-accent) hover:bg-(--noir-accent) hover:text-black"
-                      : "bg-(--primary)/10 text-(--primary) hover:bg-(--primary) hover:text-white"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          )}
+          {showCategories &&
+            product.categories &&
+            product.categories.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {product.categories.map((cat) => (
+                  <button
+                    key={cat.id || cat.name}
+                    onClick={(e) => handleCategoryClick(e, cat.id)}
+                    className={`text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded transition-colors ${
+                      isNoir
+                        ? "bg-(--noir-surface-2) text-(--noir-accent) hover:bg-(--noir-accent) hover:text-black"
+                        : "bg-(--primary)/10 text-(--primary) hover:bg-(--primary) hover:text-white"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
         </div>
 
         {showDescription && product.description && (

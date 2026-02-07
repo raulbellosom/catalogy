@@ -11,6 +11,7 @@ export const DEFAULT_CATALOG_SETTINGS = {
   showShareButton: true,
   showPurchaseInfo: true,
   showPaymentButton: true,
+  featuredProductIds: [],
 };
 
 export const resolveStoreSettings = (store) => {

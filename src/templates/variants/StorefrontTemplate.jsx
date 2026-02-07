@@ -337,12 +337,11 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
       </main>
 
       {catalog.showPurchaseInfo && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-          <StorePurchaseInfo
-            store={store}
-            showPaymentButton={catalog.showPaymentButton}
-          />
-        </div>
+        <StorePurchaseInfo
+          store={store}
+          showPaymentButton={catalog.showPaymentButton}
+          wrapperClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full"
+        />
       )}
       <StoreFooter
         store={store}

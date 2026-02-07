@@ -198,7 +198,7 @@ Settings JSON (stores.settings):
 - colors: { primary, secondary }
 - font: string (id de fuente)
 - useTemplateStyles: boolean
-- catalog: { showSearch, showFilters, showSort, showProductCount, showShareButton, showPurchaseInfo, showPaymentButton }
+- catalog: { showSearch, showFilters, showSort, showProductCount, showShareButton, showPurchaseInfo, showPaymentButton, featuredProductIds }
 
 | Index Name           | Type   | Attributes             | Notes                       |
 | -------------------- | ------ | ---------------------- | --------------------------- |

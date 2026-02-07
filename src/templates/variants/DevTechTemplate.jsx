@@ -400,13 +400,12 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
       {/* Footer Section */}
       <div className="z-10 relative">
         {catalog.showPurchaseInfo && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
-            <StorePurchaseInfo
-              store={store}
-              tone="dark"
-              showPaymentButton={catalog.showPaymentButton}
-            />
-          </div>
+          <StorePurchaseInfo
+            store={store}
+            tone="dark"
+            showPaymentButton={catalog.showPaymentButton}
+            wrapperClassName="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-10"
+          />
         )}
         <StoreFooter
           store={store}

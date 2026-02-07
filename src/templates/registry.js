@@ -156,8 +156,8 @@ export const TEMPLATES = {
     component: CoastalTemplate,
     thumbnail: "/templates/coastal-thumb.png",
     defaultSettings: {
-      colors: { primary: "#0d9488", secondary: "#f0fdfa" },
-      font: "montserrat",
+      colors: { primary: "#0ea5e9", secondary: "#f0f9ff" },
+      font: "outfit",
     },
   },
   devtech: {

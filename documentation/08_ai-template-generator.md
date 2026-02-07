@@ -28,7 +28,7 @@ interface Store {
   categoriesJson: string; // Parsear: Array<{id: string, name: string}>
   purchaseInstructions?: string; // Instrucciones de pago/entrega
   paymentLink?: string; // Link externo de pago
-  settings: string; // JSON con: { colors: { primary, secondary }, font: { id, family }, ... }. Nota: secondary se usa como color de fondo.
+  settings: string; // JSON con: { colors: { primary, secondary }, font: { id, family }, featuredProductIds: string[], ... }. Nota: secondary se usa como color de fondo.
   published: boolean;
   enabled: boolean;
 }

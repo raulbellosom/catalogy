@@ -669,16 +669,18 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
       </main>
 
       {/* ========== PURCHASE INFO ========== */}
-      {catalog.showPurchaseInfo && (
-        <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
-          <div className="border-3 border-black bg-white shadow-[6px_6px_0_0_black] p-6 md:p-8">
-            <StorePurchaseInfo
-              store={store}
-              showPaymentButton={catalog.showPaymentButton}
-            />
+      {catalog.showPurchaseInfo &&
+        (store?.purchaseInstructions?.trim() ||
+          (catalog.showPaymentButton && store?.paymentLink?.trim())) && (
+          <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
+            <div className="border-3 border-black bg-white shadow-[6px_6px_0_0_black] p-6 md:p-8">
+              <StorePurchaseInfo
+                store={store}
+                showPaymentButton={catalog.showPaymentButton}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* ========== FOOTER ========== */}
       <footer className="bg-[#333] border-t-4 border-black py-12 mt-auto">

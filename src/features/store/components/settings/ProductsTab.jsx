@@ -21,6 +21,7 @@ import { SettingsSectionLayout } from "./layout/SettingsSectionLayout";
 import { useSectionScrollSpy } from "./layout/useSectionScrollSpy";
 import { SettingsSection } from "./layout/SettingsSection";
 import { StickySaveButton } from "./StickySaveButton";
+import { useUpdateStore } from "@/shared/hooks";
 
 const safeParseCategories = (raw) => {
   if (!raw) return [];
@@ -62,6 +63,63 @@ export function ProductsTab({ store, products, isLoading }) {
   const [productActionType, setProductActionType] = useState(null); // 'delete' | 'toggle'
   const [localProducts, setLocalProducts] = useState([]);
 
+  // Featured Products Logic
+  const updateStore = useUpdateStore();
+  const [featuredProductIds, setFeaturedProductIds] = useState([]);
+
+  useEffect(() => {
+    if (store?.settings) {
+      try {
+        const settings = JSON.parse(store.settings);
+        setFeaturedProductIds(settings.catalog?.featuredProductIds || []);
+      } catch (e) {
+        console.warn("Error parsing store settings:", e);
+      }
+    }
+  }, [store]);
+
+  const handleToggleFeatured = async (product) => {
+    const isFeatured = featuredProductIds.includes(product.$id);
+    let newFeaturedIds = [...featuredProductIds];
+
+    if (isFeatured) {
+      newFeaturedIds = newFeaturedIds.filter((id) => id !== product.$id);
+    } else {
+      if (newFeaturedIds.length >= 5) {
+        toast.error("Máximo 5 productos destacados");
+        return;
+      }
+      newFeaturedIds.push(product.$id);
+    }
+
+    setFeaturedProductIds(newFeaturedIds); // Optimistic update
+
+    try {
+      const currentSettings = store.settings ? JSON.parse(store.settings) : {};
+      const currentCatalog = currentSettings.catalog || {};
+
+      await updateStore.mutateAsync({
+        storeId: store.$id,
+        data: {
+          settings: {
+            ...currentSettings,
+            catalog: {
+              ...currentCatalog,
+              featuredProductIds: newFeaturedIds,
+            },
+          },
+        },
+      });
+      toast.success(
+        isFeatured ? "Quitado de destacados" : "Agregado a destacados",
+      );
+    } catch (error) {
+      console.error("Error updating featured products:", error);
+      toast.error("Error al actualizar destacados");
+      setFeaturedProductIds(featuredProductIds); // Revert on error
+    }
+  };
+
   const categories = safeParseCategories(store?.categoriesJson);
 
   // Sync localProducts with products prop
@@ -84,12 +142,57 @@ export function ProductsTab({ store, products, isLoading }) {
     return matchesSearch && matchesFilter;
   });
 
+  // Sort: Featured first, then by existing order (or default)
+  const sortedProducts = useMemo(() => {
+    return [...filteredProducts].sort((a, b) => {
+      const aFeatured = featuredProductIds.includes(a.$id);
+      const bFeatured = featuredProductIds.includes(b.$id);
+
+      if (aFeatured && !bFeatured) return -1;
+      if (!aFeatured && bFeatured) return 1;
+
+      // Secondary sort: use existing sortOrder if available, else index/created
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    });
+  }, [filteredProducts, featuredProductIds]);
+
+  // Derived list for "Destacados" section (only featured)
+  const featuredProductsList = useMemo(() => {
+    return sortedProducts.filter((p) => featuredProductIds.includes(p.$id));
+  }, [sortedProducts, featuredProductIds]);
+
   const handleProductDelete = async (product) => {
     if (!confirm("¿Eliminar este producto?")) return;
     setProductActionLoadingId(product.$id);
     setProductActionType("delete");
     try {
       await deleteProduct.mutateAsync(product.$id);
+
+      // Remove from featured if present
+      if (featuredProductIds.includes(product.$id)) {
+        const newFeaturedIds = featuredProductIds.filter(
+          (id) => id !== product.$id,
+        );
+        setFeaturedProductIds(newFeaturedIds);
+
+        const currentSettings = store.settings
+          ? JSON.parse(store.settings)
+          : {};
+        const currentCatalog = currentSettings.catalog || {};
+
+        await updateStore.mutateAsync({
+          storeId: store.$id,
+          data: {
+            settings: {
+              ...currentSettings,
+              catalog: {
+                ...currentCatalog,
+                featuredProductIds: newFeaturedIds,
+              },
+            },
+          },
+        });
+      }
     } catch (e) {
       console.error(e);
       alert("Error al eliminar");
@@ -205,6 +308,12 @@ export function ProductsTab({ store, products, isLoading }) {
         icon: Package,
         hint: "Ver y editar",
       },
+      {
+        id: "products-featured",
+        label: "Destacados",
+        icon: Search,
+        hint: "Productos estrella",
+      },
     ],
     [],
   );
@@ -299,7 +408,7 @@ export function ProductsTab({ store, products, isLoading }) {
             </div>
           ) : (
             <ProductList
-              products={filteredProducts}
+              products={sortedProducts}
               categories={categories}
               viewMode={productViewMode}
               onEdit={handleOpenProductModal}
@@ -310,7 +419,51 @@ export function ProductsTab({ store, products, isLoading }) {
               onReorderEnd={handleProductReorderSync}
               actionLoadingId={productActionLoadingId}
               actionType={productActionType}
+              featuredProductIds={featuredProductIds}
+              onToggleFeatured={handleToggleFeatured}
+              dndIdSuffix="_main"
             />
+          )}
+        </SettingsSection>
+
+        {/* Destacados Section */}
+        <SettingsSection
+          id="products-featured"
+          title="Productos Destacados"
+          description="Tus productos estrella que aparecen primero."
+          icon={Search}
+        >
+          {featuredProductsList.length > 0 ? (
+            <ProductList
+              products={featuredProductsList}
+              categories={categories}
+              viewMode="grid" // Always grid for featured looks nice
+              onEdit={handleOpenProductModal}
+              onDelete={handleProductDelete}
+              onToggleStatus={handleProductToggle}
+              // Disable reordering for this view to avoid complexity/conflicts
+              onReorder={() => {}}
+              onReorderList={() => {}}
+              onReorderEnd={() => {}}
+              actionLoadingId={productActionLoadingId}
+              actionType={productActionType}
+              featuredProductIds={featuredProductIds}
+              onToggleFeatured={handleToggleFeatured}
+              dndIdSuffix="_featured"
+            />
+          ) : (
+            <div className="text-center py-12 bg-(--color-bg-secondary) rounded-xl border border-dashed border-(--color-border)">
+              <div className="w-12 h-12 bg-(--color-bg-tertiary) rounded-full flex items-center justify-center mx-auto mb-3">
+                <Search className="w-6 h-6 text-(--color-fg-muted)" />
+              </div>
+              <h3 className="text-sm font-medium text-(--color-fg)">
+                No tienes productos destacados
+              </h3>
+              <p className="text-xs text-(--color-fg-muted) mt-1 max-w-xs mx-auto">
+                Marca la estrella en tus productos para que aparezcan aquí y en
+                la sección principal de tu tienda.
+              </p>
+            </div>
           )}
         </SettingsSection>
       </SettingsSectionLayout>

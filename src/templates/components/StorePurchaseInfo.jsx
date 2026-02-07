@@ -4,9 +4,12 @@ export function StorePurchaseInfo({
   store,
   tone = "light",
   showPaymentButton = true,
+  wrapperClassName = "",
 }) {
   const instructions = store?.purchaseInstructions?.trim();
   const paymentLink = showPaymentButton ? store?.paymentLink?.trim() : null;
+
+  // Return null if there's no content to display - prevents empty wrapper divs
   if (!instructions && !paymentLink) return null;
 
   const isNoir = tone === "noir";
@@ -22,7 +25,7 @@ export function StorePurchaseInfo({
     ? "text-(--noir-muted)"
     : "text-(--color-fg-secondary)";
 
-  return (
+  const content = (
     <section className={`rounded-3xl p-6 md:p-8 space-y-6 ${panelBase}`}>
       <div className="flex flex-col md:flex-row gap-6 md:items-start justify-between">
         {instructions && (
@@ -62,10 +65,16 @@ export function StorePurchaseInfo({
               Pagar ahora
               <ExternalLink className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </a>
-            
           </div>
         )}
       </div>
     </section>
   );
+
+  // If wrapperClassName is provided, wrap the content in a div
+  if (wrapperClassName) {
+    return <div className={wrapperClassName}>{content}</div>;
+  }
+
+  return content;
 }

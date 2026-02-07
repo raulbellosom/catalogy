@@ -49,6 +49,11 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
   const theme = resolveThemeSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
   const primary = theme.colors.primary;
+
+  // Featured Products
+  const featuredProductIds = catalog.featuredProductIds || [];
+  const featuredProducts =
+    products?.filter((p) => featuredProductIds.includes(p.id || p.$id)) || [];
   const secondary = theme.colors.secondary;
   const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
 
@@ -254,6 +259,59 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 bg-(--minimal-secondary) rounded-full opacity-[0.03] blur-3xl pointer-events-none"></div>
       </header>
 
+      {/* Featured Section */}
+      {featuredProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-gray-900/5">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-px bg-gray-200 flex-1" />
+            <h2 className="text-sm font-bold uppercase tracking-widest text-(--minimal-accent)">
+              Destacados
+            </h2>
+            <div className="h-px bg-gray-200 flex-1" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8">
+            {featuredProducts.map((product) => {
+              const imageId = product.imageFileIds?.[0];
+              const imageUrl = imageId ? getProductImageUrl(imageId) : null;
+              return (
+                <div
+                  key={product.id || product.$id}
+                  onClick={() => setSelectedProduct(product)}
+                  className="group cursor-pointer flex flex-col gap-4"
+                >
+                  <div className="relative aspect-4/5 bg-gray-50 overflow-hidden rounded-sm hover-trigger">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <ShoppingBag className="w-8 h-8 opacity-20" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-(--minimal-accent) text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                        Star
+                      </span>
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-center">
+                    <h3 className="font-medium text-gray-900 group-hover:text-(--minimal-accent) transition-colors">
+                      {product.name}
+                    </h3>
+                    <p className="text-sm font-medium text-gray-500">
+                      {formatPrice(product.price, product.currency)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Main Content */}
       <main className="grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
         {(catalog.showProductCount || catalog.showFilters) && (
@@ -433,12 +491,11 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
       </main>
 
       {catalog.showPurchaseInfo && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-          <StorePurchaseInfo
-            store={store}
-            showPaymentButton={catalog.showPaymentButton}
-          />
-        </div>
+        <StorePurchaseInfo
+          store={store}
+          showPaymentButton={catalog.showPaymentButton}
+          wrapperClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full"
+        />
       )}
       <StoreFooter
         store={store}

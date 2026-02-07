@@ -16,6 +16,7 @@ export function CatalogFilters({
   showSort = true,
   showCategories = true,
   showPrice = true,
+  layout = "list", // 'list' | 'grid'
 }) {
   const formatPrice = (price) => {
     return (price || 0).toLocaleString("es-MX", {
@@ -50,14 +51,36 @@ export function CatalogFilters({
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
             Categorías
           </h3>
-          <ul className="space-y-2.5">
+          <ul
+            className={
+              layout === "grid"
+                ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+                : "space-y-2.5"
+            }
+          >
             {categories.map((cat) => {
               const isActive = activeCategoryIds.includes(cat.id);
               return (
                 <li key={cat.id}>
                   <button
                     onClick={() => onToggleCategory(cat.id)}
-                    className="flex items-center gap-3 w-full text-left group"
+                    className={`flex items-center gap-3 w-full text-left group ${
+                      layout === "grid"
+                        ? "p-3 rounded-xl border transition-all hover:shadow-md h-full"
+                        : ""
+                    } ${
+                      isActive && layout === "grid"
+                        ? "bg-white border-black ring-1 ring-black"
+                        : "bg-white border-gray-200 hover:border-gray-300"
+                    }`}
+                    style={
+                      isActive && layout === "grid"
+                        ? {
+                            borderColor: primaryColor,
+                            boxShadow: `0 0 0 1px ${primaryColor}`,
+                          }
+                        : {}
+                    }
                   >
                     <div
                       className={`shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-all ${
@@ -90,7 +113,9 @@ export function CatalogFilters({
               );
             })}
             {categories.length === 0 && (
-              <li className="text-sm text-gray-400 italic">Sin categorías</li>
+              <li className="text-sm text-gray-400 italic col-span-full">
+                Sin categorías
+              </li>
             )}
           </ul>
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
@@ -29,7 +29,6 @@ import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
-// Internal helpers removed in favor of registry.resolveThemeSettings
 const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
@@ -47,16 +46,45 @@ const formatPrice = (price, currency = "MXN") => {
   return price.toLocaleString("es-MX", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 };
+
+// Floating particle component
+const FloatingLeaf = ({ delay, duration, startX, size }) => (
+  <motion.div
+    className="absolute pointer-events-none text-green-600/20"
+    initial={{ y: -20, x: startX, rotate: 0, opacity: 0 }}
+    animate={{
+      y: "100vh",
+      x: [startX, startX + 50, startX - 30, startX + 20],
+      rotate: [0, 45, -30, 60, 0],
+      opacity: [0, 0.6, 0.6, 0],
+    }}
+    transition={{
+      duration,
+      delay,
+      repeat: Infinity,
+      ease: "linear",
+    }}
+  >
+    <Leaf size={size} />
+  </motion.div>
+);
 
 export function NatureTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
-  // Settings Resolution
+  // Scroll tracking for parallax
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Settings Resolution
   const theme = resolveThemeSettings(store);
   const catalog = resolveCatalogSettings(store);
@@ -91,7 +119,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-(--color-bg) text-[#2d2a26] selection:bg-green-100 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
+      className="min-h-screen flex flex-col bg-(--nature-secondary) text-[#2d2a26] selection:bg-green-100 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
         colorScheme: "light",
@@ -107,15 +135,43 @@ export function NatureTemplate({ store, products, isPreview = false }) {
           50% { transform: translateY(-10px) rotate(2deg); }
           100% { transform: translateY(0px) rotate(0deg); }
         }
+        @keyframes sway {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          25% { transform: translateX(5px) rotate(1deg); }
+          75% { transform: translateX(-5px) rotate(-1deg); }
+        }
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.05); opacity: 0.5; }
+        }
         .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-sway { animation: sway 8s ease-in-out infinite; }
+        .animate-breathe { animation: breathe 4s ease-in-out infinite; }
         .organic-shape { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        .nature-card {
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nature-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 20px 40px -15px rgba(34, 84, 44, 0.15);
+        }
       `}</style>
+
+      {/* Floating Leaves Particles */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <FloatingLeaf delay={0} duration={15} startX={100} size={16} />
+        <FloatingLeaf delay={3} duration={18} startX={300} size={12} />
+        <FloatingLeaf delay={6} duration={20} startX={500} size={18} />
+        <FloatingLeaf delay={9} duration={16} startX={700} size={14} />
+        <FloatingLeaf delay={2} duration={22} startX={900} size={16} />
+        <FloatingLeaf delay={5} duration={17} startX={1100} size={12} />
+      </div>
 
       <StoreNavbar
         store={store}
         isPreview={isPreview}
         config={{
-          bg: "bg-(--color-bg)/80",
+          bg: "bg-(--nature-secondary)/80",
           text: "text-[#2d2a26]",
           border: "border-green-200/20",
           accent: "text-(--nature-primary)",
@@ -133,60 +189,104 @@ export function NatureTemplate({ store, products, isPreview = false }) {
       />
 
       {/* Hero Section */}
-      <header className="relative py-20 px-4 overflow-hidden">
+      <header className="relative py-16 md:py-24 px-4 overflow-hidden">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center relative z-10">
-          {/* Nature Icons Background */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.03] flex justify-between items-center px-10">
-            <Trees className="w-64 h-64 text-green-900 -rotate-12" />
-            <Cloud className="w-48 h-48 text-blue-900 translate-y-[-100px]" />
-            <Wind className="w-40 h-40 text-green-900 rotate-12" />
+          {/* Nature Icons Background - with parallax */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.03] flex justify-between items-center px-10"
+            style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+          >
+            <Trees className="w-64 h-64 text-green-900 -rotate-12 animate-sway" />
+            <Cloud className="w-48 h-48 text-blue-900 translate-y-[-100px] animate-float" />
+            <Wind
+              className="w-40 h-40 text-green-900 rotate-12 animate-sway"
+              style={{ animationDelay: "2s" }}
+            />
           </div>
 
           {logoUrl ? (
-            <div className="mb-8 p-1 bg-white organic-shape shadow-xl shadow-green-900/5 overflow-hidden w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6 }}
+              className="mb-8 p-1 bg-white organic-shape shadow-xl shadow-green-900/5 overflow-hidden w-24 h-24 md:w-32 md:h-32 flex items-center justify-center"
+            >
               <img
                 src={logoUrl}
                 alt={store.name}
                 className="w-full h-full object-cover"
               />
-            </div>
+            </motion.div>
           ) : (
-            <div className="mb-8 p-6 bg-green-50 text-(--nature-primary) organic-shape animate-float">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.6 }}
+              className="mb-8 p-6 bg-green-50 text-(--nature-primary) organic-shape animate-float"
+            >
               <Leaf size={48} />
-            </div>
+            </motion.div>
           )}
 
-          <h1 className="text-4xl md:text-6xl font-serif font-bold text-[#1a2e1a] mb-6 leading-tight">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-4xl md:text-6xl font-serif font-bold text-[#1a2e1a] mb-6 leading-tight"
+          >
             {store.name}
-          </h1>
+          </motion.h1>
 
           {store.description && (
-            <p className="text-lg md:text-xl text-[#4a554a] max-w-2xl mx-auto font-light leading-relaxed">
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="text-base md:text-lg text-[#4a554a] max-w-2xl mx-auto font-light leading-relaxed line-clamp-2"
+            >
               {store.description}
-            </p>
+            </motion.p>
           )}
 
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-10 flex flex-wrap justify-center gap-4"
+          >
             <a
               href="#catalog"
-              className="px-8 py-3 bg-(--nature-primary) text-white rounded-full font-medium shadow-lg shadow-green-900/20 hover:scale-105 transition-all flex items-center gap-2"
+              className="group px-8 py-3 bg-(--nature-primary) text-white rounded-full font-medium shadow-lg shadow-green-900/20 hover:scale-105 hover:shadow-xl transition-all flex items-center gap-2"
             >
-              Explorar Catálogo <ArrowRight size={18} />
+              Explorar Catálogo{" "}
+              <ArrowRight
+                size={18}
+                className="group-hover:translate-x-1 transition-transform"
+              />
             </a>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-green-100 organic-shape opacity-40 blur-3xl -mr-20 -mt-20" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-100 organic-shape opacity-30 blur-3xl -ml-20 -mb-20" />
+        {/* Decorative elements - with parallax */}
+        <div
+          className="absolute top-0 right-0 w-64 h-64 bg-green-100 organic-shape opacity-40 blur-3xl -mr-20 -mt-20 animate-breathe"
+          style={{ transform: `translateY(${scrollY * -0.15}px)` }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-80 h-80 bg-orange-100 organic-shape opacity-30 blur-3xl -ml-20 -mb-20 animate-breathe"
+          style={{
+            animationDelay: "2s",
+            transform: `translateY(${scrollY * 0.1}px)`,
+          }}
+        />
       </header>
 
       {/* Main Content */}
       <main
         id="catalog"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full relative z-10"
       >
-        <div className="flex flex-col lg:flex-row gap-12">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12">
           {/* Sidebar / Filters - Hidden on Mobile */}
           {catalog.showFilters && (
             <div className="hidden lg:block lg:w-72 shrink-0">
@@ -236,16 +336,23 @@ export function NatureTemplate({ store, products, isPreview = false }) {
             </div>
 
             {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 md:gap-8">
-                {filteredProducts.map((product) => {
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
+                {filteredProducts.map((product, index) => {
                   const imageId = product.imageFileIds?.[0];
                   const imageUrl = imageId ? getProductImageUrl(imageId) : null;
 
                   return (
-                    <div
+                    <motion.div
                       key={product.$id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.5,
+                        delay: index * 0.06,
+                        ease: [0.25, 0.46, 0.45, 0.94],
+                      }}
                       onClick={() => setSelectedProduct(product)}
-                      className="group cursor-pointer bg-white rounded-4xl overflow-hidden border border-green-50/50 shadow-sm hover:shadow-xl hover:shadow-green-900/5 transition-all duration-500"
+                      className="group cursor-pointer nature-card bg-white rounded-4xl overflow-hidden border border-green-50/50 shadow-sm"
                     >
                       <div className="aspect-4/5 overflow-hidden relative">
                         {imageUrl ? (
@@ -268,7 +375,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                               event.stopPropagation();
                               shareProduct(product);
                             }}
-                            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-[#1a2e1a] flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-[#1a2e1a] flex items-center justify-center shadow-sm hover:shadow-md hover:bg-(--nature-primary) hover:text-white transition-all"
                             aria-label="Compartir producto"
                           >
                             <Share2 size={16} />
@@ -286,15 +393,15 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                         <div className="absolute inset-0 bg-green-900/0 group-hover:bg-green-900/10 transition-colors duration-500" />
                       </div>
 
-                      <div className="p-6">
-                        <h3 className="font-serif text-lg font-bold text-[#1a2e1a] mb-1 group-hover:text-(--nature-primary) transition-colors">
+                      <div className="p-4 md:p-6">
+                        <h3 className="font-serif text-base md:text-lg font-bold text-[#1a2e1a] mb-1 group-hover:text-(--nature-primary) transition-colors line-clamp-2">
                           {product.name}
                         </h3>
                         {catalog.showFilters &&
                           product.categories &&
                           product.categories.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-3">
-                              {product.categories.map((cat) => (
+                              {product.categories.slice(0, 2).map((cat) => (
                                 <button
                                   key={cat.id}
                                   type="button"
@@ -310,7 +417,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                             </div>
                           )}
                         {product.description && (
-                          <p className="text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
+                          <p className="text-xs md:text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
                             {product.description}
                           </p>
                         )}
@@ -318,7 +425,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                           Ver detalles <ChevronRight size={14} />
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -334,7 +441,7 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                   No hay productos que coincidan con tu búsqueda.
                 </p>
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={resetFilters}
                   className="mt-8 text-sm font-bold text-(--nature-primary) hover:underline"
                 >
                   Reiniciar filtros
@@ -346,12 +453,11 @@ export function NatureTemplate({ store, products, isPreview = false }) {
       </main>
 
       {catalog.showPurchaseInfo && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full">
-          <StorePurchaseInfo
-            store={store}
-            showPaymentButton={catalog.showPaymentButton}
-          />
-        </div>
+        <StorePurchaseInfo
+          store={store}
+          showPaymentButton={catalog.showPaymentButton}
+          wrapperClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full relative z-10"
+        />
       )}
       <StoreFooter
         store={store}

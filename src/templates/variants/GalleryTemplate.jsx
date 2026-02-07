@@ -256,18 +256,18 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                     {catalog.showFilters &&
                       product.categories &&
                       product.categories.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
-                        {product.categories.map((cat) => (
-                          <button
-                            key={cat.id || cat.name}
-                            onClick={(e) => handleCategoryClick(e, cat.id)}
-                            className="text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-white/20 text-white hover:bg-white hover:text-black transition-colors"
-                          >
-                            {cat.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                        <div className="flex flex-wrap gap-1 mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
+                          {product.categories.map((cat) => (
+                            <button
+                              key={cat.id || cat.name}
+                              onClick={(e) => handleCategoryClick(e, cat.id)}
+                              className="text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-white/20 text-white hover:bg-white hover:text-black transition-colors"
+                            >
+                              {cat.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
                     <p className="text-white/80 font-medium text-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">
                       {formatPrice(product.price, product.currency)}
@@ -309,12 +309,11 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
       </main>
 
       {catalog.showPurchaseInfo && (
-        <div className="max-w-7xl mx-auto px-4 md:px-6 pb-10 w-full">
-          <StorePurchaseInfo
-            store={store}
-            showPaymentButton={catalog.showPaymentButton}
-          />
-        </div>
+        <StorePurchaseInfo
+          store={store}
+          showPaymentButton={catalog.showPaymentButton}
+          wrapperClassName="max-w-7xl mx-auto px-4 md:px-6 pb-10 w-full"
+        />
       )}
       <StoreFooter
         store={store}
