@@ -91,32 +91,6 @@ export function ImageViewerModal({
     };
   }, [isOpen]);
 
-  // Handle ESC key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        handleClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [isOpen, handleClose]);
-
-  // Handle arrow keys for gallery navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!isOpen || !isGalleryMode) return;
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "ArrowLeft") prevImage();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isGalleryMode, nextImage, prevImage]);
-
   // Reset state when modal opens/closes or image changes
   useEffect(() => {
     setScale(1);
@@ -332,6 +306,32 @@ export function ImageViewerModal({
     resetView();
     onClose();
   }, [onClose, resetView]);
+
+  // Handle ESC key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [isOpen, handleClose]);
+
+  // Handle arrow keys for gallery navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isOpen || !isGalleryMode) return;
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isGalleryMode, nextImage, prevImage]);
 
   // Double tap to zoom (mobile)
   const lastTapRef = useRef(0);
