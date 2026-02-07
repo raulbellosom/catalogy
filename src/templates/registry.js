@@ -16,6 +16,7 @@ import { VelocityTemplate } from "./variants/VelocityTemplate";
 import { RibbonTemplate } from "./variants/RibbonTemplate";
 import { SketchyTemplate } from "./variants/SketchyTemplate";
 import { CoastalTemplate } from "./variants/CoastalTemplate";
+import { DevTechTemplate } from "./variants/DevTechTemplate";
 import { resolveStoreSettings } from "@/shared/utils/storeSettings";
 
 /**
@@ -157,6 +158,18 @@ export const TEMPLATES = {
     defaultSettings: {
       colors: { primary: "#0d9488", secondary: "#f0fdfa" },
       font: "montserrat",
+    },
+  },
+  devtech: {
+    id: "devtech",
+    name: "DevTech",
+    description:
+      "Estética cyberpunk/dev con modo oscuro, terminal styling y efectos neon.",
+    component: DevTechTemplate,
+    thumbnail: "/templates/devtech-thumb.png",
+    defaultSettings: {
+      colors: { primary: "#00ff9d", secondary: "#0f172a" },
+      font: "jetbrains",
     },
   },
 };

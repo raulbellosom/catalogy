@@ -1,5 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Search, Filter, Grid, List, Plus, Loader2, Package } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Grid,
+  List,
+  Plus,
+  Loader2,
+  Package,
+} from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { ProductList } from "../../components/ProductList";
 import { ProductModal } from "../../components/ProductModal";
@@ -208,19 +216,15 @@ export function ProductsTab({ store, products, isLoading }) {
 
   const handleSectionSelect = (id) => {
     const root = sectionScrollRef.current;
-    const element = root?.querySelector(`#${id}`) || document.getElementById(id);
+    const element =
+      root?.querySelector(`#${id}`) || document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-  // No form submission needed for products (operations are immediate)
-  const handleSave = (e) => {
-    if (e?.preventDefault) e.preventDefault();
-  };
-
   return (
-    <form onSubmit={handleSave} className="space-y-6">
+    <div className="space-y-6">
       <SettingsSectionLayout
         sections={sections}
         activeSection={activeSection}
@@ -270,14 +274,14 @@ export function ProductsTab({ store, products, isLoading }) {
                 <button
                   type="button"
                   onClick={() => setProductViewMode("grid")}
-                  className={`p-1.5 rounded-md transition-all ${ productViewMode === "grid" ? "bg-(--color-card) shadow text-(--color-fg)" : "text-(--color-fg-muted)"}`}
+                  className={`p-1.5 rounded-md transition-all ${productViewMode === "grid" ? "bg-(--color-card) shadow text-(--color-fg)" : "text-(--color-fg-muted)"}`}
                 >
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setProductViewMode("table")}
-                  className={`p-1.5 rounded-md transition-all ${ productViewMode === "table" ? "bg-(--color-card) shadow text-(--color-fg)" : "text-(--color-fg-muted)"}`}
+                  className={`p-1.5 rounded-md transition-all ${productViewMode === "table" ? "bg-(--color-card) shadow text-(--color-fg)" : "text-(--color-fg-muted)"}`}
                 >
                   <List className="w-4 h-4" />
                 </button>
@@ -319,6 +323,6 @@ export function ProductsTab({ store, products, isLoading }) {
         product={editingProduct}
         categories={categories}
       />
-    </form>
+    </div>
   );
 }

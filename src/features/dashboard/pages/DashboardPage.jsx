@@ -1,10 +1,10 @@
-import { Package, Store, TrendingUp, ExternalLink } from "lucide-react";
+import { Package, Store, ExternalLink } from "lucide-react";
 import { useAuth } from "@/app/providers";
 import { StoreOnboardingWizard } from "@/features/onboarding/components/StoreOnboardingWizard";
 import { useUserStore } from "@/shared/hooks";
 import { appConfig } from "@/shared/lib/env";
 import { QuickActionCard } from "../components/QuickActionCard";
-import { StatCard } from "../components/StatCard";
+import { StatsGrid } from "../components/StatsGrid";
 
 /**
  * Dashboard page - Main app landing after login
@@ -27,12 +27,12 @@ export function DashboardPage() {
     <div>
       {/* Welcome header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--color-fg)]">
+        <h1 className="text-2xl font-bold text-(--color-fg)">
           Hola, {user?.name?.split(" ")[0] || "Usuario"}
         </h1>
-        <p className="text-[var(--color-fg-secondary)]">
+        <p className="text-(--color-fg-secondary)">
           Bienvenido a tu panel de control de{" "}
-          <span className="font-semibold text-[var(--color-primary)]">
+          <span className="font-semibold text-(--color-primary)">
             {store.name}
           </span>
         </p>
@@ -64,17 +64,8 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Stats placeholder */}
-      <div className="grid sm:grid-cols-3 gap-4">
-        <StatCard icon={Package} label="Productos" value="0" delay={0.3} />
-        <StatCard icon={TrendingUp} label="Visitas hoy" value="0" delay={0.4} />
-        <StatCard
-          icon={Store}
-          label="Estado"
-          value={store.published ? "Publicado" : "No publicado"}
-          delay={0.5}
-        />
-      </div>
+      {/* Real stats */}
+      <StatsGrid store={store} />
     </div>
   );
 }

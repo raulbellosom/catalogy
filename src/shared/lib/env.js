@@ -54,6 +54,9 @@ export const collections = {
     "emailVerifications",
   stores: import.meta.env.VITE_APPWRITE_COLLECTION_STORES_ID || "stores",
   products: import.meta.env.VITE_APPWRITE_COLLECTION_PRODUCTS_ID || "products",
+  storeAnalytics:
+    import.meta.env.VITE_APPWRITE_COLLECTION_STORE_ANALYTICS_ID ||
+    "storeAnalytics",
 };
 
 // Alias legacy para compatibilidad (mayúsculas para mantener compatibilidad con código existente)
@@ -63,6 +66,7 @@ export const COLLECTIONS = {
   EMAIL_VERIFICATIONS: collections.emailVerifications,
   STORES: collections.stores,
   PRODUCTS: collections.products,
+  STORE_ANALYTICS: collections.storeAnalytics,
 };
 
 // ============================================================

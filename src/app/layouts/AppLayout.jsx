@@ -431,16 +431,27 @@ export function AppLayout() {
           collapsed ? "lg:w-16" : "lg:w-64"
         }`}
       >
-        {/* Logo area */}
-        <div className="flex h-16 items-center border-b border-[var(--color-card-border)] overflow-hidden px-4">
-          {/* Using Logo component which handles text and icon */}
-          {collapsed ? (
-            <div className="flex h-full w-full items-center justify-center">
-              <Logo variant="icon" />
-            </div>
-          ) : (
-            <Logo variant="full" />
-          )}
+        {/* Logo area - same smooth animation as nav items */}
+        <div className="flex h-16 items-center border-b border-[var(--color-card-border)] overflow-hidden mx-2">
+          {/* Icon area - fixed width, same as nav items */}
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+            <Logo
+              variant="icon"
+              asLink={!collapsed}
+              imgClass="w-6 h-6 object-contain"
+            />
+          </div>
+
+          {/* Text - smooth reveal with grid technique */}
+          <div
+            className={`grid transition-[grid-template-columns] duration-300 ease-in-out ${
+              collapsed ? "grid-cols-[0fr]" : "grid-cols-[1fr]"
+            }`}
+          >
+            <span className="overflow-hidden whitespace-nowrap text-xl font-bold text-[var(--color-fg)] pr-3">
+              Catalogy
+            </span>
+          </div>
         </div>
 
         {/* Navigation */}

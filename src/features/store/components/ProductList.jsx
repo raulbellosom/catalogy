@@ -174,7 +174,7 @@ export function ProductList({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
           <SortableContext items={productIds} strategy={rectSortingStrategy}>
             {products.map((product, index) => (
               <SortableCard
@@ -548,15 +548,39 @@ const ProductCard = React.forwardRef(
             </span>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 text-sm text-(--color-fg-secondary)">
+          <div className="flex items-center gap-2 text-sm text-(--color-fg-secondary)">
             <Package className="w-4 h-4" />
             <span>
               Stock: <b>{product.stock || 0}</b>
             </span>
           </div>
 
+          {/* Categorías */}
+          {product.categoryIds?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {product.categoryIds.slice(0, 3).map((categoryId) => {
+                const category = categories?.find(
+                  (cat) => cat.id === categoryId,
+                );
+                return category ? (
+                  <span
+                    key={categoryId}
+                    className="inline-block px-2 py-0.5 bg-(--color-primary)/10 text-(--color-primary) rounded-full text-xs font-medium"
+                  >
+                    {category.name}
+                  </span>
+                ) : null;
+              })}
+              {product.categoryIds.length > 3 && (
+                <span className="inline-block px-2 py-0.5 bg-(--color-bg-tertiary) text-(--color-fg-muted) rounded-full text-xs font-medium">
+                  +{product.categoryIds.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+
           {!isOverlay && (
-            <div className="pt-4 border-t border-(--color-border) flex items-center justify-between gap-2 mt-auto">
+            <div className="pt-4 mt-4 border-t border-(--color-border) flex items-center justify-between gap-2">
               <Button
                 variant="ghost"
                 size="sm"

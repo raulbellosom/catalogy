@@ -174,22 +174,22 @@ Document ID:
 
 - Auto-generated
 
-| Attribute            | Type    | Required | Default  | Constraint(s) | Notes                                        |
-| -------------------- | ------- | -------- | -------- | ------------- | -------------------------------------------- |
-| profileId            | string  | yes      |          | size=64       | FK -> profiles.$id (owner)                   |
-| slug                 | string  | yes      |          | size=50       | URL-safe, unico, lowercase                   |
-| name                 | string  | yes      |          | size=120      | nombre de la tienda                          |
-| description          | string  | no       |          | size=500      | descripcion corta                            |
-| logoFileId           | string  | no       |          | size=64       | FK -> storeLogos bucket                      |
-| templateId           | string  | no       | minimal  | size=50       | ID del template (minimal/storefront/gallery) |
-| activeRenderer       | enum    | no       | template | template,puck | decide que render se publica                 |
-| categoriesJson       | string  | no       | "[]"     | size=2000     | JSON de categorias propias de la tienda      |
-| purchaseInstructions | string  | no       | ""       | size=2000     | instrucciones de compra                      |
-| paymentLink          | URL     | no       | null     |               | link de pago opcional                        |
+| Attribute            | Type    | Required | Default  | Constraint(s) | Notes                                                    |
+| -------------------- | ------- | -------- | -------- | ------------- | -------------------------------------------------------- |
+| profileId            | string  | yes      |          | size=64       | FK -> profiles.$id (owner)                               |
+| slug                 | string  | yes      |          | size=50       | URL-safe, unico, lowercase                               |
+| name                 | string  | yes      |          | size=120      | nombre de la tienda                                      |
+| description          | string  | no       |          | size=500      | descripcion corta                                        |
+| logoFileId           | string  | no       |          | size=64       | FK -> storeLogos bucket                                  |
+| templateId           | string  | no       | minimal  | size=50       | ID del template (minimal/storefront/gallery)             |
+| activeRenderer       | enum    | no       | template | template,puck | decide que render se publica                             |
+| categoriesJson       | string  | no       | "[]"     | size=2000     | JSON de categorias propias de la tienda                  |
+| purchaseInstructions | string  | no       | ""       | size=2000     | instrucciones de compra                                  |
+| paymentLink          | URL     | no       | null     |               | link de pago opcional                                    |
 | settings             | string  | no       | "{}"     | size=2000     | JSON de configuracion (colores, fonts, catalog controls) |
-| puckData             | string  | no       | null     | size=100000   | JSON de configuracion Puck Editor            |
-| published            | boolean | no       | false    |               | si el catalogo es publico                    |
-| enabled              | boolean | no       | true     |               | soft delete                                  |
+| puckData             | string  | no       | null     | size=100000   | JSON de configuracion Puck Editor                        |
+| published            | boolean | no       | false    |               | si el catalogo es publico                                |
+| enabled              | boolean | no       | true     |               | soft delete                                              |
 
 Indexes:
 
@@ -271,6 +271,43 @@ Permissions:
 - create("users") — usuarios autenticados pueden crear
 - update("user:{userId}") via store.profileId — solo owner de tienda puede editar
 - delete("user:{userId}") via store.profileId — solo owner puede eliminar
+
+### storeAnalytics (dominio)
+
+Purpose:
+
+- Almacenar datos de visitas diarias por tienda para dashboard analytics
+
+Document ID:
+
+- Auto-generated
+
+| Attribute    | Type     | Required | Default | Constraint(s) | Notes                               |
+| ------------ | -------- | -------- | ------- | ------------- | ----------------------------------- |
+| storeId      | string   | yes      |         | size=64       | FK -> stores.$id                    |
+| date         | datetime | yes      |         |               | Formato YYYY-MM-DD                  |
+| totalViews   | integer  | yes      |         | min=0         | Total de visitas en ese día         |
+| uniqueViews  | integer  | yes      |         | min=0         | Visitantes únicos (fingerprint)     |
+| fingerprints | string   | no       | "[]"    | size=50000    | JSON array de hashes de fingerprint |
+
+Indexes:
+
+| Index Name              | Type   | Attributes        | Notes                       |
+| ----------------------- | ------ | ----------------- | --------------------------- |
+| key_analytics_storeid   | key    | storeId ↑         | queries por tienda          |
+| uq_analytics_store_date | unique | storeId ↑, date ↑ | un documento por tienda/día |
+| key_analytics_date      | key    | date ↑            | queries por fecha           |
+
+Query patterns:
+
+- Analytics de tienda por rango: `storeId = ? AND date >= ? AND date <= ?`
+- Analytics del día: `storeId = ? AND date = ?`
+
+Permissions:
+
+- read("any") — lectura pública para permitir tracking frontend
+- create("any") — crear registros desde frontend
+- update("any") — actualizar contadores desde frontend
 
 ## Notas sobre FK
 

@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import { Store as StoreIcon, Loader2, Clock } from "lucide-react";
 import { useSubdomainContext } from "@/app/providers";
-import { useStoreBySlug, useProducts } from "@/shared/hooks";
+import { useStoreBySlug, useProducts, useTrackVisit } from "@/shared/hooks";
 import { getTemplate, resolveThemeSettings } from "@/templates/registry";
 import { PuckRenderer } from "@/features/editor/components/PuckRenderer";
 import { EmptyCatalog } from "../components/EmptyCatalog";
@@ -35,6 +36,21 @@ export function CatalogPage({ previewSlug }) {
 
   const products = productsData?.documents || [];
 
+  // Track store view for analytics
+  const trackVisit = useTrackVisit();
+  const isOwner = user?.$id === store?.profileId;
+
+  useEffect(() => {
+    // Only track if:
+    // 1. Store exists and is loaded
+    // 2. Not a preview mode
+    // 3. Store is published
+    // 4. User is not the owner
+    if (store?.$id && !previewSlug && store.published && !isOwner) {
+      trackVisit.mutate(store.$id);
+    }
+  }, [store?.$id, store?.published, previewSlug, isOwner]);
+
   if (loadingStore) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-(--color-bg)">
@@ -63,7 +79,6 @@ export function CatalogPage({ previewSlug }) {
 
   // Security check: If not published and not the owner, don't show products
   // (AppRoutes should prevent this, but this is an extra layer)
-  const isOwner = user?.$id === store.profileId;
   const isAvailable = store.published || isOwner || !!previewSlug;
 
   if (!isAvailable) {

@@ -13,3 +13,4 @@ export { PrismTemplate } from "./PrismTemplate";
 export { RibbonTemplate } from "./RibbonTemplate";
 export { SketchyTemplate } from "./SketchyTemplate";
 export { CoastalTemplate } from "./CoastalTemplate";
+export { DevTechTemplate } from "./DevTechTemplate";

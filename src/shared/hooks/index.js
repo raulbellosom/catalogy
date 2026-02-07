@@ -20,3 +20,8 @@ export {
   useReorderProducts,
 } from "./useProducts";
 export { useErrorStore } from "./useErrorStore";
+export {
+  useTrackVisit,
+  useStoreAnalytics,
+  useTodayAnalytics,
+} from "./useAnalytics";
