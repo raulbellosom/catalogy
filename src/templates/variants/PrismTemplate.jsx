@@ -12,6 +12,7 @@ import {
   Sparkles,
   Hexagon,
   Globe,
+  ShoppingBag,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
