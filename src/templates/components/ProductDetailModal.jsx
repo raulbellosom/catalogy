@@ -102,6 +102,18 @@ export function ProductDetailModal({
     }
   }, [panelBackground, isDark]);
 
+  // Determine if primary color needs dark text
+  const primaryNeedsDarkText = useMemo(() => {
+    try {
+      const primaryIsDark = isColorDark(primary);
+      const contrastWithWhite = getContrastRatio(primary, "#ffffff");
+      const contrastWithBlack = getContrastRatio(primary, "#000000");
+      return contrastWithBlack > contrastWithWhite;
+    } catch {
+      return false;
+    }
+  }, [primary]);
+
   if (!product) return null;
 
   const imageFileIds = Array.isArray(product.imageFileIds)
@@ -284,10 +296,18 @@ export function ProductDetailModal({
                 {/* Quantity & Add to Cart */}
                 <div className="flex gap-2 sm:gap-3 md:gap-4">
                   {/* Quantity Selector */}
-                  <div className="flex items-center bg-white/10 rounded-xl border border-white/10">
+                  <div
+                    className={`flex items-center rounded-xl border ${
+                      isDark
+                        ? "bg-white/10 border-white/10"
+                        : "bg-gray-100 border-gray-200"
+                    }`}
+                  >
                     <button
                       onClick={() => setQty((q) => Math.max(1, q - 1))}
-                      className="p-2 sm:p-2.5 md:p-3 hover:bg-white/10 transition-colors"
+                      className={`p-2 sm:p-2.5 md:p-3 transition-colors ${
+                        isDark ? "hover:bg-white/10" : "hover:bg-gray-200"
+                      }`}
                     >
                       <Minus size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
@@ -296,7 +316,9 @@ export function ProductDetailModal({
                     </span>
                     <button
                       onClick={() => setQty((q) => q + 1)}
-                      className="p-2 sm:p-2.5 md:p-3 hover:bg-white/10 transition-colors"
+                      className={`p-2 sm:p-2.5 md:p-3 transition-colors ${
+                        isDark ? "hover:bg-white/10" : "hover:bg-gray-200"
+                      }`}
                     >
                       <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
@@ -305,7 +327,9 @@ export function ProductDetailModal({
                   {/* Add to Cart Button */}
                   <button
                     onClick={handleAddToCart}
-                    className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all active:scale-95 text-white shadow-lg"
+                    className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg ${
+                      primaryNeedsDarkText ? "text-black" : "text-white"
+                    }`}
                     style={{ backgroundColor: primary || "#3b82f6" }}
                   >
                     {justAdded ? (
