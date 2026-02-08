@@ -274,6 +274,9 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   // Featured Products Logic
@@ -647,6 +650,9 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                       sortOrder={sortOrder}
                       mainColor={primary}
                       layout="grid" // Use grid layout for categories
+                      showFeaturedOnly={showFeaturedOnly}
+                      onToggleFeaturedOnly={toggleFeaturedOnly}
+                      hasFeaturedProducts={hasFeaturedProducts}
                     />
                     <div className="mt-4 flex justify-end">
                       <button
@@ -675,9 +681,7 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                   product={product}
                   primaryColor={primary}
                   onClick={() => setSelectedProduct(product)}
-                  isFeatured={featuredProductIds.includes(
-                    product.id || product.$id,
-                  )}
+                  isFeatured={product.isFeatured}
                 />
               ))}
             </div>
@@ -795,6 +799,9 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                       sortOrder={sortOrder}
                       mainColor={primary}
                       layout="list" // Use list layout for mobile sidebar
+                      showFeaturedOnly={showFeaturedOnly}
+                      onToggleFeaturedOnly={toggleFeaturedOnly}
+                      hasFeaturedProducts={hasFeaturedProducts}
                     />
                     <button
                       onClick={resetFilters}

@@ -1,16 +1,26 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ExternalLink, Filter } from "lucide-react";
 import {
-  ProductCard,
+  Search,
+  ShoppingBag,
+  X,
+  Filter,
+  Share2,
+  Menu,
+  ChevronRight,
+} from "lucide-react";
+import { getStoreLogoUrl } from "@/shared/services/storeService";
+import { getProductImageUrl } from "@/shared/services/productService";
+import {
   ProductDetailModal,
   StoreNavbar,
   StoreFooter,
   CatalogFilters,
   StorePurchaseInfo,
+  shareProduct,
 } from "../components";
+import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
-import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
@@ -26,17 +36,31 @@ const resolveFontFamily = (fontId) => {
   return map[fontId] || "'Playfair Display', serif";
 };
 
+const formatPrice = (price, currency = "MXN") => {
+  if (typeof price !== "number") return "";
+  return price.toLocaleString("es-MX", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+};
+
 export function RibbonTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   const theme = resolveThemeSettings(store);
   const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
-  const primary = theme.colors.primary;
-  const secondary = theme.colors.secondary;
-  const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
+  const primary = theme.colors.primary || "#be185d"; // Default pink-700
+  const secondary = theme.colors.secondary || "#fce7f3"; // Default pink-100
+
+  // Featured Products
+  const featuredProductIds = catalog.featuredProductIds || [];
+  const featuredProducts =
+    products?.filter((p) => featuredProductIds.includes(p.id || p.$id)) || [];
 
   const {
     categories,
@@ -53,327 +77,347 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
-  useEffect(() => {
-    if (!catalog.showFilters) {
-      setFiltersOpen(false);
-    }
-  }, [catalog.showFilters]);
+  // ImageViewer State
+  const [viewer, setViewer] = useState({
+    isOpen: false,
+    images: [],
+    index: 0,
+  });
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-(--ribbon-bg) text-(--ribbon-fg) pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
+      className="min-h-screen flex flex-col bg-stone-50 text-stone-900"
       style={{
         fontFamily,
         colorScheme: "light",
         "--ribbon-primary": primary,
-        "--ribbon-bg": secondary,
-        "--ribbon-fg": "#0f172a",
-        "--store-navbar-height": "4rem",
+        "--ribbon-secondary": secondary,
         "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
-      <style>{`
-        .ribbon-glow {
-          background: radial-gradient(600px circle at 20% 10%, rgba(255,255,255,0.7), transparent 55%),
-                      radial-gradient(500px circle at 80% 0%, rgba(255,255,255,0.6), transparent 55%);
-        }
-        .ribbon-frame {
-          clip-path: polygon(0 0, 100% 0, 100% 85%, 96% 100%, 0 100%);
-        }
-      `}</style>
+      {/* Header Container (Fixed) */}
+      <header className="fixed top-[var(--store-navbar-offset)] w-full z-50 transition-all duration-300">
+        {/* Top Ribbon Banner - Decorative */}
+        <div
+          className="h-2 bg-[var(--ribbon-primary)] w-full shadow-sm"
+          style={{
+            background: `repeating-linear-gradient(45deg, ${primary}, ${primary} 10px, ${secondary} 10px, ${secondary} 20px)`,
+          }}
+        />
 
-      <StoreNavbar
-        store={store}
-        isPreview={isPreview}
-        config={{
-          bg: "bg-(--ribbon-bg)/80",
-          text: "text-slate-900",
-          border: "border-slate-200/50",
-          accent: "text-(--ribbon-primary)",
-          glass: true,
-        }}
-        search={
-          catalog.showSearch
-            ? {
-                query: searchQuery,
-                onQueryChange: setSearchQuery,
-              }
-            : null
-        }
-        onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-        actions={
-          store?.paymentLink &&
-          catalog.showPaymentButton && (
-            <a
-              href={store.paymentLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-2 text-sm font-medium text-(--ribbon-primary) hover:opacity-80 transition-opacity"
+        {/* Header / Nav */}
+        <nav className="bg-white/95 backdrop-blur-sm shadow-sm border-b border-stone-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            {/* Left: Menu/Filter Trigger on all devices for 'Boutique' feel */}
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="p-2 -ml-2 text-stone-600 hover:text-[var(--ribbon-primary)] transition-colors flex items-center gap-2 group"
             >
-              <ExternalLink className="w-4 h-4" />
-              Pagar
-            </a>
-          )
-        }
-      />
+              <Menu size={24} strokeWidth={1.5} />
+              <span className="hidden md:inline text-xs font-bold uppercase tracking-widest group-hover:underline">
+                Menú & Filtros
+              </span>
+            </button>
 
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0 ribbon-glow pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
-          <div className="flex flex-col md:flex-row gap-10 items-start">
-            <div className="flex-1 space-y-6">
-              {logoUrl && (
-                <div className="h-14 w-14 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+            {/* Center: Logo */}
+            <div className="flex-1 flex justify-center">
+              <div className="text-2xl font-black font-serif tracking-tight text-[var(--ribbon-primary)]">
+                {store.logoFileId ? (
                   <img
-                    src={logoUrl}
-                    alt={store?.name}
-                    className="h-full w-full object-cover"
+                    src={getStoreLogoUrl(store.logoFileId)}
+                    alt={store.name}
+                    className="h-10 w-auto object-contain"
                   />
-                </div>
-              )}
-              <h1 className="text-4xl md:text-6xl font-semibold tracking-tight text-slate-900">
-                {store?.name}
-              </h1>
-              {store?.description && (
-                <p className="text-lg text-slate-600 max-w-2xl leading-relaxed">
-                  {store.description}
-                </p>
+                ) : (
+                  <span>{store.name}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Search (Icon only to keep clean) */}
+            <div className="w-[100px] flex justify-end">
+              {catalog.showSearch && (
+                <button
+                  onClick={() => setIsFilterDrawerOpen(true)} // Search lives in drawer
+                  className="p-2 text-stone-500 hover:text-[var(--ribbon-primary)]"
+                >
+                  <Search size={22} strokeWidth={1.5} />
+                </button>
               )}
             </div>
-            {catalog.showProductCount && (
-              <div className="hidden md:block w-56 shrink-0">
-                <div className="ribbon-frame bg-white/70 border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                    Productos
-                  </p>
-                  <p className="text-3xl font-bold text-(--ribbon-primary)">
-                    {filteredProducts?.length || 0}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
-        </div>
+        </nav>
       </header>
 
-      <main
-        id="catalog"
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 w-full"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-semibold text-slate-900">Productos</h2>
-          {catalog.showProductCount && (
-            <span className="text-sm text-slate-500">
-              {filteredProducts?.length || 0} productos
-            </span>
+      {/* Hero Section */}
+      <header className="relative py-12 md:py-20 text-center px-4 overflow-hidden mt-[calc(var(--store-navbar-offset)+6rem)]">
+        <div className="relative z-10 max-w-3xl mx-auto space-y-6">
+          <span className="inline-block px-4 py-1 rounded-full bg-[var(--ribbon-secondary)] text-[var(--ribbon-primary)] text-xs font-bold uppercase tracking-widest mb-4">
+            Bienvenido a {store.name}
+          </span>
+          {store.description && (
+            <p className="text-xl md:text-2xl text-stone-600 font-serif italic max-w-2xl mx-auto leading-relaxed">
+              "{store.description}"
+            </p>
           )}
         </div>
 
-        {catalog.showFilters && categories?.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {categories.map((cat) => {
-              const isActive = activeCategoryIds.includes(cat.id);
+        {/* Decorative Ribbons BG */}
+        <div className="absolute top-10 left-10 w-32 h-32 bg-[var(--ribbon-secondary)] rounded-full blur-3xl opacity-50 mix-blend-multiply animate-pulse" />
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-[var(--ribbon-primary)] rounded-full blur-3xl opacity-20 mix-blend-multiply" />
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+        {/* Filter Categories Pills (Quick Access) */}
+        {categories.length > 0 && catalog.showFilters && (
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            <button
+              onClick={resetFilters}
+              className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${activeCategoryIds.length === 0 ? "bg-[var(--ribbon-primary)] text-white border-[var(--ribbon-primary)]" : "bg-white text-stone-500 border-stone-200 hover:border-[var(--ribbon-primary)]"}`}
+            >
+              Todos
+            </button>
+            {categories.slice(0, 5).map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => toggleCategory(cat.id)}
+                className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${activeCategoryIds.includes(cat.id) ? "bg-[var(--ribbon-primary)] text-white border-[var(--ribbon-primary)]" : "bg-white text-stone-500 border-stone-200 hover:border-[var(--ribbon-primary)]"}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Product Grid */}
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            {filteredProducts.map((product) => {
+              const imageUrl = product.imageFileIds?.[0]
+                ? getProductImageUrl(product.imageFileIds[0])
+                : null;
+
               return (
-                <button
-                  key={cat.id}
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold transition-colors ${
-                    isActive
-                      ? "bg-slate-900 text-white"
-                      : "bg-white/70 text-slate-500 border border-slate-200 hover:bg-slate-900 hover:text-white"
-                  }`}
+                <motion.div
+                  key={product.$id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="group cursor-pointer flex flex-col"
+                  onClick={() => setSelectedProduct(product)}
                 >
-                  {cat.name}
-                </button>
+                  <div className="relative aspect-[3/4] rounded-t-xl overflow-hidden bg-white shadow-sm group-hover:shadow-md transition-shadow">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-stone-300 bg-stone-100">
+                        <ShoppingBag size={32} />
+                      </div>
+                    )}
+
+                    {/* Ribbon Tag Overlay */}
+                    <div className="absolute top-4 left-0 flex flex-col items-start gap-1">
+                      {/* Existing "New" tag if logic existed (it was hardcoded "Nuevo" in the view) - preserving it if it was dynamic, but it looks static. I'll just add Featured above or below. */}
+                      <div className="bg-[var(--ribbon-secondary)] text-[var(--ribbon-primary)] text-[10px] font-bold px-3 py-1 shadow-sm rounded-r-full uppercase tracking-wider transform -translate-x-2 group-hover:translate-x-0 transition-transform">
+                        Nuevo
+                      </div>
+                      {product.isFeatured && (
+                        <div className="bg-[var(--ribbon-primary)] text-white text-[10px] font-bold px-3 py-1 shadow-sm rounded-r-full uppercase tracking-wider transform -translate-x-2 group-hover:translate-x-0 transition-transform delay-75">
+                          Destacado
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info Card - "Tag" Look */}
+                  <div className="relative -mt-6 mx-2 md:mx-4 bg-white p-4 rounded-xl shadow-md text-center border border-stone-100 flex flex-col gap-2 z-10 group-hover:-translate-y-1 transition-transform">
+                    <h3 className="font-serif font-bold text-stone-900 text-lg leading-tight line-clamp-1">
+                      {product.name}
+                    </h3>
+                    <div className="w-8 h-0.5 bg-[var(--ribbon-primary)]/20 mx-auto rounded-full" />
+                    <p className="text-sm font-medium text-stone-500">
+                      {formatPrice(product.price, product.currency)}
+                    </p>
+                  </div>
+                </motion.div>
               );
             })}
           </div>
-        )}
-
-        {catalog.showFilters && (
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div className="flex items-center gap-3">
-              {catalog.showSort && (
-                <select
-                  value={sortOrder}
-                  onChange={(event) => setSortOrder(event.target.value)}
-                  className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-slate-200 bg-white/70 text-slate-600"
-                >
-                  <option value="none">Relevancia</option>
-                  <option value="asc">Menor precio</option>
-                  <option value="desc">Mayor precio</option>
-                </select>
-              )}
-              <button
-                onClick={() => setFiltersOpen((prev) => !prev)}
-                className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold border border-slate-200 text-slate-600 hover:bg-slate-900 hover:text-white transition-colors flex items-center gap-2"
-              >
-                <Filter className="h-3.5 w-3.5" />
-                Filtros
-              </button>
-            </div>
+        ) : (
+          <div className="py-24 text-center bg-white rounded-3xl border border-dashed border-stone-200">
+            <ShoppingBag className="mx-auto h-12 w-12 text-stone-300 mb-4" />
+            <h3 className="text-xl font-serif font-bold text-stone-900 mb-2">
+              Colección vacía
+            </h3>
+            <p className="text-stone-500 mb-6">
+              No encontramos productos con los filtros seleccionados.
+            </p>
             <button
               onClick={resetFilters}
-              className="px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-semibold text-slate-900"
+              className="text-[var(--ribbon-primary)] font-bold hover:underline"
             >
-              Reiniciar
+              Ver todo
             </button>
-          </div>
-        )}
-
-        {catalog.showFilters && filtersOpen && (
-          <div className="mb-8">
-            <div className="bg-white/80 border border-slate-200/60 rounded-2xl p-6 shadow-sm">
-              <CatalogFilters
-                categories={categories}
-                activeCategoryIds={activeCategoryIds}
-                onToggleCategory={toggleCategory}
-                minPrice={minPrice}
-                maxPrice={maxPrice}
-                onMinPriceChange={setMinPrice}
-                onMaxPriceChange={setMaxPrice}
-                priceBounds={priceBounds}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                primaryColor={primary}
-                showSort={catalog.showSort}
-              />
-            </div>
-          </div>
-        )}
-
-        {filteredProducts && filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id || product.$id}
-                product={product}
-                onCategoryClick={
-                  catalog.showFilters ? (id) => toggleCategory(id) : undefined
-                }
-                onClick={() => setSelectedProduct(product)}
-                showShareButton={catalog.showShareButton}
-                showCategories={catalog.showFilters}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-center text-slate-500">
-            <p>No se encontraron productos.</p>
           </div>
         )}
       </main>
 
-      {catalog.showPurchaseInfo && (
-        <StorePurchaseInfo
-          store={store}
-          showPaymentButton={catalog.showPaymentButton}
-          wrapperClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full"
-        />
-      )}
+      {/* Footer */}
       <StoreFooter
         store={store}
         config={{
-          bg: "bg-slate-900",
-          text: "text-slate-400",
-          border: "border-slate-800",
-          muted: "text-slate-500",
-          accent: "text-white",
+          bg: "bg-white",
+          text: "text-stone-500",
+          border: "border-stone-100",
         }}
       />
 
-      {/* Mobile Menu Overlay */}
+      {/* Filter Drawer (Left Side) */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {isFilterDrawerOpen && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 z-60 bg-slate-900/30 backdrop-blur-sm md:hidden"
+              onClick={() => setIsFilterDrawerOpen(false)}
+              className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-sm"
             />
-
             <motion.div
-              initial={{ x: "100%" }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 30 }}
+              className="fixed inset-y-0 left-0 z-50 w-[300px] bg-white shadow-2xl flex flex-col overflow-hidden border-r-4 border-[var(--ribbon-primary)]"
+              style={{ top: "var(--store-navbar-offset, 0px)" }}
             >
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="absolute top-8 right-8 p-2 border border-slate-200 rounded-full text-slate-900"
-              >
-                <X size={24} />
-              </button>
+              <div className="p-8 bg-[var(--ribbon-secondary)] flex justify-between items-center">
+                <h2 className="text-xl font-serif font-bold text-[var(--ribbon-primary)]">
+                  Menú
+                </h2>
+                <button
+                  onClick={() => setIsFilterDrawerOpen(false)}
+                  className="text-[var(--ribbon-primary)] p-1 hover:bg-white/50 rounded-full transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
 
-              <div className="space-y-10">
-                {(catalog.showSearch || catalog.showFilters) && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                        Búsqueda y Filtros
-                      </h3>
-                      <button
-                        onClick={resetFilters}
-                        className="text-[10px] font-bold uppercase tracking-widest text-slate-900"
-                      >
-                        Reiniciar
-                      </button>
-                    </div>
-                    {catalog.showSearch && (
-                      <div className="relative">
-                        <input
-                          type="search"
-                          value={searchQuery}
-                          onChange={(event) =>
-                            setSearchQuery(event.target.value)
-                          }
-                          placeholder="Buscar..."
-                          className="w-full px-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
-                        />
-                      </div>
-                    )}
-                    {catalog.showFilters && (
-                      <CatalogFilters
-                        categories={categories}
-                        activeCategoryIds={activeCategoryIds}
-                        onToggleCategory={toggleCategory}
-                        minPrice={minPrice}
-                        maxPrice={maxPrice}
-                        onMinPriceChange={setMinPrice}
-                        onMaxPriceChange={setMaxPrice}
-                        priceBounds={priceBounds}
-                        sortOrder={sortOrder}
-                        setSortOrder={setSortOrder}
-                        primaryColor={primary}
-                        showSort={catalog.showSort}
+              <div className="flex-grow overflow-y-auto p-8 space-y-10">
+                {/* Search Input */}
+                {catalog.showSearch && (
+                  <div className="space-y-4">
+                    <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                      Buscar
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Buscar..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full border-b-2 border-stone-200 py-2 pl-0 pr-8 text-sm outline-none focus:border-[var(--ribbon-primary)] bg-transparent placeholder:text-stone-300 transition-colors"
                       />
-                    )}
+                      <Search
+                        className="absolute right-0 top-1/2 -translate-y-1/2 text-stone-400"
+                        size={18}
+                      />
+                    </div>
                   </div>
                 )}
 
-                {store?.paymentLink && catalog.showPaymentButton && (
-                  <div className="pt-8 border-t border-slate-100">
+                {/* Categories Vertical */}
+                {categories.length > 0 && (
+                  <div className="space-y-4">
+                    <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                      Colecciones
+                    </label>
+                    <div className="flex flex-col gap-3">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            toggleCategory(cat.id);
+                            setIsFilterDrawerOpen(false);
+                          }}
+                          className={`text-left text-sm py-1 flex items-center justify-between group ${activeCategoryIds.includes(cat.id) ? "font-bold text-[var(--ribbon-primary)]" : "text-stone-600 hover:text-[var(--ribbon-primary)]"}`}
+                        >
+                          <span>{cat.name}</span>
+                          <ChevronRight
+                            size={14}
+                            className={`opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all ${activeCategoryIds.includes(cat.id) ? "opacity-100 translate-x-0" : ""}`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Featured Toggle */}
+                {hasFeaturedProducts && (
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                      Solo destacados
+                    </label>
+                    <button
+                      onClick={toggleFeaturedOnly}
+                      className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${
+                        showFeaturedOnly
+                          ? "bg-[var(--ribbon-primary)]"
+                          : "bg-stone-200"
+                      }`}
+                    >
+                      <div
+                        className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
+                          showFeaturedOnly ? "translate-x-6" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
+
+                {/* Filters Actions */}
+                <div className="pt-4 space-y-3">
+                  <button
+                    onClick={resetFilters}
+                    className="w-full py-3 bg-stone-100 text-stone-600 text-xs font-bold uppercase tracking-widest hover:bg-stone-200 rounded-lg"
+                  >
+                    Limpiar Filtros
+                  </button>
+                  {store?.paymentLink && catalog.showPaymentButton && (
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-4 bg-slate-900 text-white rounded-full font-bold flex items-center justify-center gap-2 whitespace-nowrap"
+                      className="block w-full py-3 bg-[var(--ribbon-primary)] text-white text-center text-xs font-bold uppercase tracking-widest rounded-lg shadow-lg hover:shadow-xl transition-shadow"
                     >
-                      <ExternalLink size={20} /> Ir al pago
+                      Ir al Checkout
                     </a>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
+      {/* Modals */}
+      <ImageViewerModal
+        isOpen={viewer.isOpen}
+        onClose={() => setViewer((v) => ({ ...v, isOpen: false }))}
+        images={viewer.images}
+        initialIndex={viewer.index}
+      />
       <ProductDetailModal
         product={selectedProduct}
         isOpen={!!selectedProduct}

@@ -54,6 +54,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   // ImageViewerModal State
@@ -218,6 +221,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                   showPrice={catalog.showFilters}
                   showCategories={catalog.showFilters}
                   orientation="vertical"
+                  showFeaturedOnly={showFeaturedOnly}
+                  onToggleFeaturedOnly={toggleFeaturedOnly}
+                  hasFeaturedProducts={hasFeaturedProducts}
                 />
               </aside>
             )}
@@ -252,6 +258,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                     showSort={catalog.showSort}
                     showPrice={catalog.showFilters}
                     showCategories={catalog.showFilters}
+                    showFeaturedOnly={showFeaturedOnly}
+                    onToggleFeaturedOnly={toggleFeaturedOnly}
+                    hasFeaturedProducts={hasFeaturedProducts}
                   />
                 </div>
               )}
@@ -293,9 +302,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                           onClick={() => setSelectedProduct(product)}
                           showShareButton={catalog.showShareButton}
                           showCategories={catalog.showFilters}
-                          isFeatured={featuredProductIds.includes(
-                            product.id || product.$id,
-                          )}
+                          isFeatured={product.isFeatured}
                         />
                       </motion.div>
                     ))}
@@ -422,6 +429,9 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                           showPrice={catalog.showFilters}
                           showCategories={catalog.showFilters}
                           orientation="vertical"
+                          showFeaturedOnly={showFeaturedOnly}
+                          onToggleFeaturedOnly={toggleFeaturedOnly}
+                          hasFeaturedProducts={hasFeaturedProducts}
                         />
                       )}
                     </div>

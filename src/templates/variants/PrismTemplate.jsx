@@ -82,6 +82,9 @@ export function PrismTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   const [viewer, setViewer] = useState({
@@ -446,7 +449,7 @@ export function PrismTemplate({ store, products, isPreview = false }) {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 z-50 w-[85%] bg-[#0f0f0f] border-l border-white/10 p-6 pt-24 shadow-2xl overflow-y-auto lg:hidden"
+              className="fixed inset-y-0 right-0 z-50 w-[85%] bg-[#0f0f0f] border-l border-white/10 p-4 pt-24 shadow-2xl overflow-y-auto lg:hidden"
             >
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -454,26 +457,6 @@ export function PrismTemplate({ store, products, isPreview = false }) {
               >
                 <X size={24} />
               </button>
-
-              <h3 className="text-2xl font-bold text-white mb-8">Filtros</h3>
-
-              {catalog.showSearch && (
-                <div className="mb-8">
-                  <div className="relative">
-                    <Search
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"
-                      size={18}
-                    />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Buscar..."
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-[var(--prism-accent)] transition-colors placeholder:text-white/30"
-                    />
-                  </div>
-                </div>
-              )}
 
               {catalog.showFilters && (
                 <CatalogControls
@@ -489,12 +472,15 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                   sortOrder={sortOrder}
                   setSortOrder={setSortOrder}
                   categories={categories}
-                  tone="dark"
-                  showSearch={false}
+                  tone="dark" // Using dark/noir tone
+                  showSearch={catalog.showSearch}
                   showFilters={true}
                   showSort={catalog.showSort}
                   showPrice={catalog.showFilters}
                   showCategories={catalog.showFilters}
+                  showFeaturedOnly={showFeaturedOnly}
+                  onToggleFeaturedOnly={toggleFeaturedOnly}
+                  hasFeaturedProducts={hasFeaturedProducts}
                   onReset={resetFilters}
                   layout="vertical"
                 />

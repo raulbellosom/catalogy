@@ -108,6 +108,9 @@ export function NatureTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer State
@@ -148,12 +151,13 @@ export function NatureTemplate({ store, products, isPreview = false }) {
         .animate-sway { animation: sway 8s ease-in-out infinite; }
         .animate-breathe { animation: breathe 4s ease-in-out infinite; }
         .organic-shape { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        .organic-bottom { border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
         .nature-card {
           transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .nature-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 20px 40px -15px rgba(34, 84, 44, 0.15);
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 20px 40px -10px rgba(var(--nature-primary-rgb), 0.2);
         }
       `}</style>
 
@@ -167,39 +171,44 @@ export function NatureTemplate({ store, products, isPreview = false }) {
         <FloatingLeaf delay={5} duration={17} startX={1100} size={12} />
       </div>
 
-      <StoreNavbar
-        store={store}
-        isPreview={isPreview}
-        config={{
-          bg: "bg-(--nature-secondary)/80",
-          text: "text-[#2d2a26]",
-          border: "border-green-200/20",
-          accent: "text-(--nature-primary)",
-          glass: true,
-        }}
-        search={
-          catalog.showSearch
-            ? {
-                query: searchQuery,
-                onQueryChange: setSearchQuery,
-              }
-            : null
-        }
-        onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-      />
+      {/* Store Navbar - Fixed & Glassmorphic */}
+      <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <StoreNavbar
+          store={store}
+          isPreview={isPreview}
+          config={{
+            bg: "bg-white/70",
+            text: "text-[#2d2a26]",
+            border: "border-transparent",
+            accent: "text-(--nature-primary)",
+            glass: true,
+          }}
+          search={
+            catalog.showSearch
+              ? {
+                  query: searchQuery,
+                  onQueryChange: setSearchQuery,
+                  variant: "minimal", // Or 'pill' if available
+                }
+              : null
+          }
+          onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="backdrop-blur-md shadow-sm"
+        />
+      </nav>
 
       {/* Hero Section */}
-      <header className="relative py-16 md:py-24 px-4 overflow-hidden">
+      <header className="relative pt-32 pb-24 px-6 overflow-hidden bg-white/40 organic-bottom mb-12">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center relative z-10">
           {/* Nature Icons Background - with parallax */}
           <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03] flex justify-between items-center px-10"
-            style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+            className="absolute inset-0 pointer-events-none opacity-[0.06] flex justify-between items-center px-10"
+            style={{ transform: `translateY(${scrollY * 0.15}px)` }}
           >
-            <Trees className="w-64 h-64 text-green-900 -rotate-12 animate-sway" />
-            <Cloud className="w-48 h-48 text-blue-900 translate-y-[-100px] animate-float" />
+            <Trees className="w-80 h-80 text-(--nature-primary) -rotate-12 animate-sway" />
+            <Cloud className="w-56 h-56 text-blue-900/20 translate-y-[-100px] animate-float" />
             <Wind
-              className="w-40 h-40 text-green-900 rotate-12 animate-sway"
+              className="w-48 h-48 text-(--nature-primary) rotate-12 animate-sway"
               style={{ animationDelay: "2s" }}
             />
           </div>
@@ -208,59 +217,59 @@ export function NatureTemplate({ store, products, isPreview = false }) {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              className="mb-8 p-1 bg-white organic-shape shadow-xl shadow-green-900/5 overflow-hidden w-24 h-24 md:w-32 md:h-32 flex items-center justify-center"
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="mb-8 p-2 bg-white organic-shape shadow-2xl shadow-green-900/10 overflow-hidden w-32 h-32 md:w-40 md:h-40 flex items-center justify-center relative z-20"
             >
               <img
                 src={logoUrl}
                 alt={store.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-full"
               />
             </motion.div>
           ) : (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              className="mb-8 p-6 bg-green-50 text-(--nature-primary) organic-shape animate-float"
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="mb-8 p-8 bg-green-50 text-(--nature-primary) organic-shape animate-float shadow-xl shadow-green-900/10"
             >
-              <Leaf size={48} />
+              <Leaf size={64} strokeWidth={1.5} />
             </motion.div>
           )}
 
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-4xl md:text-6xl font-serif font-bold text-[#1a2e1a] mb-6 leading-tight"
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-5xl md:text-7xl font-serif font-medium text-[#1a2e1a] mb-6 leading-tight tracking-tight relative z-20"
           >
             {store.name}
           </motion.h1>
 
           {store.description && (
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="text-base md:text-lg text-[#4a554a] max-w-2xl mx-auto font-light leading-relaxed line-clamp-2"
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-lg md:text-xl text-[#4a554a] max-w-2xl mx-auto font-light leading-relaxed relative z-20"
             >
               {store.description}
             </motion.p>
           )}
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-10 flex flex-wrap justify-center gap-4"
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-12 flex flex-wrap justify-center gap-4 relative z-20"
           >
             <a
               href="#catalog"
-              className="group px-8 py-3 bg-(--nature-primary) text-white rounded-full font-medium shadow-lg shadow-green-900/20 hover:scale-105 hover:shadow-xl transition-all flex items-center gap-2"
+              className="group px-10 py-4 bg-(--nature-primary) text-white rounded-full font-medium shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-3 text-lg"
             >
               Explorar Catálogo{" "}
               <ArrowRight
-                size={18}
+                size={20}
                 className="group-hover:translate-x-1 transition-transform"
               />
             </a>
@@ -269,11 +278,11 @@ export function NatureTemplate({ store, products, isPreview = false }) {
 
         {/* Decorative elements - with parallax */}
         <div
-          className="absolute top-0 right-0 w-64 h-64 bg-green-100 organic-shape opacity-40 blur-3xl -mr-20 -mt-20 animate-breathe"
-          style={{ transform: `translateY(${scrollY * -0.15}px)` }}
+          className="absolute top-0 right-0 w-96 h-96 bg-green-200/40 organic-shape blur-[80px] -mr-32 -mt-32 animate-breathe"
+          style={{ transform: `translateY(${scrollY * -0.2}px)` }}
         />
         <div
-          className="absolute bottom-0 left-0 w-80 h-80 bg-orange-100 organic-shape opacity-30 blur-3xl -ml-20 -mb-20 animate-breathe"
+          className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-orange-100/60 organic-shape blur-[80px] -ml-40 -mb-40 animate-breathe"
           style={{
             animationDelay: "2s",
             transform: `translateY(${scrollY * 0.1}px)`,
@@ -287,18 +296,23 @@ export function NatureTemplate({ store, products, isPreview = false }) {
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full relative z-10"
       >
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-12">
-          {/* Sidebar / Filters - Hidden on Mobile */}
+          {/* Sidebar / Filters - "Greenhouse" Style */}
           {catalog.showFilters && (
-            <div className="hidden lg:block lg:w-72 shrink-0">
-              <div className="sticky top-24 space-y-8">
-                <div className="bg-white/50 backdrop-blur-sm border border-green-50 rounded-3xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-green-800/60 flex items-center gap-2">
-                      <Filter size={14} /> Filtros
+            <aside className="hidden lg:block lg:w-80 shrink-0">
+              <div className="sticky top-28 space-y-8">
+                <div className="bg-white/60 backdrop-blur-md border border-white/50 rounded-[2rem] p-8 shadow-sm relative overflow-hidden">
+                  {/* Decorative vine/leaf */}
+                  <div className="absolute top-0 right-0 text-green-100 -mr-4 -mt-4 opacity-50 pointer-events-none">
+                    <Leaf size={64} className="rotate-45" />
+                  </div>
+
+                  <div className="flex items-center justify-between mb-8 relative z-10">
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-[#1a2e1a]/70 flex items-center gap-2">
+                      <Filter size={16} /> Filtros
                     </h3>
                     <button
                       onClick={resetFilters}
-                      className="text-[10px] font-bold uppercase tracking-widest text-(--nature-primary)"
+                      className="text-[10px] font-bold uppercase tracking-widest text-(--nature-primary) hover:underline bg-white/50 px-2 py-1 rounded-full"
                     >
                       Reiniciar
                     </button>
@@ -316,10 +330,13 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                     setSortOrder={setSortOrder}
                     primaryColor={primary}
                     showSort={catalog.showSort}
+                    showFeaturedOnly={showFeaturedOnly}
+                    onToggleFeaturedOnly={toggleFeaturedOnly}
+                    hasFeaturedProducts={hasFeaturedProducts}
                   />
                 </div>
               </div>
-            </div>
+            </aside>
           )}
 
           {/* Product Grid */}
@@ -344,27 +361,36 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                   return (
                     <motion.div
                       key={product.$id}
-                      initial={{ opacity: 0, y: 30 }}
+                      initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        duration: 0.5,
-                        delay: index * 0.06,
-                        ease: [0.25, 0.46, 0.45, 0.94],
+                        duration: 0.7,
+                        delay: index * 0.08,
+                        ease: [0.22, 1, 0.36, 1],
                       }}
                       onClick={() => setSelectedProduct(product)}
-                      className="group cursor-pointer nature-card bg-white rounded-4xl overflow-hidden border border-green-50/50 shadow-sm"
+                      className="group cursor-pointer nature-card bg-white rounded-[2rem] overflow-hidden border border-white shadow-sm hover:border-green-100/50"
                     >
-                      <div className="aspect-4/5 overflow-hidden relative">
+                      <div className="aspect-4/5 overflow-hidden relative bg-[#f4f7f4]">
                         {imageUrl ? (
                           <img
                             src={imageUrl}
                             alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                            className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110"
                             loading="lazy"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                            <Flower2 className="w-12 h-12 text-green-100" />
+                          <div className="w-full h-full flex items-center justify-center bg-[#f0fdf4]">
+                            <Flower2 className="w-16 h-16 text-green-200" />
+                          </div>
+                        )}
+
+                        {product.isFeatured && (
+                          <div className="absolute top-4 left-4 z-10">
+                            <span className="bg-stone-800/90 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest border border-white/20 shadow-lg flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>{" "}
+                              Destacado
+                            </span>
                           </div>
                         )}
 
@@ -375,55 +401,43 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                               event.stopPropagation();
                               shareProduct(product);
                             }}
-                            className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/90 text-[#1a2e1a] flex items-center justify-center shadow-sm hover:shadow-md hover:bg-(--nature-primary) hover:text-white transition-all"
+                            className="absolute right-4 top-4 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm text-[#1a2e1a] flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-(--nature-primary) hover:text-white"
                             aria-label="Compartir producto"
                           >
-                            <Share2 size={16} />
+                            <Share2 size={18} />
                           </button>
                         )}
 
-                        {/* Price Tag Overlay */}
-                        <div className="absolute bottom-4 left-4">
-                          <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-bold text-(--nature-primary) shadow-sm">
+                        {/* Price Tag Overlay - Organic Pill */}
+                        <div className="absolute bottom-4 left-4 right-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0 delay-75">
+                          <span className="bg-white/95 backdrop-blur-md px-6 py-2 rounded-full text-base font-bold text-[#1a2e1a] shadow-lg border border-white/50">
                             {formatPrice(product.price, product.currency)}
                           </span>
                         </div>
 
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-green-900/0 group-hover:bg-green-900/10 transition-colors duration-500" />
+                        {/* Quick View Overlay (Mobile mostly) */}
+                        <div className="absolute inset-0 bg-green-900/0 group-hover:bg-green-900/5 transition-colors duration-500" />
                       </div>
 
-                      <div className="p-4 md:p-6">
-                        <h3 className="font-serif text-base md:text-lg font-bold text-[#1a2e1a] mb-1 group-hover:text-(--nature-primary) transition-colors line-clamp-2">
+                      <div className="p-6 text-center">
+                        <h3 className="font-serif text-lg font-bold text-[#1a2e1a] mb-2 group-hover:text-(--nature-primary) transition-colors line-clamp-2 leading-tight">
                           {product.name}
                         </h3>
                         {catalog.showFilters &&
                           product.categories &&
                           product.categories.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-3">
-                              {product.categories.slice(0, 2).map((cat) => (
-                                <button
+                            <div className="flex flex-wrap gap-1 mb-3 justify-center">
+                              {product.categories.slice(0, 1).map((cat) => (
+                                <span
                                   key={cat.id}
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    toggleCategory(cat.id);
-                                  }}
-                                  className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-green-50 text-[#1a2e1a] hover:bg-(--nature-primary) hover:text-white transition-colors"
+                                  className="text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full bg-[#f4f7f4] text-[#5d6b5d]"
                                 >
                                   {cat.name}
-                                </button>
+                                </span>
                               ))}
                             </div>
                           )}
-                        {product.description && (
-                          <p className="text-xs md:text-sm text-[#5d6b5d] line-clamp-1 italic mb-4">
-                            {product.description}
-                          </p>
-                        )}
-                        <div className="flex items-center text-(--nature-primary) text-xs font-bold uppercase tracking-widest gap-1 group-hover:gap-2 transition-all">
-                          Ver detalles <ChevronRight size={14} />
-                        </div>
+                        <div className="w-8 h-1 bg-(--nature-primary)/20 rounded-full mx-auto mt-4 group-hover:w-16 group-hover:bg-(--nature-primary) transition-all duration-300" />
                       </div>
                     </motion.div>
                   );
@@ -540,6 +554,9 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                         setSortOrder={setSortOrder}
                         primaryColor={primary}
                         showSort={catalog.showSort}
+                        showFeaturedOnly={showFeaturedOnly}
+                        onToggleFeaturedOnly={toggleFeaturedOnly}
+                        hasFeaturedProducts={hasFeaturedProducts}
                       />
                     )}
                   </div>

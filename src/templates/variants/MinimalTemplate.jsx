@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, ShoppingBag, X, Filter, Share2 } from "lucide-react";
+import {
+  Search,
+  ShoppingBag,
+  X,
+  Filter,
+  Share2,
+  ArrowRight,
+} from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import {
@@ -16,7 +23,6 @@ import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
-// Internal helpers removed in favor of registry.resolveThemeSettings
 const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
@@ -34,32 +40,26 @@ const formatPrice = (price, currency = "MXN") => {
   return price.toLocaleString("es-MX", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 };
 
 export function MinimalTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const catalog = resolveCatalogSettings(store);
-  const [showFilters, setShowFilters] = useState(catalog.showFilters);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false); // For desktop toggle
 
-  // Settings Resolution
   const theme = resolveThemeSettings(store);
+  const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
-  const primary = theme.colors.primary;
+  const primary = theme.colors.primary || "#000000";
+  const secondary = theme.colors.secondary || "#ffffff";
 
   // Featured Products
   const featuredProductIds = catalog.featuredProductIds || [];
   const featuredProducts =
     products?.filter((p) => featuredProductIds.includes(p.id || p.$id)) || [];
-  const secondary = theme.colors.secondary;
-  const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
-
-  useEffect(() => {
-    setShowFilters(catalog.showFilters);
-  }, [catalog.showFilters]);
 
   const {
     categories,
@@ -76,9 +76,10 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
-
-  const showMobileFilters = catalog.showSearch || catalog.showFilters;
 
   // ImageViewer State
   const [viewer, setViewer] = useState({
@@ -87,426 +88,384 @@ export function MinimalTemplate({ store, products, isPreview = false }) {
     index: 0,
   });
 
-  const openViewer = (index, images) => {
+  const openViewer = (index, images, e) => {
+    e?.stopPropagation();
     setViewer({ isOpen: true, images, index });
   };
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-(--color-bg) text-gray-900 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
+      className="min-h-screen flex flex-col bg-white text-stone-900"
       style={{
         fontFamily,
         colorScheme: "light",
         "--minimal-accent": primary,
-        "--minimal-secondary": secondary,
-        "--store-navbar-height": "4rem",
         "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
-      <StoreNavbar
-        store={store}
-        isPreview={isPreview}
-        config={{
-          bg: "bg-(--color-bg)/80",
-          text: "text-gray-900",
-          border: "border-gray-900/5",
-          accent: "text-(--minimal-accent)",
-          glass: true,
-        }}
-        search={
-          catalog.showSearch
-            ? {
-                query: searchQuery,
-                onQueryChange: setSearchQuery,
-              }
-            : null
+      <style>{`
+        .minimal-scroll::-webkit-scrollbar {
+          width: 0px;
+          background: transparent;
         }
-        onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-        actions={
-          store?.paymentLink &&
-          catalog.showPaymentButton && (
-            <div className="hidden md:flex items-center gap-6">
-              <a
-                href={store.paymentLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
-                style={{ backgroundColor: primary }}
-              >
-                Ir al pago
-              </a>
+      `}</style>
+
+      {/* Navbar - Sticky & Clean */}
+      <nav className="fixed top-[var(--store-navbar-offset)] w-full z-40 bg-white/90 backdrop-blur-md border-b border-stone-100 transition-all duration-300">
+        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="text-xl font-bold tracking-tighter uppercase flex items-center gap-3">
+            {store.logoFileId ? (
+              <img
+                src={getStoreLogoUrl(store.logoFileId)}
+                alt={store.name}
+                className="h-8 md:h-10 w-auto object-contain"
+              />
+            ) : (
+              <span>{store.name}</span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-6">
+            {catalog.showSearch && (
+              <div className="hidden md:flex items-center bg-stone-50 rounded-full px-4 py-2 border border-stone-100 focus-within:border-stone-900 transition-colors w-64">
+                <Search size={16} className="text-stone-400 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent outline-none text-sm w-full placeholder:text-stone-400"
+                />
+              </div>
+            )}
+
+            <button
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Filter size={24} strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero / Intro */}
+      <header className="px-6 py-20 md:py-32 max-w-[1400px] mx-auto w-full pt-[calc(var(--store-navbar-offset)+5rem+5rem)]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-4xl"
+        >
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-[0.9] mb-8 text-stone-900">
+            {store.name}
+            <span className="text-[var(--minimal-accent)]">.</span>
+          </h1>
+          {store.description && (
+            <p className="text-xl md:text-2xl text-stone-500 font-light leading-relaxed max-w-2xl">
+              {store.description}
+            </p>
+          )}
+        </motion.div>
+      </header>
+
+      {/* Main Layout: Sticky Sidebar + Grid */}
+      <main className="flex-grow w-full max-w-[1400px] mx-auto px-6 pb-32 flex flex-col md:flex-row gap-12 relative">
+        {/* Desktop Sidebar */}
+        {catalog.showFilters && (
+          <aside
+            className={`hidden md:block w-64 flex-shrink-0 sticky top-[calc(var(--store-navbar-offset)+6rem)] h-[calc(100vh-8rem)] overflow-y-auto minimal-scroll pr-4 transition-all duration-500 ${isFiltersCollapsed ? "-ml-[17rem] opacity-0 pointer-events-none" : ""}`}
+          >
+            <div className="space-y-10">
+              <div>
+                <div className="flex justify-between items-baseline mb-4">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                    Categorías
+                  </h3>
+                  <button
+                    onClick={resetFilters}
+                    className="text-[10px] uppercase font-bold text-stone-900 underline"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`text-left py-2 px-3 rounded-md text-sm transition-all ${activeCategoryIds.includes(cat.id) ? "bg-stone-900 text-white font-medium" : "text-stone-600 hover:bg-stone-100"}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-4">
+                  Precio
+                </h3>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(Number(e.target.value))}
+                    className="w-full bg-stone-50 border border-stone-200 p-2 text-sm rounded-md focus:outline-none focus:border-stone-900"
+                  />
+                  <span className="text-stone-400">-</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(Number(e.target.value))}
+                    className="w-full bg-stone-50 border border-stone-200 p-2 text-sm rounded-md focus:outline-none focus:border-stone-900"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-4">
+                  Ordenar
+                </h3>
+                <div className="relative">
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="w-full bg-stone-50 border border-stone-200 p-2 text-sm rounded-md appearance-none focus:outline-none focus:border-stone-900"
+                  >
+                    <option value="">Relevancia</option>
+                    <option value="price-asc">Menor precio</option>
+                    <option value="price-desc">Mayor precio</option>
+                  </select>
+                  <ArrowRight
+                    size={14}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 rotate-90"
+                  />
+                </div>
+              </div>
+
+              {hasFeaturedProducts && (
+                <div className="pt-6 border-t border-gray-100">
+                  <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+                    Destacados
+                  </h3>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div
+                      className={`w-5 h-5 border rounded flex items-center justify-center transition-colors ${
+                        showFeaturedOnly
+                          ? "bg-black border-black"
+                          : "border-gray-300 group-hover:border-black"
+                      }`}
+                    >
+                      {showFeaturedOnly && (
+                        <Check size={14} className="text-white" />
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-600 group-hover:text-black transition-colors">
+                      Ver solo destacados
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={showFeaturedOnly}
+                      onChange={toggleFeaturedOnly}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
-          )
-        }
+          </aside>
+        )}
+
+        {/* Product Grid */}
+        <div className="flex-1 min-w-0">
+          {/* Filter Toggle (If needed) & Product Count */}
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-stone-100">
+            <div className="text-sm font-medium text-stone-500">
+              {filteredProducts.length} Productos
+            </div>
+            {catalog.showFilters && (
+              <button
+                onClick={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
+                className="hidden md:flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-[var(--minimal-accent)]"
+              >
+                <Filter size={14} />
+                {isFiltersCollapsed ? "Mostrar Filtros" : "Ocultar Filtros"}
+              </button>
+            )}
+          </div>
+
+          {filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-12">
+              {filteredProducts.map((product) => {
+                const imageUrl = product.imageFileIds?.[0]
+                  ? getProductImageUrl(product.imageFileIds[0])
+                  : null;
+
+                return (
+                  <motion.div
+                    key={product.$id}
+                    layoutId={product.$id}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="group cursor-pointer flex flex-col gap-4"
+                    onClick={() => setSelectedProduct(product)}
+                  >
+                    <div className="aspect-[3/4] bg-stone-100 relative overflow-hidden">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-stone-300">
+                          <ShoppingBag size={32} />
+                        </div>
+                      )}
+
+                      {catalog.showShareButton && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-stone-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white"
+                        >
+                          <Share2 size={16} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <h3 className="text-base font-bold text-stone-900 leading-tight group-hover:underline decoration-1 underline-offset-4 decoration-stone-900/30">
+                        {product.name}
+                      </h3>
+                      <p className="text-sm text-stone-500 font-medium">
+                        {formatPrice(product.price, product.currency)}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-24 text-center">
+              <h3 className="text-xl font-bold mb-2">Sin resultados</h3>
+              <p className="text-stone-500 mb-6">
+                No encontramos productos con esos filtros.
+              </p>
+              <button
+                onClick={resetFilters}
+                className="text-sm font-bold underline"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <StoreFooter
+        store={store}
+        config={{
+          bg: "bg-stone-900",
+          text: "text-stone-400",
+          border: "border-stone-800",
+        }}
       />
 
+      {/* Mobile Menu & Filters (Drawer) */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {isMobileMenuOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 z-60 bg-black/10 backdrop-blur-[2px] md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 z-50 bg-stone-900/20 backdrop-blur-sm md:hidden"
             />
-
-            {/* Menu Sidebar */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              transition={{ type: "spring", damping: 30 }}
+              className="fixed inset-y-0 right-0 z-50 w-[85%] max-w-sm bg-white p-6 pt-20 flex flex-col md:hidden overflow-hidden"
+              style={{ top: "var(--store-navbar-offset, 0px)" }}
             >
               <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="absolute top-8 right-8 p-2 text-gray-600 hover:text-black border border-gray-100 rounded-full shadow-sm"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="absolute top-6 right-6 p-2"
               >
                 <X size={24} />
               </button>
 
-              <div className="space-y-12">
-                {showMobileFilters && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                        Búsqueda y Filtros
-                      </h3>
-                      <button
-                        onClick={resetFilters}
-                        className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
-                      >
-                        Reiniciar
-                      </button>
-                    </div>
-                    {catalog.showSearch && (
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="search"
-                          value={searchQuery}
-                          onChange={(event) =>
-                            setSearchQuery(event.target.value)
-                          }
-                          placeholder="Buscar..."
-                          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-gray-200 bg-gray-50 text-gray-900 placeholder:text-gray-400"
-                        />
-                      </div>
-                    )}
-                    {catalog.showFilters && (
-                      <CatalogFilters
-                        categories={categories}
-                        activeCategoryIds={activeCategoryIds}
-                        onToggleCategory={toggleCategory}
-                        minPrice={minPrice}
-                        maxPrice={maxPrice}
-                        onMinPriceChange={setMinPrice}
-                        onMaxPriceChange={setMaxPrice}
-                        priceBounds={priceBounds}
-                        sortOrder={sortOrder}
-                        setSortOrder={setSortOrder}
-                        primaryColor={primary}
-                        showSort={catalog.showSort}
-                      />
-                    )}
+              <div className="flex-grow overflow-y-auto space-y-8 pb-8 overflow-x-hidden">
+                <h2 className="text-2xl font-bold tracking-tight mb-6">
+                  Filtros
+                </h2>
+
+                {/* Search Mobile */}
+                {catalog.showSearch && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-stone-50 p-4 rounded-lg text-sm outline-none border border-stone-200"
+                    />
+                    <Search
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400"
+                      size={18}
+                    />
                   </div>
                 )}
 
-                {store?.paymentLink && catalog.showPaymentButton && (
-                  <div className="pt-8 border-t border-gray-100">
+                {/* Categories List Mobile */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">
+                    Categorías
+                  </h3>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`w-full text-left py-3 border-b border-stone-100 text-sm font-medium ${activeCategoryIds.includes(cat.id) ? "text-stone-900 border-stone-900" : "text-stone-500"}`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Actions Mobile */}
+                <div className="pt-8 space-y-4">
+                  <button
+                    onClick={resetFilters}
+                    className="w-full py-3 border border-stone-200 text-stone-900 font-bold text-xs uppercase tracking-widest"
+                  >
+                    Limpiar
+                  </button>
+                  {store?.paymentLink && catalog.showPaymentButton && (
                     <a
                       href={store.paymentLink}
                       target="_blank"
-                      className="w-full py-4 px-4 bg-black text-white rounded-full font-bold flex items-center justify-center shadow-lg whitespace-nowrap"
-                      style={{ backgroundColor: primary }}
+                      className="block w-full py-4 bg-stone-900 text-white text-center font-bold text-xs uppercase tracking-widest"
                     >
                       Ir al pago
                     </a>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
-
-      {/* Hero Section: Simple & Text-based */}
-      <header className="relative bg-(--color-bg) py-16 md:py-24 border-b border-gray-900/5 overflow-hidden">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6 relative z-10">
-          {logoUrl && (
-            <div className="flex justify-center mb-6">
-              <img
-                src={logoUrl}
-                alt={store.name}
-                className="h-16 md:h-24 w-auto object-contain"
-              />
-            </div>
-          )}
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900 leading-tight">
-            {store?.name}
-          </h1>
-          {store?.description && (
-            <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-              {store.description}
-            </p>
-          )}
-        </div>
-
-        {/* Abstract Background Element */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-(--minimal-accent) rounded-full opacity-[0.03] blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 bg-(--minimal-secondary) rounded-full opacity-[0.03] blur-3xl pointer-events-none"></div>
-      </header>
-
-      {/* Featured Section */}
-      {featuredProducts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-b border-gray-900/5">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-px bg-gray-200 flex-1" />
-            <h2 className="text-sm font-bold uppercase tracking-widest text-(--minimal-accent)">
-              Destacados
-            </h2>
-            <div className="h-px bg-gray-200 flex-1" />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8">
-            {featuredProducts.map((product) => {
-              const imageId = product.imageFileIds?.[0];
-              const imageUrl = imageId ? getProductImageUrl(imageId) : null;
-              return (
-                <div
-                  key={product.id || product.$id}
-                  onClick={() => setSelectedProduct(product)}
-                  className="group cursor-pointer flex flex-col gap-4"
-                >
-                  <div className="relative aspect-4/5 bg-gray-50 overflow-hidden rounded-sm hover-trigger">
-                    {imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">
-                        <ShoppingBag className="w-8 h-8 opacity-20" />
-                      </div>
-                    )}
-                    <div className="absolute top-2 left-2">
-                      <span className="bg-(--minimal-accent) text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
-                        Star
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-center">
-                    <h3 className="font-medium text-gray-900 group-hover:text-(--minimal-accent) transition-colors">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm font-medium text-gray-500">
-                      {formatPrice(product.price, product.currency)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* Main Content */}
-      <main className="grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        {(catalog.showProductCount || catalog.showFilters) && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-900/5 pb-4">
-            {catalog.showProductCount && (
-              <div>
-                <span className="text-sm text-gray-500 font-medium">
-                  Mostrando {filteredProducts?.length || 0} productos
-                </span>
-              </div>
-            )}
-
-            {catalog.showFilters && (
-              <div className="hidden md:flex items-center gap-2">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`group flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-full transition-all border ${
-                    showFilters
-                      ? "bg-gray-900 text-white border-gray-900"
-                      : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-                  }`}
-                  style={
-                    showFilters
-                      ? { backgroundColor: primary, borderColor: primary }
-                      : {}
-                  }
-                >
-                  <Filter className="w-4 h-4" />
-                  {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Sidebar Filters */}
-          {catalog.showFilters && (
-            <aside
-              className={`hidden lg:block lg:w-72 space-y-12 transition-all duration-300 ease-in-out ${
-                showFilters ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Filtros
-                </span>
-                <button
-                  onClick={resetFilters}
-                  className="text-[10px] font-bold uppercase tracking-widest text-(--minimal-accent)"
-                >
-                  Reiniciar
-                </button>
-              </div>
-              <CatalogFilters
-                categories={categories}
-                activeCategoryIds={activeCategoryIds}
-                onToggleCategory={toggleCategory}
-                minPrice={minPrice}
-                maxPrice={maxPrice}
-                onMinPriceChange={setMinPrice}
-                onMaxPriceChange={setMaxPrice}
-                priceBounds={priceBounds}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                primaryColor={primary}
-                showSort={catalog.showSort}
-              />
-            </aside>
-          )}
-
-          {/* Product Grid */}
-          <div className="flex-1">
-            {filteredProducts && filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-12">
-                {filteredProducts.map((product) => {
-                  // Get first valid image
-                  const imageId = product.imageFileIds?.[0];
-                  const imageUrl = imageId ? getProductImageUrl(imageId) : null;
-
-                  return (
-                    <div
-                      key={product.id || product.$id}
-                      onClick={() => setSelectedProduct(product)}
-                      className="group cursor-pointer flex flex-col gap-4"
-                    >
-                      {/* Image Aspect */}
-                      <div className="relative aspect-4/5 bg-gray-50 overflow-hidden rounded-sm hover-trigger">
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={product.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300">
-                            <ShoppingBag className="w-8 h-8 opacity-20" />
-                          </div>
-                        )}
-
-                        {catalog.showShareButton && (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              shareProduct(product);
-                            }}
-                            className="absolute right-3 top-3 h-8 w-8 rounded-full bg-white/90 text-gray-700 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                            aria-label="Compartir producto"
-                          >
-                            <Share2 className="w-4 h-4" />
-                          </button>
-                        )}
-
-                        {/* Overlay Action */}
-                        <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="bg-white text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                            Ver detalles
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Info */}
-                      <div className="space-y-1">
-                        <h3 className="font-medium text-gray-900 group-hover:text-(--minimal-accent) transition-colors">
-                          {product.name}
-                        </h3>
-                        {catalog.showFilters &&
-                          product.categories &&
-                          product.categories.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {product.categories.map((cat) => (
-                                <button
-                                  key={cat.id}
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    toggleCategory(cat.id);
-                                  }}
-                                  className="text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 hover:bg-(--minimal-accent) hover:text-white transition-colors"
-                                >
-                                  {cat.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        <p className="text-sm font-medium text-gray-500">
-                          {formatPrice(product.price, product.currency)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                  <Search className="w-6 h-6 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900">
-                  No encontramos resultados
-                </h3>
-                <p className="text-gray-500">
-                  Intenta ajustar los filtros o tu búsqueda.
-                </p>
-                <button
-                  onClick={resetFilters}
-                  className="mt-6 text-sm font-bold text-(--minimal-accent) hover:underline"
-                >
-                  Borrar filtros
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-
-      {catalog.showPurchaseInfo && (
-        <StorePurchaseInfo
-          store={store}
-          showPaymentButton={catalog.showPaymentButton}
-          wrapperClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full"
-        />
-      )}
-      <StoreFooter
-        store={store}
-        config={{
-          bg: "bg-gray-50",
-          text: "text-gray-500",
-          border: "border-gray-100",
-          muted: "text-gray-400",
-          accent: "text-black",
-        }}
-      />
 
       {/* Modals */}
       <ImageViewerModal

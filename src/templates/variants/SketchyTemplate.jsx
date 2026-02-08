@@ -2,13 +2,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
-  Menu,
+  ShoppingBag,
   X,
-  Share2,
   Filter,
-  RotateCcw,
-  Package,
-  ExternalLink,
+  Share2,
+  Menu,
+  Eraser,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -24,13 +23,6 @@ import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { Logo } from "@/shared/ui/atoms/Logo";
-
-/**
- * SketchyTemplate
- *
- * A hand-drawn, playful template inspired by mockup aesthetics.
- * Features irregular borders, sketch-like styling, and a whimsical vibe.
- */
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -55,113 +47,15 @@ const formatPrice = (price, currency = "MXN") => {
   });
 };
 
-// Custom sketchy border SVG filter
-const SketchyFilter = () => (
-  <svg className="absolute w-0 h-0" aria-hidden="true">
-    <defs>
-      <filter id="sketchy-filter">
-        <feTurbulence
-          type="turbulence"
-          baseFrequency="0.02"
-          numOctaves="3"
-          result="noise"
-        />
-        <feDisplacementMap
-          in="SourceGraphic"
-          in2="noise"
-          scale="2"
-          xChannelSelector="R"
-          yChannelSelector="G"
-        />
-      </filter>
-    </defs>
-  </svg>
-);
-
-// Sketchy button component
-const SketchyButton = ({
-  children,
-  variant = "primary",
-  className = "",
-  ...props
-}) => {
-  const baseStyles =
-    "relative h-[42px] px-5 font-bold transition-all duration-200 active:translate-y-0.5 flex items-center justify-center";
-
-  const variants = {
-    primary:
-      "bg-(--sketchy-primary) text-white border-3 border-black shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5",
-    secondary:
-      "bg-white text-black border-3 border-black shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5",
-    success:
-      "bg-[#5cb85c] text-white border-3 border-black shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5",
-    info: "bg-[#5bc0de] text-white border-3 border-black shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5",
-    warning:
-      "bg-[#f0ad4e] text-white border-3 border-black shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5",
-    ghost:
-      "bg-white text-black border-3 border-black shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5 opacity-70 hover:opacity-100",
-  };
-
-  return (
-    <button
-      className={`${baseStyles} ${variants[variant]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
-// Sketchy card wrapper
-const SketchyCard = ({ children, className = "", onClick, hover = true }) => (
+// Hand-drawn SVG components
+const Tape = ({ className = "" }) => (
   <div
-    onClick={onClick}
-    className={`
-      relative bg-white border-3 border-black 
-      shadow-[6px_6px_0_0_black] 
-      ${hover ? "hover:shadow-[3px_3px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer" : ""}
-      transition-all duration-200
-      ${className}
-    `}
-  >
-    {children}
-  </div>
-);
-
-// Sketchy input wrapper
-const SketchyInput = ({ className = "", ...props }) => (
-  <input
-    className={`
-      w-full px-4 py-3 bg-white border-3 border-black 
-      shadow-[3px_3px_0_0_black] 
-      focus:shadow-[1px_1px_0_0_black] focus:translate-x-0.5 focus:translate-y-0.5
-      outline-none transition-all duration-200
-      placeholder:text-gray-400
-      ${className}
-    `}
-    {...props}
+    className={`absolute w-24 h-8 bg-yellow-100/80 -rotate-3 z-10 shadow-sm opacity-90 backdrop-blur-[1px] ${className}`}
+    style={{
+      clipPath:
+        "polygon(2% 0%, 98% 0%, 100% 10%, 98% 20%, 100% 30%, 98% 40%, 100% 50%, 98% 60%, 100% 70%, 98% 80%, 100% 90%, 98% 100%, 2% 100%, 0% 90%, 2% 80%, 0% 70%, 2% 60%, 0% 50%, 2% 40%, 0% 30%, 2% 20%, 0% 10%)",
+    }}
   />
-);
-
-// Sketchy badge/tag
-const SketchyBadge = ({ children, onClick, active = false, color }) => (
-  <button
-    onClick={onClick}
-    className={`
-      px-3 py-1 text-xs font-bold uppercase tracking-wider
-      border-2 border-black transition-all duration-150
-      ${
-        active
-          ? "bg-black text-white shadow-none translate-x-0.5 translate-y-0.5"
-          : "bg-white text-black shadow-[2px_2px_0_0_black] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5"
-      }
-    `}
-    style={
-      active && color ? { backgroundColor: color, borderColor: "black" } : {}
-    }
-  >
-    {children}
-  </button>
 );
 
 export function SketchyTemplate({ store, products, isPreview = false }) {
@@ -169,13 +63,11 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Settings Resolution
   const theme = resolveThemeSettings(store);
   const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
-  const primary = theme.colors.primary;
-  const secondary = theme.colors.secondary;
-  const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
+  const primary = theme.colors.primary || "#2563eb"; // Blue pen default
+  const secondary = theme.colors.secondary || "#fefce8"; // Paper default
 
   const {
     categories,
@@ -192,6 +84,9 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   // ImageViewer State
@@ -201,542 +96,327 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
     index: 0,
   });
 
-  useEffect(() => {
-    setShowFilters(catalog.showFilters);
-  }, [catalog.showFilters]);
-
-  const openViewer = (index, images) => {
-    setViewer({ isOpen: true, images, index });
-  };
-
-  const handleCategoryClick = (e, catId) => {
-    e.stopPropagation();
-    toggleCategory(catId);
-  };
-
   return (
     <div
-      className="min-h-screen flex flex-col pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))] bg-white text-black"
+      className="min-h-screen flex flex-col pt-20"
       style={{
         fontFamily,
         colorScheme: "light",
         "--sketchy-primary": primary,
-        "--sketchy-secondary": secondary,
-        "--store-navbar-height": "5rem",
-        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
         backgroundColor: secondary,
+        // Notebook ruled paper effect
+        backgroundImage: `linear-gradient(${secondary} 97%, #e5e7eb 97%)`,
+        backgroundSize: "100% 2rem",
       }}
     >
-      <SketchyFilter />
+      <style>{`
+        .sketchy-border {
+            border-radius: 2px 255px 3px 25px / 255px 6px 225px 9px;
+            box-shadow: 2px 2px 0 0 rgba(0,0,0,0.1);
+        }
+        .sketchy-input {
+            background: transparent;
+            border-bottom: 2px solid ${primary};
+            border-radius: 0;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&display=swap');
+      `}</style>
 
-      {/* ========== NAVBAR ========== */}
-      <nav
-        className={`fixed ${isPreview ? "top-10" : "top-0"} left-0 right-0 z-50 bg-[#333] border-b-4 border-black`}
-        style={{ height: "var(--store-navbar-height)" }}
-      >
-        <div className="mx-auto max-w-7xl px-4 h-full flex items-center justify-between gap-4">
-          {/* Logo & Name */}
-          <div className="flex items-center gap-3 shrink-0">
-            {logoUrl ? (
-              <div className="w-10 h-10 border-3 border-white/30 bg-white overflow-hidden">
+      {/* Navbar: Sticky Note Header */}
+      <nav className="fixed top-[var(--store-navbar-offset)] left-0 right-0 z-50 transition-all duration-300">
+        <div className="absolute inset-0 bg-white shadow-md -skew-y-1 origin-top-left h-20 border-b-2 border-stone-200" />
+        <div className="relative max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2 transform -rotate-1">
+            <div className="text-3xl font-bold" style={{ color: primary }}>
+              {store.logoFileId ? (
                 <img
-                  src={logoUrl}
-                  alt={store?.name}
-                  className="w-full h-full object-cover"
+                  src={getStoreLogoUrl(store.logoFileId)}
+                  alt={store.name}
+                  className="h-12 w-auto object-contain sketchy-border bg-white p-1"
                 />
-              </div>
-            ) : (
-              <Logo className="h-6 w-auto text-white" variant="icon" />
-            )}
-            <span
-              className="text-white font-bold text-xl tracking-tight truncate max-w-[150px] md:max-w-none"
-              style={{ fontFamily: "'Cabin Sketch', cursive" }}
-            >
-              {store?.name || "Store"}
-            </span>
+              ) : (
+                <span>{store.name}</span>
+              )}
+            </div>
           </div>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-6 text-white/80 text-sm font-medium">
-            <a href="#catalog" className="hover:text-white transition-colors">
-              Productos
-            </a>
-            {store?.paymentLink && catalog.showPaymentButton && (
-              <a
-                href={store.paymentLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition-colors"
-              >
-                Pagar
-              </a>
-            )}
-          </div>
-
-          {/* Search */}
-          {catalog.showSearch && (
-            <div className="flex-1 max-w-md mx-4 hidden md:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <SketchyInput
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-8">
+            {catalog.showSearch && (
+              <div className="relative transform rotate-1">
+                <input
                   type="text"
-                  placeholder="Buscar productos..."
+                  placeholder="Buscar..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 py-2 text-sm"
+                  className="sketchy-input px-2 py-1 outline-none text-lg font-bold placeholder:text-stone-400 w-48 focus:w-64 transition-all"
+                  style={{ borderColor: primary, color: primary }}
+                />
+                <Search
+                  className="absolute right-0 top-1/2 -translate-y-1/2 opacity-50"
+                  size={18}
                 />
               </div>
-            </div>
-          )}
+            )}
+            <button
+              onClick={() => setShowFilters(true)}
+              className="flex items-center gap-2 font-bold hover:underline decoration-2 underline-offset-4"
+              style={{ color: primary }}
+            >
+              <Filter size={20} className="stroke-[3]" />
+              Filtros
+            </button>
+          </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Toggle */}
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-white hover:text-white/80"
+            className="md:hidden relative z-50 text-stone-800"
+            onClick={() => setShowFilters(true)}
           >
-            <Menu className="w-6 h-6" />
+            <Menu size={28} className="stroke-[3]" />
           </button>
         </div>
       </nav>
 
-      {/* ========== MOBILE MENU ========== */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 z-60 bg-black/30 md:hidden"
-            />
-
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-60 w-[85%] max-w-sm bg-white border-l-4 border-black p-6 pt-20 overflow-y-auto md:hidden"
-            >
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="absolute top-6 right-6 p-2 border-2 border-black"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {catalog.showSearch && (
-                <div className="mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <SketchyInput
-                      type="text"
-                      placeholder="Buscar..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10 py-2 text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {catalog.showFilters && (
-                <div className="space-y-6">
-                  <CatalogFilters
-                    categories={categories}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={toggleCategory}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    primaryColor={primary}
-                    showSort={catalog.showSort}
-                  />
-
-                  <SketchyButton
-                    variant="ghost"
-                    onClick={resetFilters}
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Reiniciar filtros
-                  </SketchyButton>
-                </div>
-              )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* ========== HERO SECTION ========== */}
-      <header className="px-4 py-12 md:py-20 text-center">
-        <div className="max-w-4xl mx-auto">
+      {/* Hero Section: Hand-drawn Title */}
+      <header className="px-4 py-16 md:py-24 text-center relative overflow-hidden">
+        <div className="relative z-10 max-w-2xl mx-auto transform -rotate-1">
           <h1
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-black mb-4 leading-tight"
-            style={{ fontFamily: "'Cabin Sketch', cursive" }}
+            className="text-5xl md:text-8xl font-black mb-6 drop-shadow-sm"
+            style={{ color: primary }}
           >
-            {store?.name || "Store"}
+            {store.name}
           </h1>
-          {store?.description && (
-            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              {store.description}
-            </p>
-          )}
-
-          {/* Quick Category Pills */}
-          {catalog.showFilters && categories.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 mt-8">
-              {categories.slice(0, 6).map((cat) => (
-                <SketchyBadge
-                  key={cat.id}
-                  onClick={() => toggleCategory(cat.id)}
-                  active={activeCategoryIds.includes(cat.id)}
-                  color={primary}
-                >
-                  {cat.name}
-                </SketchyBadge>
-              ))}
+          {store.description && (
+            <div className="inline-block bg-yellow-100 p-6 shadow-md transform rotate-2 max-w-lg mx-auto relative">
+              <Tape className="-top-3 -left-2 w-16" />
+              <p className="text-xl md:text-2xl font-bold text-stone-800 leading-relaxed font-sans">
+                {store.description}
+              </p>
             </div>
           )}
         </div>
       </header>
 
-      {/* ========== MAIN CATALOG ========== */}
-      <main id="catalog" className="flex-1 px-4 pb-20">
-        <div className="max-w-7xl mx-auto">
-          {/* Desktop Controls */}
-          {(catalog.showFilters || catalog.showProductCount) && (
-            <div className="hidden md:flex items-center justify-between gap-4 mb-8 pb-6 border-b-3 border-black">
-              {catalog.showProductCount && (
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-bold text-gray-600 uppercase tracking-wider">
-                    {filteredProducts.length} productos
-                  </span>
-                </div>
-              )}
-
-              {catalog.showFilters && (
-                <div className="flex items-center gap-3">
-                  {catalog.showSort && (
-                    <select
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)}
-                      className="h-[42px] px-5 border-3 border-black bg-white text-sm font-bold shadow-[4px_4px_0_0_black] hover:shadow-[2px_2px_0_0_black] hover:translate-x-0.5 hover:translate-y-0.5 outline-none transition-all cursor-pointer"
-                    >
-                      <option value="none">Relevancia</option>
-                      <option value="asc">Menor precio</option>
-                      <option value="desc">Mayor precio</option>
-                    </select>
-                  )}
-
-                  <SketchyButton
-                    variant="secondary"
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex items-center gap-2"
-                  >
-                    <Filter className="w-4 h-4" />
-                    Filtros
-                  </SketchyButton>
-
-                  <SketchyButton
-                    variant="ghost"
-                    onClick={resetFilters}
-                    className="flex items-center gap-2"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Reiniciar
-                  </SketchyButton>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Desktop Filters Panel */}
-          <AnimatePresence>
-            {catalog.showFilters && showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="hidden md:block overflow-hidden mb-8"
+      {/* Main Content */}
+      <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+        {/* Categories "Tags" */}
+        {catalog.showFilters && categories.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-4 mb-16">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => toggleCategory(cat.id)}
+                className={`text-lg font-bold px-4 py-1 border-2 transition-transform hover:-translate-y-1 hover:rotate-1 transform ${activeCategoryIds.includes(cat.id) ? "bg-stone-900 text-white border-stone-900 -rotate-2 shadow-lg" : "bg-white text-stone-600 border-stone-300 rotate-1 shadow-sm"}`}
+                style={{
+                  borderRadius: "255px 15px 225px 15px/15px 225px 15px 255px",
+                }}
               >
-                <SketchyCard hover={false} className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Sort */}
-                    {catalog.showSort && (
-                      <div>
-                        <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
-                          Ordenar Por
-                        </h3>
-                        <select
-                          value={sortOrder}
-                          onChange={(e) => setSortOrder(e.target.value)}
-                          className="w-full h-[42px] px-4 border-3 border-black bg-white text-sm font-bold shadow-[3px_3px_0_0_black] outline-none cursor-pointer"
-                        >
-                          <option value="none">Relevancia</option>
-                          <option value="asc">Menor precio</option>
-                          <option value="desc">Mayor precio</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Price Range */}
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
-                        Rango de Precio
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            min={0}
-                            max={maxPrice}
-                            value={minPrice}
-                            onChange={(e) =>
-                              setMinPrice(Number(e.target.value))
-                            }
-                            className="w-full h-[42px] pl-7 pr-3 border-3 border-black bg-white text-sm font-bold shadow-[3px_3px_0_0_black] outline-none"
-                            placeholder="Min"
-                          />
-                        </div>
-                        <span className="text-gray-400 font-bold">-</span>
-                        <div className="relative flex-1">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            min={minPrice}
-                            max={priceBounds.max}
-                            value={maxPrice}
-                            onChange={(e) =>
-                              setMaxPrice(Number(e.target.value))
-                            }
-                            className="w-full h-[42px] pl-7 pr-3 border-3 border-black bg-white text-sm font-bold shadow-[3px_3px_0_0_black] outline-none"
-                            placeholder="Max"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Categories - Horizontal pills */}
-                    <div className="lg:col-span-1">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">
-                        Categorías
-                      </h3>
-                      <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto pr-2">
-                        {categories.map((cat) => {
-                          const isActive = activeCategoryIds.includes(cat.id);
-                          return (
-                            <button
-                              key={cat.id}
-                              onClick={() => toggleCategory(cat.id)}
-                              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 border-black transition-all duration-150 ${
-                                isActive
-                                  ? "bg-black text-white shadow-none translate-x-0.5 translate-y-0.5"
-                                  : "bg-white text-black shadow-[2px_2px_0_0_black] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5"
-                              }`}
-                            >
-                              {cat.name}
-                            </button>
-                          );
-                        })}
-                        {categories.length === 0 && (
-                          <span className="text-sm text-gray-400 italic">
-                            Sin categorías
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </SketchyCard>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Product Grid */}
-          {filteredProducts && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {filteredProducts.map((product) => {
-                const imageId = product.imageFileIds?.[0];
-                const imageUrl = imageId ? getProductImageUrl(imageId) : null;
-
-                return (
-                  <SketchyCard
-                    key={product.id || product.$id}
-                    onClick={() => setSelectedProduct(product)}
-                    className="group overflow-hidden"
-                  >
-                    {/* Image */}
-                    <div className="relative aspect-square bg-gray-100 overflow-hidden border-b-3 border-black">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Package className="w-12 h-12" />
-                        </div>
-                      )}
-
-                      {/* Share Button */}
-                      {catalog.showShareButton && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            shareProduct(product);
-                          }}
-                          className="absolute top-2 right-2 p-2 bg-white border-2 border-black shadow-[2px_2px_0_0_black] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-                          aria-label="Compartir producto"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-3 md:p-4">
-                      <h3 className="font-bold text-sm md:text-base text-black line-clamp-2 mb-2">
-                        {product.name}
-                      </h3>
-
-                      {/* Category Tags */}
-                      {catalog.showFilters &&
-                        product.categories &&
-                        product.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {product.categories.slice(0, 2).map((cat) => (
-                              <button
-                                key={cat.id || cat.name}
-                                onClick={(e) => handleCategoryClick(e, cat.id)}
-                                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 border border-black/20 hover:bg-black hover:text-white transition-colors"
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
-                      {/* Price */}
-                      <div
-                        className="text-lg md:text-xl font-bold"
-                        style={{ color: primary }}
-                      >
-                        {formatPrice(product.price, product.currency)}
-                      </div>
-
-                      {/* Stock Indicator */}
-                      {typeof product.stock === "number" &&
-                        product.stock <= 5 &&
-                        product.stock > 0 && (
-                          <p className="text-xs text-orange-600 font-medium mt-1">
-                            {product.stock} disponibles
-                          </p>
-                        )}
-                    </div>
-                  </SketchyCard>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="py-20 text-center">
-              <SketchyCard hover={false} className="inline-block p-10">
-                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg">
-                  No se encontraron productos
-                </p>
-                <SketchyButton
-                  variant="ghost"
-                  onClick={resetFilters}
-                  className="mt-4"
-                >
-                  Reiniciar filtros
-                </SketchyButton>
-              </SketchyCard>
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* ========== PURCHASE INFO ========== */}
-      {catalog.showPurchaseInfo &&
-        (store?.purchaseInstructions?.trim() ||
-          (catalog.showPaymentButton && store?.paymentLink?.trim())) && (
-          <div className="max-w-7xl mx-auto px-4 pb-10 w-full">
-            <div className="border-3 border-black bg-white shadow-[6px_6px_0_0_black] p-6 md:p-8">
-              <StorePurchaseInfo
-                store={store}
-                showPaymentButton={catalog.showPaymentButton}
-              />
-            </div>
+                {cat.name}
+              </button>
+            ))}
           </div>
         )}
 
-      {/* ========== FOOTER ========== */}
-      <footer className="bg-[#333] border-t-4 border-black py-12 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <h4
-            className="text-2xl font-bold text-white mb-2"
-            style={{ fontFamily: "'Cabin Sketch', cursive" }}
-          >
-            {store?.name}
-          </h4>
-          {store?.description && (
-            <p className="text-gray-400 text-sm max-w-md mx-auto mb-6">
-              {store.description}
-            </p>
-          )}
+        {/* Product Grid: Polaroids */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 px-4">
+          {filteredProducts.map((product, idx) => {
+            const imageUrl = product.imageFileIds?.[0]
+              ? getProductImageUrl(product.imageFileIds[0])
+              : null;
+            const rotation = idx % 2 === 0 ? "rotate-1" : "-rotate-1";
 
-          {store?.paymentLink && catalog.showPaymentButton && (
-            <a
-              href={store.paymentLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black font-bold border-3 border-black shadow-[4px_4px_0_0_white] hover:shadow-[2px_2px_0_0_white] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-            >
-              Ir a pagar
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
+            return (
+              <motion.div
+                key={product.$id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.02, rotate: 0 }}
+                className={`group cursor-pointer bg-white p-4 pb-16 shadow-lg border border-stone-200 transform ${rotation} transition-all duration-300 relative`}
+                onClick={() => setSelectedProduct(product)}
+                style={{ borderRadius: "2px" }}
+              >
+                {/* Tape Effect */}
+                <Tape className="-top-3 left-[40%]" />
 
-          <div className="mt-10 pt-6 border-t border-gray-700 text-gray-500 text-xs">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span>Powered by</span>
-              <Logo variant="icon" className="h-4 w-auto text-gray-400" />
-              <span className="font-bold">Catalogy</span>
-            </div>
-            <p>Todos los derechos reservados.</p>
-          </div>
+                {/* Image Area */}
+                <div className="aspect-[4/5] bg-stone-100 overflow-hidden border-2 border-stone-100 mb-4 relative grayscale-[10%] group-hover:grayscale-0 transition-all duration-500">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-300">
+                      <ShoppingBag size={48} className="stroke-1" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Handwritten Details */}
+                <div className="text-center font-handwriting">
+                  <h3 className="text-2xl font-bold text-stone-800 mb-1 leading-none">
+                    {product.name}
+                  </h3>
+                  <p className="text-xl font-bold" style={{ color: primary }}>
+                    {formatPrice(product.price, product.currency)}
+                  </p>
+                </div>
+
+                {/* Hover Action: Scribble Button */}
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="bg-stone-900 text-white px-4 py-1 text-sm font-bold uppercase tracking-widest transform -rotate-2 sketchy-border">
+                    Ver Detalle
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
-      </footer>
 
-      {/* ========== PRODUCT DETAIL MODAL ========== */}
+        {filteredProducts.length === 0 && (
+          <div className="py-24 text-center">
+            <div className="inline-block border-4 border-dashed border-stone-300 p-12 rounded-full mb-6">
+              <Eraser size={48} className="text-stone-400" />
+            </div>
+            <h3 className="text-3xl font-bold text-stone-400">
+              Nada por aquí...
+            </h3>
+            <button
+              onClick={resetFilters}
+              className="mt-6 text-xl font-bold underline decoration-wavy decoration-2 underline-offset-4"
+              style={{ color: primary }}
+            >
+              Borrar garabatos (Filtros)
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <StoreFooter
+        store={store}
+        config={{
+          bg: "bg-white",
+          text: "text-stone-900",
+          border: "border-black",
+        }}
+      />
+
+      {/* Sidebar Doodle (Filters) */}
+      <AnimatePresence>
+        {showFilters && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilters(false)}
+              className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: "100%", rotate: 2 }}
+              animate={{ x: 0, rotate: 0 }}
+              exit={{ x: "100%", rotate: 2 }}
+              transition={{ type: "spring", damping: 20 }}
+              className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-yellow-50 shadow-2xl p-8 flex flex-col border-l-4 border-stone-900"
+              style={{
+                backgroundImage:
+                  "radial-gradient(#d6d3d1 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            >
+              <div className="flex justify-between items-center mb-8 pb-4 border-b-2 border-stone-900 border-dashed">
+                <h2 className="text-3xl font-black transform -rotate-1">
+                  Mis Filtros
+                </h2>
+                <button onClick={() => setShowFilters(false)}>
+                  <X size={32} className="stroke-[3]" />
+                </button>
+              </div>
+
+              <div className="space-y-8 flex-grow overflow-y-auto">
+                {/* Search */}
+                <div className="bg-white p-4 shadow-md transform rotate-1 border-2 border-stone-200">
+                  <label className="block font-bold mb-2 uppercase text-xs tracking-widest text-stone-500">
+                    Búsqueda
+                  </label>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full text-lg font-bold outline-none border-b-2 border-stone-300 focus:border-black transition-colors bg-transparent"
+                    placeholder="..."
+                  />
+                </div>
+
+                {/* Price Doodle */}
+                <div className="bg-white p-4 shadow-md transform -rotate-1 border-2 border-stone-200">
+                  <label className="block font-bold mb-2 uppercase text-xs tracking-widest text-stone-500">
+                    Precio ($)
+                  </label>
+                  <div className="flex gap-4">
+                    <input
+                      type="number"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(Number(e.target.value))}
+                      className="w-full border-2 border-stone-200 p-2 font-bold rounded-md"
+                      placeholder="Min"
+                    />
+                    <input
+                      type="number"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(Number(e.target.value))}
+                      className="w-full border-2 border-stone-200 p-2 font-bold rounded-md"
+                      placeholder="Max"
+                    />
+                  </div>
+                </div>
+
+                {/* Filters Component */}
+                <CatalogFilters
+                  showSort={catalog.showSort}
+                  showPrice={catalog.showFilters}
+                  showCategories={catalog.showFilters}
+                  showFeaturedOnly={showFeaturedOnly}
+                  onToggleFeaturedOnly={toggleFeaturedOnly}
+                  hasFeaturedProducts={hasFeaturedProducts}
+                  tone="sketchy"
+                />
+
+                {/* Actions */}
+                <div className="pt-4 space-y-4">
+                  <button
+                    onClick={resetFilters}
+                    className="w-full py-4 bg-stone-900 text-white font-black text-xl hover:bg-stone-800 transition-colors transform rotate-1 shadow-lg"
+                  >
+                    LIMPIAR TODO
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Modals */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         store={store}
-        tone="light"
+        tone="light" // Use light tone but maybe we can custom style later
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
       />
-
-      {/* ========== IMAGE VIEWER ========== */}
       <ImageViewerModal
+        isOpen={viewer.isOpen}
+        onClose={() => setViewer((v) => ({ ...v, isOpen: false }))}
         images={viewer.images}
         initialIndex={viewer.index}
-        isOpen={viewer.isOpen}
-        onClose={() => setViewer({ ...viewer, isOpen: false })}
       />
     </div>
   );

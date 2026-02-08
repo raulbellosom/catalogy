@@ -112,6 +112,9 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   const [viewer, setViewer] = useState({
@@ -415,6 +418,13 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
                           </button>
                         )}
                       </div>
+
+                      {/* Featured Badge */}
+                      {product.isFeatured && (
+                        <div className="absolute top-2 right-2 bg-(--dev-accent) text-(--dev-bg) text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider z-20 border border-(--dev-bg)/20">
+                          [FEATURED]
+                        </div>
+                      )}
                     </div>
 
                     {/* Card Content */}
@@ -565,6 +575,9 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
                           setSortOrder={setSortOrder}
                           primaryColor={primary}
                           showSort={catalog.showSort}
+                          showFeaturedOnly={showFeaturedOnly}
+                          onToggleFeaturedOnly={toggleFeaturedOnly}
+                          hasFeaturedProducts={hasFeaturedProducts}
                         />
                       )}
                     </div>

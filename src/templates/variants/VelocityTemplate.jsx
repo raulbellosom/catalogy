@@ -62,6 +62,9 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -445,6 +448,14 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                               ))}
                             </div>
                           )}
+                        {/* Speed Badge / Featured Badge */}
+                        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                          {product.isFeatured && (
+                            <div className="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 transform -skew-x-12 uppercase tracking-tighter border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                              Destacado
+                            </div>
+                          )}
+                        </div>
 
                         {catalog.showShareButton && (
                           <div className="absolute -top-10 right-2 md:-right-4">
@@ -560,6 +571,9 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                     showSort={catalog.showSort}
                     showPrice={catalog.showFilters}
                     showCategories={catalog.showFilters}
+                    showFeaturedOnly={showFeaturedOnly}
+                    onToggleFeaturedOnly={toggleFeaturedOnly}
+                    hasFeaturedProducts={hasFeaturedProducts}
                     onReset={resetFilters}
                   />
                 )}

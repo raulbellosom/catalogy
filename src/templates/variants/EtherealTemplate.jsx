@@ -60,6 +60,9 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -273,6 +276,15 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
                     </div>
                   )}
 
+                  {/* Featured Badge */}
+                  {product.isFeatured && (
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1">
+                      <span className="text-[10px] uppercase tracking-widest font-medium text-black">
+                        Destacado
+                      </span>
+                    </div>
+                  )}
+
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
 
@@ -414,6 +426,23 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
                     </button>
                   </div>
                 </div>
+
+                {hasFeaturedProducts && (
+                  <div className="pt-4 border-t border-stone-100">
+                    <button
+                      onClick={() => {
+                        toggleFeaturedOnly();
+                      }}
+                      className={`w-full py-3 text-xs uppercase tracking-widest border transition-colors ${
+                        showFeaturedOnly
+                          ? "bg-stone-900 text-white border-stone-900"
+                          : "bg-white text-stone-500 border-stone-200 hover:border-stone-900 hover:text-stone-900"
+                      }`}
+                    >
+                      {showFeaturedOnly ? "Ver Todos" : "Ver Solo Destacados"}
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </>
@@ -554,7 +583,19 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
                   </div>
                 </div>
 
-                <div className="pt-8 border-t border-stone-100">
+                <div className="pt-8 border-t border-stone-100 space-y-4">
+                  {hasFeaturedProducts && (
+                    <button
+                      onClick={toggleFeaturedOnly}
+                      className={`w-full py-3 text-xs uppercase tracking-widest border transition-colors ${
+                        showFeaturedOnly
+                          ? "bg-stone-900 text-white border-stone-900"
+                          : "bg-white text-stone-500 border-stone-200 hover:border-stone-900 hover:text-stone-900"
+                      }`}
+                    >
+                      {showFeaturedOnly ? "Ver Todos" : "Ver Solo Destacados"}
+                    </button>
+                  )}
                   <button
                     onClick={resetFilters}
                     className="w-full py-3 bg-stone-900 text-white text-xs uppercase tracking-widest hover:bg-black transition-colors"

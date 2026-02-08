@@ -134,7 +134,8 @@ export function CategoriesTab({ store, products }) {
 
   const handleSectionSelect = (id) => {
     const root = sectionScrollRef.current;
-    const element = root?.querySelector(`#${id}`) || document.getElementById(id);
+    const element =
+      root?.querySelector(`#${id}`) || document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -332,37 +333,59 @@ export function CategoriesTab({ store, products }) {
         sidebarTitle="Categorías"
         sidebarSubtitle="Organiza tus productos por categorías."
         sidebarFooter={
-          <StickySaveButton isSubmitting={isSubmitting} hasChanges={hasChanges} />
+          <StickySaveButton
+            isSubmitting={isSubmitting}
+            hasChanges={hasChanges}
+          />
         }
       >
         <SettingsSection
           id="categories-manage"
           title="Categorías de productos"
-          description="Crea categorías propias para filtrar tu catálogo."
+          description="Crea hasta 10 categorías propias para filtrar tu catálogo."
           icon={Tag}
         >
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Input
-              label="Nueva categoría"
-              placeholder="Ej. Plantas de interior"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddCategory();
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <label className="text-sm font-medium text-(--color-fg)">
+                Nueva categoría
+              </label>
+              <span
+                className={`text-xs font-medium ${categories.length >= 10 ? "text-(--color-error)" : "text-(--color-fg-muted)"}`}
+              >
+                {categories.length}/10
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                placeholder={
+                  categories.length >= 10
+                    ? "Límite de 10 categorías alcanzado"
+                    : "Ej. Plantas de interior"
                 }
-              }}
-              maxLength={50}
-            />
-            <Button
-              type="button"
-              className="mt-auto"
-              onClick={handleAddCategory}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar
-            </Button>
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (categories.length < 10) handleAddCategory();
+                  }
+                }}
+                maxLength={50}
+                disabled={categories.length >= 10}
+                className="w-full"
+              />
+              {categories.length < 10 && (
+                <Button
+                  type="button"
+                  className="mt-auto"
+                  onClick={handleAddCategory}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar
+                </Button>
+              )}
+            </div>
           </div>
 
           {categories.length > 0 ? (

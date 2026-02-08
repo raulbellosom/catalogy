@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from "react";
-import { Check } from "lucide-react";
+import { Check, Star } from "lucide-react";
 
 export function CatalogFilters({
   categories = [],
@@ -17,6 +17,9 @@ export function CatalogFilters({
   showCategories = true,
   showPrice = true,
   layout = "list", // 'list' | 'grid'
+  showFeaturedOnly = false,
+  onToggleFeaturedOnly,
+  hasFeaturedProducts = false,
 }) {
   const formatPrice = (price) => {
     return (price || 0).toLocaleString("es-MX", {
@@ -29,6 +32,30 @@ export function CatalogFilters({
 
   return (
     <div className="space-y-8">
+      {hasFeaturedProducts && onToggleFeaturedOnly && (
+        <div className="flex items-center justify-between bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+              <Star size={16} fill="currentColor" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-yellow-900 leading-tight">
+                Solo Destacados
+              </h3>
+              <p className="text-xs text-yellow-700">Ver productos premium</p>
+            </div>
+          </div>
+          <button
+            onClick={onToggleFeaturedOnly}
+            className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${showFeaturedOnly ? "bg-yellow-500" : "bg-gray-300"}`}
+          >
+            <div
+              className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ${showFeaturedOnly ? "translate-x-6" : "translate-x-0"}`}
+            />
+          </button>
+        </div>
+      )}
+
       {showSort && (
         <div>
           <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">

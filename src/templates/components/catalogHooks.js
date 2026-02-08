@@ -39,6 +39,27 @@ export const useCatalogFilters = ({ store, products }) => {
 
   const productList = Array.isArray(products) ? products : [];
 
+  // Parse featured product IDs
+  const featuredProductIds = useMemo(() => {
+    try {
+      const settings =
+        typeof store?.settings === "string"
+          ? JSON.parse(store.settings)
+          : store?.settings || {};
+      const catalog = settings.catalog || {};
+      return Array.isArray(catalog.featuredProductIds)
+        ? catalog.featuredProductIds
+        : [];
+    } catch (e) {
+      return [];
+    }
+  }, [store?.settings]);
+
+  const hasFeaturedProducts = useMemo(() => {
+    if (!featuredProductIds.length) return false;
+    return productList.some((p) => featuredProductIds.includes(p.id || p.$id));
+  }, [featuredProductIds, productList]);
+
   const priceBounds = useMemo(() => {
     if (!productList.length) return { min: 0, max: 0 };
     const prices = productList
@@ -56,11 +77,13 @@ export const useCatalogFilters = ({ store, products }) => {
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(priceBounds.max);
   const [sortOrder, setSortOrder] = useState("none"); // 'asc', 'desc', 'none'
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
   useEffect(() => {
     setMinPrice(0);
     setMaxPrice(priceBounds.max);
     setSortOrder("none");
+    setShowFeaturedOnly(false);
   }, [priceBounds.max]);
 
   const toggleCategory = (categoryId) => {
@@ -71,12 +94,22 @@ export const useCatalogFilters = ({ store, products }) => {
     );
   };
 
+  const toggleFeaturedOnly = () => setShowFeaturedOnly((prev) => !prev);
+
   const filteredProducts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     const min = clampNumber(minPrice, priceBounds.min);
     const max = clampNumber(maxPrice, priceBounds.max);
 
     const filtered = productList.filter((product) => {
+      // 1. Filter by featured if enabled
+      if (showFeaturedOnly) {
+        const isFeatured = featuredProductIds.includes(
+          product.id || product.$id,
+        );
+        if (!isFeatured) return false;
+      }
+
       const price = typeof product.price === "number" ? product.price : 0;
       if (price < min || price > max) return false;
 
@@ -94,23 +127,37 @@ export const useCatalogFilters = ({ store, products }) => {
     });
 
     const withCategories = filtered.map((product) => {
-      if (product?.categories?.length) return product;
-      const ids = Array.isArray(product?.categoryIds)
-        ? product.categoryIds
-        : [];
-      const resolvedCategories = ids
-        .map((id) => categoryMap.get(id))
-        .filter(Boolean);
-      return resolvedCategories.length
-        ? { ...product, categories: resolvedCategories }
-        : product;
+      // Mark formatted product as featured for UI usage
+      const isFeatured = featuredProductIds.includes(product.id || product.$id);
+
+      let finalProduct = product;
+
+      if (!product?.categories?.length) {
+        const ids = Array.isArray(product?.categoryIds)
+          ? product.categoryIds
+          : [];
+        const resolvedCategories = ids
+          .map((id) => categoryMap.get(id))
+          .filter(Boolean);
+
+        if (resolvedCategories.length) {
+          finalProduct = { ...product, categories: resolvedCategories };
+        }
+      }
+
+      // Append isFeatured flag
+      return { ...finalProduct, isFeatured };
     });
 
     // Sorting
     if (sortOrder === "asc") {
-      return [...withCategories].sort((a, b) => (a.price || 0) - (b.price || 0));
+      return [...withCategories].sort(
+        (a, b) => (a.price || 0) - (b.price || 0),
+      );
     } else if (sortOrder === "desc") {
-      return [...withCategories].sort((a, b) => (b.price || 0) - (a.price || 0));
+      return [...withCategories].sort(
+        (a, b) => (b.price || 0) - (a.price || 0),
+      );
     }
 
     return withCategories;
@@ -124,6 +171,8 @@ export const useCatalogFilters = ({ store, products }) => {
     priceBounds.max,
     sortOrder,
     categoryMap,
+    showFeaturedOnly,
+    featuredProductIds,
   ]);
 
   const resetFilters = () => {
@@ -132,6 +181,7 @@ export const useCatalogFilters = ({ store, products }) => {
     setMinPrice(0);
     setMaxPrice(priceBounds.max);
     setSortOrder("none");
+    setShowFeaturedOnly(false);
   };
 
   return {
@@ -149,6 +199,9 @@ export const useCatalogFilters = ({ store, products }) => {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   };
 };
 

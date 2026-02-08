@@ -1,21 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, X, ExternalLink } from "lucide-react";
+import {
+  Search,
+  ShoppingBag,
+  X,
+  Filter,
+  Share2,
+  ArrowLeft,
+  ArrowRight,
+  Menu,
+  Pause,
+  Play,
+} from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
+import { getProductImageUrl } from "@/shared/services/productService";
 import {
   ProductDetailModal,
-  StoreNavbar,
   StoreFooter,
   CatalogFilters,
-  ProductCard,
   StorePurchaseInfo,
+  shareProduct,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 import { useCatalogFilters } from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
+import { Logo } from "@/shared/ui/atoms/Logo";
 
-// Internal helpers removed in favor of registry.resolveThemeSettings
 const resolveFontFamily = (fontId) => {
   const map = {
     inter: "'Inter', sans-serif",
@@ -25,7 +36,7 @@ const resolveFontFamily = (fontId) => {
     playfair: "'Playfair Display', serif",
     montserrat: "'Montserrat', sans-serif",
   };
-  return map[fontId] || "'Roboto', sans-serif";
+  return map[fontId] || "'Inter', sans-serif";
 };
 
 const formatPrice = (price, currency = "MXN") => {
@@ -33,22 +44,79 @@ const formatPrice = (price, currency = "MXN") => {
   return price.toLocaleString("es-MX", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 };
 
 export function StorefrontTemplate({ store, products, isPreview = false }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Settings Resolution
   const theme = resolveThemeSettings(store);
   const catalog = resolveCatalogSettings(store);
   const fontFamily = resolveFontFamily(theme.font);
-  const primary = theme.colors.primary;
-  const secondary = theme.colors.secondary;
-  const logoUrl = store?.logoFileId ? getStoreLogoUrl(store.logoFileId) : null;
+  const primary = theme.colors.primary || "#000000";
+  const secondary = theme.colors.secondary || "#ffffff";
+
+  // Hero Carousel Logic
+  const featuredProductIds = catalog.featuredProductIds || [];
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  const heroProducts = (() => {
+    let productsToShow = [];
+
+    // 1. Get explicitly featured products
+    if (featuredProductIds.length > 0) {
+      productsToShow =
+        products?.filter((p) => featuredProductIds.includes(p.id || p.$id)) ||
+        [];
+    }
+
+    // 2. If not enough featured (e.g. less than 5), fill with regular products
+    // User requested: "complement options with normal products but without showing they are featured"
+    if (productsToShow.length < 5 && products?.length > 0) {
+      const remainingSlots = 5 - productsToShow.length;
+      const otherProducts = products.filter(
+        (p) =>
+          !productsToShow.find((fp) => (fp.id || fp.$id) === (p.id || p.$id)),
+      );
+
+      // Add up to remainingSlots from otherProducts
+      productsToShow = [
+        ...productsToShow,
+        ...otherProducts.slice(0, remainingSlots),
+      ];
+    }
+
+    // 3. Fallback if still empty (no products at all)
+    if (productsToShow.length === 0 && products?.length > 0) {
+      return products.slice(0, 1);
+    }
+
+    return productsToShow;
+  })();
+
+  const activeHeroProduct = heroProducts[heroIndex];
+
+  // Auto-advance carousel
+  useEffect(() => {
+    if (heroProducts.length <= 1 || isCarouselPaused) return;
+
+    const interval = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroProducts.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [heroProducts.length, isCarouselPaused]);
+
+  // Helper to check if current hero product is actually in the featured list
+  const isFeatured = (product) => {
+    if (!product) return false;
+    return featuredProductIds.includes(product.id || product.$id);
+  };
 
   const {
     categories,
@@ -65,308 +133,492 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
     sortOrder,
     setSortOrder,
     resetFilters,
+    showFeaturedOnly,
+    toggleFeaturedOnly,
+    hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
-  // ImageViewer
+  // ImageViewer State
   const [viewer, setViewer] = useState({
     isOpen: false,
     images: [],
     index: 0,
   });
 
-  const openViewer = (index, images, e) => {
-    e.stopPropagation();
-    setViewer({ isOpen: true, images, index });
-  };
-
   return (
     <div
-      className="min-h-screen flex flex-col bg-(--color-bg) text-slate-900 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
+      className="min-h-screen flex flex-col bg-white text-stone-900"
       style={{
         fontFamily,
         colorScheme: "light",
-        "--store-primary": primary,
-        "--store-secondary": secondary,
-        "--store-navbar-height": "4rem",
+        "--storefront-primary": primary,
         "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
-      <StoreNavbar
-        store={store}
-        isPreview={isPreview}
-        config={{
-          bg: "bg-(--color-bg)/80",
-          text: "text-slate-900",
-          border: "border-slate-200/50",
-          accent: "text-(--store-primary)",
-          glass: true,
-        }}
-        search={
-          catalog.showSearch
-            ? {
-                query: searchQuery,
-                onQueryChange: setSearchQuery,
-              }
-            : null
+      <style>{`
+        .storefront-hero-text {
+            text-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-        actions={
-          store?.paymentLink &&
-          catalog.showPaymentButton && (
-            <a
-              href={store.paymentLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-2 text-sm font-medium text-(--store-primary) hover:text-slate-900 transition-colors"
+      `}</style>
+
+      {/* Header Container (Fixed) */}
+      <header className="fixed top-[var(--store-navbar-offset)] w-full z-50 transition-all duration-300">
+        {/* Navbar */}
+        <nav className="bg-white/95 backdrop-blur-md border-b border-stone-100 transition-all">
+          <div className="max-w-[1600px] mx-auto px-6 h-20 flex items-center justify-between">
+            {/* Logo & Store Name */}
+            <div className="flex items-center gap-4">
+              {store.logoFileId && (
+                <img
+                  src={getStoreLogoUrl(store.logoFileId)}
+                  alt={store.name}
+                  className="h-10 w-auto object-contain"
+                />
+              )}
+              <span className="text-xl font-black tracking-tighter uppercase">
+                {store.name}
+              </span>
+            </div>
+
+            {/* Desktop Center Nav */}
+            <div className="hidden md:flex items-center gap-8">
+              {/* No categories here - kept minimal */}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-6">
+              {catalog.showSearch && (
+                <div className="hidden lg:flex items-center relative group">
+                  <input
+                    type="text"
+                    placeholder="Buscar..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-stone-50 border-b border-stone-200 outline-none px-2 py-1 text-sm w-32 focus:w-64 transition-all focus:border-black"
+                  />
+                  <Search
+                    size={16}
+                    className="text-stone-400 absolute right-2 pointer-events-none"
+                  />
+                </div>
+              )}
+
+              <button
+                className="md:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                <Menu size={24} />
+              </button>
+            </div>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero Section (Flagship Style) */}
+      <header className="relative w-full h-[calc(100dvh-5rem-var(--store-navbar-offset))] bg-stone-900 overflow-hidden mt-[calc(var(--store-navbar-offset)+5rem)]">
+        <AnimatePresence mode="wait">
+          {activeHeroProduct ? (
+            <div
+              key={activeHeroProduct.id || activeHeroProduct.$id}
+              className="absolute inset-0 w-full h-full"
             >
-              <ExternalLink className="w-4 h-4" />
-              Ir al pago
-            </a>
-          )
-        }
+              {/* Background Image Layer */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+                className="absolute inset-0"
+              >
+                {activeHeroProduct.imageFileIds?.[0] ? (
+                  <img
+                    src={getProductImageUrl(activeHeroProduct.imageFileIds[0])}
+                    alt={activeHeroProduct.name}
+                    className="w-full h-full object-cover opacity-80"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-stone-800 flex items-center justify-center">
+                    <ShoppingBag className="w-24 h-24 text-stone-700" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30" />
+              </motion.div>
+
+              {/* Content Layer */}
+              <div className="absolute bottom-0 left-0 w-full p-8 md:p-20 text-white z-10">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="max-w-4xl"
+                >
+                  {isFeatured(activeHeroProduct) && (
+                    <span className="inline-block px-3 py-1 bg-white text-black text-xs font-bold uppercase tracking-widest mb-4">
+                      Destacado
+                    </span>
+                  )}
+
+                  <h1 className="text-5xl md:text-8xl font-black uppercase tracking-tighter mb-6 storefront-hero-text leading-[0.9]">
+                    {activeHeroProduct.name}
+                  </h1>
+                  <p className="text-xl md:text-2xl font-medium mb-8 text-stone-200">
+                    {formatPrice(activeHeroProduct.price)}
+                  </p>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setSelectedProduct(activeHeroProduct)}
+                      className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-stone-200 transition-colors flex items-center gap-4"
+                    >
+                      Ver Producto <ArrowRight size={20} />
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center text-white">
+              <h1 className="text-4xl font-bold">Bienvenido a {store.name}</h1>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Carousel Controls */}
+        {heroProducts.length > 1 && (
+          <div className="absolute top-8 right-8 z-20 flex flex-col items-end gap-4 md:flex-row md:items-center">
+            <div className="flex items-center gap-2 bg-black/50 backdrop-blur-md p-2 rounded-full border border-white/10">
+              <button
+                onClick={() =>
+                  setHeroIndex(
+                    (prev) =>
+                      (prev - 1 + heroProducts.length) % heroProducts.length,
+                  )
+                }
+                className="p-2 rounded-full hover:bg-white/20 text-white transition-colors"
+              >
+                <ArrowLeft size={20} />
+              </button>
+
+              <button
+                onClick={() => setIsCarouselPaused(!isCarouselPaused)}
+                className="p-2 rounded-full hover:bg-white/20 text-white transition-colors"
+              >
+                {isCarouselPaused ? <Play size={16} /> : <Pause size={16} />}
+              </button>
+
+              <button
+                onClick={() =>
+                  setHeroIndex((prev) => (prev + 1) % heroProducts.length)
+                }
+                className="p-2 rounded-full hover:bg-white/20 text-white transition-colors"
+              >
+                <ArrowRight size={20} />
+              </button>
+            </div>
+
+            {/* Dots Indicator */}
+            <div className="flex gap-2">
+              {heroProducts.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setHeroIndex(idx)}
+                  className={`h-1 transition-all duration-300 ${
+                    idx === heroIndex
+                      ? "w-8 bg-white"
+                      : "w-4 bg-white/40 hover:bg-white/60"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* Scrollable Categories Strip */}
+      {catalog.showFilters && categories.length > 0 && (
+        <div className="border-b border-stone-100 bg-white py-8">
+          <div className="max-w-[1600px] mx-auto px-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-stone-900">
+                Departamentos
+              </h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const container = document.getElementById("cat-scroll");
+                    if (container) container.scrollLeft -= 200;
+                  }}
+                  className="p-2 border border-stone-200 rounded-full hover:bg-stone-50"
+                >
+                  <ArrowRight className="rotate-180" size={16} />
+                </button>
+                <button
+                  onClick={() => {
+                    const container = document.getElementById("cat-scroll");
+                    if (container) container.scrollLeft += 200;
+                  }}
+                  className="p-2 border border-stone-200 rounded-full hover:bg-stone-50"
+                >
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+            <div
+              id="cat-scroll"
+              className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide snap-x scroll-smooth"
+            >
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => toggleCategory(cat.id)}
+                  className={`snap-start shrink-0 w-64 h-32 bg-stone-50 flex items-center justify-center border hover:border-black transition-all group relative overflow-hidden ${activeCategoryIds.includes(cat.id) ? "border-black bg-stone-100" : "border-stone-100"}`}
+                >
+                  <span className="relative z-10 text-lg font-bold uppercase tracking-widest group-hover:scale-105 transition-transform">
+                    {cat.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Product Grid */}
+      <main className="max-w-[1600px] mx-auto px-6 py-20 w-full">
+        <div className="flex items-center justify-between mb-12">
+          <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
+            Catálogo Completo
+          </h2>
+          <div className="flex items-center gap-4">
+            {/* Filters Trigger */}
+            {catalog.showFilters && (
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest border border-stone-200 px-4 py-2 hover:bg-stone-50"
+              >
+                <Filter size={16} /> Filtros
+              </button>
+            )}
+            <div className="text-sm font-medium text-stone-500 hidden md:block">
+              {filteredProducts.length} items
+            </div>
+          </div>
+        </div>
+
+        {/* Collapsible Filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden mb-12 bg-stone-50 p-6 md:p-10"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                  <h4 className="font-bold uppercase text-xs mb-4">Ordenar</h4>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="w-full bg-white border border-stone-200 p-3 text-sm font-bold outline-none"
+                  >
+                    <option value="">Relevancia</option>
+                    <option value="price-asc">Menor Precio</option>
+                    <option value="price-desc">Mayor Precio</option>
+                  </select>
+                </div>
+                <div>
+                  <h4 className="font-bold uppercase text-xs mb-4">Precio</h4>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(Number(e.target.value))}
+                      className="w-full bg-white border border-stone-200 p-3 text-sm"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(Number(e.target.value))}
+                      className="w-full bg-white border border-stone-200 p-3 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="md:col-span-2 flex items-end justify-end">
+                  <button
+                    onClick={resetFilters}
+                    className="text-xs font-bold uppercase underline"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12">
+            {filteredProducts.map((product) => {
+              const imageUrl = product.imageFileIds?.[0]
+                ? getProductImageUrl(product.imageFileIds[0])
+                : null;
+
+              return (
+                <div
+                  key={product.$id}
+                  onClick={() => setSelectedProduct(product)}
+                  className="group cursor-pointer"
+                >
+                  <div className="aspect-[3/4] bg-stone-100 mb-4 relative overflow-hidden">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ShoppingBag className="text-stone-300" />
+                      </div>
+                    )}
+
+                    {/* Featured Badge */}
+                    {product.isFeatured && (
+                      <div className="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest z-10">
+                        Destacado
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                      <button className="w-full bg-white text-black font-bold uppercase text-xs py-3 tracking-widest hover:bg-stone-900 hover:text-white transition-colors">
+                        Ver Producto
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold uppercase tracking-tight mb-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-stone-500 text-sm font-medium">
+                      {formatPrice(product.price, product.currency)}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-24 text-center">
+            <h3 className="text-2xl font-bold uppercase mb-4">
+              Sin resultados
+            </h3>
+            <button onClick={resetFilters} className="underline">
+              Ver todo
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <StoreFooter
+        store={store}
+        config={{
+          bg: "bg-black",
+          text: "text-stone-400",
+          border: "border-stone-800",
+        }}
       />
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm top-[var(--store-navbar-offset)]"
+              onClick={() => setMobileMenuOpen(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm md:hidden"
             />
-
-            {/* Menu Sidebar */}
             <motion.div
+              className="fixed inset-y-0 right-0 z-50 w-[85%] bg-white p-6 shadow-2xl flex flex-col top-[var(--store-navbar-offset)]"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              transition={{ type: "spring", damping: 30 }}
             >
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="absolute top-8 right-8 p-2 text-slate-500 hover:text-slate-900 border border-slate-200 rounded-full"
-              >
-                <X size={24} />
-              </button>
-
-              <div className="space-y-12">
-                {(catalog.showSearch || catalog.showFilters) && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                        Búsqueda y Filtros
-                      </h3>
-                      <button
-                        onClick={resetFilters}
-                        className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
-                      >
-                        Reiniciar
-                      </button>
-                    </div>
-                    {catalog.showSearch && (
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <input
-                          type="search"
-                          value={searchQuery}
-                          onChange={(event) =>
-                            setSearchQuery(event.target.value)
-                          }
-                          placeholder="Buscar..."
-                          className="w-full pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400"
-                        />
-                      </div>
-                    )}
-                    {catalog.showFilters && (
-                      <CatalogFilters
-                        categories={categories}
-                        activeCategoryIds={activeCategoryIds}
-                        onToggleCategory={toggleCategory}
-                        minPrice={minPrice}
-                        maxPrice={maxPrice}
-                        onMinPriceChange={setMinPrice}
-                        onMaxPriceChange={setMaxPrice}
-                        priceBounds={priceBounds}
-                        sortOrder={sortOrder}
-                        setSortOrder={setSortOrder}
-                        primaryColor={primary}
-                        showSort={catalog.showSort}
-                      />
-                    )}
+              <div className="flex justify-between items-center mb-8">
+                <span className="font-black text-xl uppercase">Menú</span>
+                <button onClick={() => setMobileMenuOpen(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="space-y-6 flex-grow overflow-y-auto">
+                {catalog.showSearch && (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-stone-50 p-4 font-bold outline-none"
+                    />
+                    <Search
+                      className="absolute right-4 top-1/2 -translate-y-1/2"
+                      size={18}
+                    />
                   </div>
                 )}
-
-                {store?.paymentLink && catalog.showPaymentButton && (
-                  <div className="pt-8 border-t border-slate-100">
-                    <a
-                      href={store.paymentLink}
-                      target="_blank"
-                      className="w-full py-4 bg-(--store-primary) text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg whitespace-nowrap"
-                    >
-                      <ExternalLink size={20} /> Ir al pago
-                    </a>
-                  </div>
-                )}
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                  Filtros
+                </h3>
+                <CatalogFilters
+                  categories={categories}
+                  activeCategoryIds={activeCategoryIds}
+                  onToggleCategory={(id) => {
+                    toggleCategory(id);
+                    // Optional: close menu on selection if desired, or let user filter multiple
+                  }}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  onMinPriceChange={setMinPrice}
+                  onMaxPriceChange={setMaxPrice}
+                  priceBounds={priceBounds}
+                  sortOrder={sortOrder}
+                  setSortOrder={setSortOrder}
+                  primaryColor={primary}
+                  showSort={catalog.showSort}
+                  showFeaturedOnly={showFeaturedOnly}
+                  onToggleFeaturedOnly={toggleFeaturedOnly}
+                  hasFeaturedProducts={hasFeaturedProducts}
+                />
+                <div className="pt-4 border-t border-stone-100">
+                  <button
+                    onClick={resetFilters}
+                    className="w-full py-3 bg-stone-100 text-stone-900 font-bold uppercase text-xs tracking-widest hover:bg-stone-200"
+                  >
+                    Limpiar Todo
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Hero / Banner Area */}
-      <div className="bg-(--color-bg) border-b border-slate-200/50">
-        <div className="max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col md:flex-row items-center gap-8">
-          <div className="flex-1 space-y-4">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 leading-tight">
-              {store?.name}
-            </h2>
-            <p className="text-lg text-slate-600 max-w-xl">
-              {store?.description || ""}
-            </p>
-            {store?.paymentLink && catalog.showPaymentButton && (
-              <div className="pt-4">
-                <a
-                  href={store.paymentLink}
-                  className="inline-flex justify-center items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-(--store-primary) hover:bg-slate-900 transition-colors shadow-lg"
-                >
-                  Ir al pago
-                </a>
-              </div>
-            )}
-          </div>
-          {logoUrl && (
-            <div className="flex-1 flex justify-center md:justify-end">
-              <div className="w-full max-w-xs md:max-w-md aspect-square bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl">
-                <img
-                  src={logoUrl}
-                  alt={store.name}
-                  className="w-full h-full object-contain p-8"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main Layout Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full flex flex-col md:flex-row gap-8">
-        {/* Sidebar Controls (Desktop) */}
-        {catalog.showFilters && (
-          <aside className="hidden md:block w-64 shrink-0 space-y-8">
-            <div className="bg-(--color-bg) rounded-lg shadow-sm border border-slate-200/50 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                  Filtros
-                </span>
-                <button
-                  onClick={resetFilters}
-                  className="text-[10px] font-bold uppercase tracking-widest text-(--store-primary)"
-                >
-                  Reiniciar
-                </button>
-              </div>
-              <CatalogFilters
-                categories={categories}
-                activeCategoryIds={activeCategoryIds}
-                onToggleCategory={toggleCategory}
-                minPrice={minPrice}
-                maxPrice={maxPrice}
-                onMinPriceChange={setMinPrice}
-                onMaxPriceChange={setMaxPrice}
-                priceBounds={priceBounds}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-                primaryColor={primary}
-                showSort={catalog.showSort}
-              />
-            </div>
-          </aside>
-        )}
-
-        {/* Product Results */}
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-900">Productos</h2>
-            {catalog.showProductCount && (
-              <span className="text-sm text-slate-500">
-                {filteredProducts?.length || 0} resultados
-              </span>
-            )}
-          </div>
-
-          {filteredProducts && filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id || product.$id}
-                  product={product}
-                  onCategoryClick={
-                    catalog.showFilters ? (id) => toggleCategory(id) : undefined
-                  }
-                  onClick={() => setSelectedProduct(product)}
-                  onImageClick={(index, images, e) =>
-                    openViewer(index, images, e)
-                  }
-                  showShareButton={catalog.showShareButton}
-                  showCategories={catalog.showFilters}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-slate-300">
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                <Search className="w-8 h-8 text-slate-300" />
-              </div>
-              <p className="text-slate-500 font-medium">
-                No se encontraron productos
-              </p>
-              <button
-                onClick={resetFilters}
-                className="mt-4 text-(--store-primary) font-bold hover:underline"
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          )}
-        </div>
-      </main>
-
-      {catalog.showPurchaseInfo && (
-        <StorePurchaseInfo
-          store={store}
-          showPaymentButton={catalog.showPaymentButton}
-          wrapperClassName="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 w-full"
-        />
-      )}
-      <StoreFooter
-        store={store}
-        config={{
-          bg: "bg-slate-900",
-          text: "text-slate-400",
-          border: "border-slate-800",
-          muted: "text-slate-500",
-          accent: "text-white",
-        }}
-      />
-
       {/* Modals */}
-      <ImageViewerModal
-        isOpen={viewer.isOpen}
-        onClose={() => setViewer((v) => ({ ...v, isOpen: false }))}
-        images={viewer.images}
-        initialIndex={viewer.index}
-      />
       <ProductDetailModal
         product={selectedProduct}
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
         store={store}
-        tone="storefront"
+        tone="dark"
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
       />

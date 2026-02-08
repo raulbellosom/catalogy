@@ -43,6 +43,9 @@ export function CatalogControls({
   showPrice = true,
   showCategories = true,
   orientation = "horizontal",
+  showFeaturedOnly = false,
+  onToggleFeaturedOnly,
+  hasFeaturedProducts = false,
 }) {
   const styles = toneStyles[tone] || toneStyles.light;
   const showHeader = showSearch || showFilters;
