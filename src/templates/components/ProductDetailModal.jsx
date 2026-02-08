@@ -19,6 +19,7 @@ import { shareProduct } from "./catalogHooks";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { resolveThemeSettings } from "@/templates/registry";
 import { isColorDark, getContrastRatio } from "@/shared/utils/colorExtraction";
+import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
 
 const formatPrice = (price, currency = "MXN") => {
   if (typeof price !== "number") return "";
@@ -42,6 +43,7 @@ export function ProductDetailModal({
   onAddToCart, // New prop for Cart integration
 }) {
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -176,7 +178,8 @@ export function ProductDetailModal({
                     transition={{ duration: 0.3 }}
                     src={imageUrls[currentIdx]}
                     alt={product.name}
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full object-contain cursor-zoom-in"
+                    onClick={() => setIsViewerOpen(true)}
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center text-slate-400">
@@ -190,28 +193,36 @@ export function ProductDetailModal({
                   <>
                     <button
                       onClick={prevImg}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors z-10"
                     >
                       <ChevronLeft size={24} />
                     </button>
                     <button
                       onClick={nextImg}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors z-10"
                     >
                       <ChevronRight size={24} />
                     </button>
                   </>
                 )}
+
+                {/* Zoom Indicator */}
+                <div className="absolute bottom-4 right-4 pointer-events-none z-10">
+                  <div className="bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
+                    <ZoomIn size={14} />
+                    <span>Click para ampliar</span>
+                  </div>
+                </div>
               </div>
 
               {/* Thumbnails (Desktop bottom) */}
               {imageUrls.length > 1 && (
-                <div className="h-20 bg-white/5 backdrop-blur-md border-t border-white/10 flex items-center gap-2 px-4 overflow-x-auto">
+                <div className="h-20 bg-white/5 backdrop-blur-md border-t border-white/10 flex items-center gap-2 px-4 overflow-x-auto z-10 relative">
                   {imageUrls.map((url, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentIdx(idx)}
-                      className={`h-14 w-14 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`h-14 w-14 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
                         idx === currentIdx
                           ? "border-white scale-105"
                           : "border-transparent opacity-50 hover:opacity-100"
@@ -346,6 +357,15 @@ export function ProductDetailModal({
               </div>
             </div>
           </motion.div>
+
+          <ImageViewerModal
+            isOpen={isViewerOpen}
+            onClose={() => setIsViewerOpen(false)}
+            src={imageUrls[currentIdx]}
+            images={imageUrls}
+            initialIndex={currentIdx}
+            alt={product.name}
+          />
         </div>
       )}
     </AnimatePresence>

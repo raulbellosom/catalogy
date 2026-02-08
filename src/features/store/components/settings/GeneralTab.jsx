@@ -24,8 +24,8 @@ const isValidUrl = (string) => {
 };
 
 const isValidPhoneNumber = (string) => {
-  // Allows + followed by 7-15 digits
-  const regex = /^\+?[1-9]\d{7,14}$/;
+  // Allows + followed by 10-15 digits (to avoid very short numbers)
+  const regex = /^\+?[1-9]\d{9,14}$/;
   return regex.test(string);
 };
 

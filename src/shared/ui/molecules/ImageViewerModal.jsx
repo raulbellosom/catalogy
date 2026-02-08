@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "motion/react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+} from "motion/react";
 import {
   X,
   ZoomIn,
@@ -18,16 +23,7 @@ import { cn } from "@/shared/lib/utils";
 
 /**
  * A fullscreen image viewer modal with zoom, pan, rotate and mobile gestures support.
- *
- * @param {Object} props
- * @param {boolean} props.isOpen - Whether the modal is open
- * @param {function} props.onClose - Callback when modal closes
- * @param {string} props.src - Current image URL to display
- * @param {string[]} [props.images] - Array of image URLs for gallery navigation
- * @param {number} [props.initialIndex=0] - Initial index when using gallery mode
- * @param {string} [props.alt="Image"] - Alt text for the image
- * @param {boolean} [props.showDownload=true] - Whether to show download button
- * @param {string} [props.downloadFilename] - Custom filename for download
+ * Refactored to use MotionValues for high-performance 60fps animations.
  */
 export function ImageViewerModal({
   isOpen,
@@ -39,7 +35,6 @@ export function ImageViewerModal({
   showDownload = true,
   downloadFilename,
 }) {
-  // Determine effective image list
   const imageList = React.useMemo(() => {
     if (images && images.length > 0) return images;
     return src ? [src] : [];
@@ -48,64 +43,73 @@ export function ImageViewerModal({
   const isGalleryMode = imageList.length > 1;
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [scaleDisplay, setScaleDisplay] = useState(1); // Only for UI display
+
+  // Motion Values for performant animations without re-renders
+  const scaleMv = useMotionValue(1);
+  const rotateMv = useMotionValue(0);
+  const xMv = useMotionValue(0);
+  const yMv = useMotionValue(0);
+
+  // Refs for gesture tracking
+  const stateRef = useRef({
+    isDragging: false,
+    lastTouch: { x: 0, y: 0 },
+    touchStartDist: null,
+    initialPinchScale: 1,
+  });
 
   const containerRef = useRef(null);
   const imageRef = useRef(null);
-  const lastTouchRef = useRef({ x: 0, y: 0 });
-  const touchStartDistRef = useRef(null);
-  const initialPinchScaleRef = useRef(1);
 
-  // Get current image URL
-  const currentImageUrl = imageList[currentIndex] || src;
+  // Sync index when initialIndex changes
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+    }
+  }, [initialIndex, isOpen]);
 
-  // Prevent body scroll when modal is open
+  // Reset view when image changes or modal opens
+  useEffect(() => {
+    scaleMv.set(1);
+    rotateMv.set(0);
+    xMv.set(0);
+    yMv.set(0);
+    setScaleDisplay(1);
+    setLoading(!!(imageList[currentIndex] || src));
+
+    stateRef.current = {
+      isDragging: false,
+      lastTouch: { x: 0, y: 0 },
+      touchStartDist: null,
+      initialPinchScale: 1,
+    };
+  }, [currentIndex, isOpen, src, imageList, scaleMv, rotateMv, xMv, yMv]);
+
+  // Lock body scroll
   useEffect(() => {
     if (!isOpen) return;
-
-    // Save current scroll position
     const scrollY = window.scrollY;
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
-    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
 
-    // Cleanup function
     return () => {
       const savedScrollY = document.body.style.top;
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
-      document.body.style.overflow = "";
-
+      document.body.style.touchAction = "";
       if (savedScrollY) {
         window.scrollTo(0, parseInt(savedScrollY || "0") * -1);
       }
     };
   }, [isOpen]);
-
-  // Reset state when modal opens/closes or image changes
-  useEffect(() => {
-    setScale(1);
-    setRotation(0);
-    setPosition({ x: 0, y: 0 });
-    // If we have an image, start loading. If not, stop loading.
-    setLoading(!!(imageList[currentIndex] || src));
-  }, [currentIndex, isOpen, src, imageList]);
-
-  // Sync index when initialIndex changes externally
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(initialIndex);
-    }
-  }, [initialIndex, isOpen]);
 
   const nextImage = useCallback(() => {
     if (!isGalleryMode) return;
@@ -117,85 +121,89 @@ export function ImageViewerModal({
     setCurrentIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
   }, [isGalleryMode, imageList.length]);
 
-  // Handle Wheel Zoom - using native event listener for non-passive
-  const handleWheel = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Support both regular wheel and trackpad pinch (ctrlKey indicates pinch gesture)
-    const delta = e.ctrlKey ? -e.deltaY * 0.01 : -e.deltaY * 0.002;
-    setScale((s) => Math.min(5, Math.max(0.5, s + delta)));
-  }, []);
+  const updateScale = useCallback(
+    (newScale) => {
+      const clamped = Math.min(5, Math.max(0.5, newScale));
+      scaleMv.set(clamped);
+      setScaleDisplay(clamped); // Update UI
+    },
+    [scaleMv],
+  );
 
-  // Handle Pinch Zoom (Mobile)
+  const handleWheel = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const currentScale = scaleMv.get();
+      // Regular wheel or pinch-to-zoom on trackpad
+      const delta = e.ctrlKey ? -e.deltaY * 0.01 : -e.deltaY * 0.002;
+      updateScale(currentScale + delta);
+    },
+    [scaleMv, updateScale],
+  );
+
   const handleTouchStart = useCallback(
     (e) => {
       if (e.touches.length === 2) {
-        // Pinch gesture start
         e.preventDefault();
         const dist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY,
         );
-        touchStartDistRef.current = dist;
-        initialPinchScaleRef.current = scale;
+        stateRef.current.touchStartDist = dist;
+        stateRef.current.initialPinchScale = scaleMv.get();
       } else if (e.touches.length === 1) {
-        // Single touch - for panning when zoomed or swipe navigation
-        lastTouchRef.current = {
+        stateRef.current.lastTouch = {
           x: e.touches[0].clientX,
           y: e.touches[0].clientY,
         };
-        if (scale > 1) {
-          setIsDragging(true);
+        if (scaleMv.get() > 1) {
+          stateRef.current.isDragging = true;
         }
       }
     },
-    [scale],
+    [scaleMv],
   );
 
   const handleTouchMove = useCallback(
     (e) => {
-      if (e.touches.length === 2 && touchStartDistRef.current) {
-        // Pinch zoom
+      const isDragging = stateRef.current.isDragging;
+      const touchStartDist = stateRef.current.touchStartDist;
+
+      if (e.touches.length === 2 && touchStartDist) {
         e.preventDefault();
         const dist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY,
         );
-        const scaleFactor = dist / touchStartDistRef.current;
-        const newScale = Math.min(
-          5,
-          Math.max(0.5, initialPinchScaleRef.current * scaleFactor),
-        );
-        setScale(newScale);
-      } else if (e.touches.length === 1 && isDragging && scale > 1) {
-        // Pan when zoomed
+        const scaleFactor = dist / touchStartDist;
+        updateScale(stateRef.current.initialPinchScale * scaleFactor);
+      } else if (e.touches.length === 1 && isDragging) {
         e.preventDefault();
-        const deltaX = e.touches[0].clientX - lastTouchRef.current.x;
-        const deltaY = e.touches[0].clientY - lastTouchRef.current.y;
+        // Calculate delta
+        const deltaX = e.touches[0].clientX - stateRef.current.lastTouch.x;
+        const deltaY = e.touches[0].clientY - stateRef.current.lastTouch.y;
 
-        setPosition((prev) => ({
-          x: prev.x + deltaX,
-          y: prev.y + deltaY,
-        }));
+        // Apply immediately to motion values
+        xMv.set(xMv.get() + deltaX);
+        yMv.set(yMv.get() + deltaY);
 
-        lastTouchRef.current = {
+        stateRef.current.lastTouch = {
           x: e.touches[0].clientX,
           y: e.touches[0].clientY,
         };
       }
     },
-    [isDragging, scale],
+    [xMv, yMv, updateScale],
   );
 
   const handleTouchEnd = useCallback(() => {
-    touchStartDistRef.current = null;
-    setIsDragging(false);
+    stateRef.current.touchStartDist = null;
+    stateRef.current.isDragging = false;
   }, []);
 
-  // Combined callback ref for wheel and touch events
   const combinedContainerRef = useCallback(
     (node) => {
-      // Remove listeners from previous node
       if (containerRef.current) {
         containerRef.current.removeEventListener("wheel", handleWheel);
         containerRef.current.removeEventListener(
@@ -205,12 +213,9 @@ export function ImageViewerModal({
         containerRef.current.removeEventListener("touchmove", handleTouchMove);
         containerRef.current.removeEventListener("touchend", handleTouchEnd);
       }
-
-      // Save the node
       containerRef.current = node;
-
-      // Attach listeners to new node
       if (node) {
+        node.style.touchAction = "none";
         node.addEventListener("wheel", handleWheel, { passive: false });
         node.addEventListener("touchstart", handleTouchStart, {
           passive: false,
@@ -222,62 +227,55 @@ export function ImageViewerModal({
     [handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd],
   );
 
-  // Mouse drag for desktop
   const handleMouseDown = useCallback(
     (e) => {
-      if (scale > 1) {
+      if (scaleMv.get() > 1) {
         e.preventDefault();
-        lastTouchRef.current = { x: e.clientX, y: e.clientY };
-        setIsDragging(true);
+        stateRef.current.lastTouch = { x: e.clientX, y: e.clientY };
+        stateRef.current.isDragging = true;
+        // Optional: change cursor
+        if (containerRef.current)
+          containerRef.current.style.cursor = "grabbing";
       }
     },
-    [scale],
+    [scaleMv],
   );
 
   const handleMouseMove = useCallback(
     (e) => {
-      if (isDragging && scale > 1) {
-        const deltaX = e.clientX - lastTouchRef.current.x;
-        const deltaY = e.clientY - lastTouchRef.current.y;
+      if (stateRef.current.isDragging && scaleMv.get() > 1) {
+        const deltaX = e.clientX - stateRef.current.lastTouch.x;
+        const deltaY = e.clientY - stateRef.current.lastTouch.y;
 
-        setPosition((prev) => ({
-          x: prev.x + deltaX,
-          y: prev.y + deltaY,
-        }));
+        xMv.set(xMv.get() + deltaX);
+        yMv.set(yMv.get() + deltaY);
 
-        lastTouchRef.current = { x: e.clientX, y: e.clientY };
+        stateRef.current.lastTouch = { x: e.clientX, y: e.clientY };
       }
     },
-    [isDragging, scale],
+    [scaleMv, xMv, yMv],
   );
 
   const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleDownload = useCallback(
-    (e) => {
-      e.stopPropagation();
-      if (!currentImageUrl) return;
-
-      const link = document.createElement("a");
-      link.href = currentImageUrl;
-      link.download = downloadFilename || `image-${Date.now()}.jpg`;
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    },
-    [currentImageUrl, downloadFilename],
-  );
+    stateRef.current.isDragging = false;
+    if (containerRef.current && scaleMv.get() > 1) {
+      containerRef.current.style.cursor = "grab";
+    }
+  }, [scaleMv]);
 
   const resetView = useCallback(() => {
-    setScale(1);
-    setRotation(0);
-    setPosition({ x: 0, y: 0 });
-  }, []);
+    scaleMv.set(1);
+    rotateMv.set(0);
+    xMv.set(0);
+    yMv.set(0);
+    setScaleDisplay(1);
+  }, [scaleMv, rotateMv, xMv, yMv]);
 
-  // Fullscreen toggle
+  const handleClose = useCallback(() => {
+    resetView();
+    onClose();
+  }, [onClose, resetView]);
+
   const toggleFullscreen = useCallback(async () => {
     try {
       if (!document.fullscreenElement) {
@@ -288,123 +286,101 @@ export function ImageViewerModal({
         setIsFullscreen(false);
       }
     } catch (err) {
-      console.error("Fullscreen error:", err);
+      console.error(`Fullscreen error: ${err}`);
     }
   }, []);
 
-  // Listen for fullscreen changes (e.g., ESC key exits fullscreen)
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
+  const handleDownload = useCallback(
+    (e) => {
+      e.stopPropagation();
+      const currentUrl = imageList[currentIndex] || src;
+      if (!currentUrl) return;
+      const link = document.createElement("a");
+      link.href = currentUrl;
+      link.download = downloadFilename || `image-${Date.now()}.jpg`;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    [currentIndex, imageList, src, downloadFilename],
+  );
 
-  const handleClose = useCallback(() => {
-    resetView();
-    onClose();
-  }, [onClose, resetView]);
-
-  // Handle ESC key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === "Escape" && isOpen) {
-        handleClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [isOpen, handleClose]);
-
-  // Handle arrow keys for gallery navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!isOpen || !isGalleryMode) return;
-      if (e.key === "ArrowRight") nextImage();
-      if (e.key === "ArrowLeft") prevImage();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isGalleryMode, nextImage, prevImage]);
-
-  // Double tap to zoom (mobile)
+  // Double tap/click
   const lastTapRef = useRef(0);
   const handleDoubleTap = useCallback(
     (e) => {
       const now = Date.now();
-      if (now - lastTapRef.current < 300) {
-        // Double tap detected
-        if (scale > 1) {
+      const isDouble = e.type === "dblclick" || now - lastTapRef.current < 300;
+      if (e.type === "dblclick") e.preventDefault();
+
+      if (isDouble) {
+        if (scaleMv.get() > 1) {
           resetView();
         } else {
-          setScale(2.5);
+          updateScale(2.5);
         }
       }
       lastTapRef.current = now;
     },
-    [scale, resetView],
+    [scaleMv, resetView, updateScale],
   );
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (!isOpen) return;
+      if (e.key === "Escape") handleClose();
+      if (e.key === "ArrowLeft") prevImage();
+      if (e.key === "ArrowRight") nextImage();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, handleClose, prevImage, nextImage]);
 
   if (!isOpen) return null;
 
-  const modalContent = (
+  return createPortal(
     <AnimatePresence mode="wait">
       <motion.div
-        key="image-viewer-modal"
-        className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+        key="image-viewer-root"
+        className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden touch-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
       >
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
+          className="absolute inset-0 bg-black/80 backdrop-blur-2xl"
           onClick={handleClose}
-          className="absolute inset-0 bg-black/70 backdrop-blur-2xl"
         />
 
-        {/* Controls Layer */}
+        {/* UI Controls */}
         <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-6 z-10 text-white">
-          {/* Top Bar */}
-          <motion.div
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            className="flex justify-between items-center pointer-events-auto"
-          >
-            {isGalleryMode ? (
+          {/* Header */}
+          <div className="flex justify-between items-center pointer-events-auto">
+            {isGalleryMode && (
               <div className="bg-black/30 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-medium border border-white/10">
                 {currentIndex + 1} / {imageList.length}
               </div>
-            ) : (
-              <div />
             )}
+            {!isGalleryMode && <div />}
             <button
               onClick={handleClose}
               className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10"
             >
               <X size={24} />
             </button>
-          </motion.div>
+          </div>
 
-          {/* Middle (Nav Buttons) */}
+          {/* Navigation */}
           {isGalleryMode && (
-            <div className="flex-1 flex items-center justify-between pointer-events-auto">
+            <div className="flex-1 flex items-center justify-between pointer-events-none px-4 sm:px-8">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10 ml-[-6px] sm:ml-0"
+                className="pointer-events-auto p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10 -ml-2"
               >
                 <ChevronLeft size={28} />
               </button>
@@ -413,82 +389,67 @@ export function ImageViewerModal({
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10 mr-[-6px] sm:mr-0"
+                className="pointer-events-auto p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10 -mr-2"
               >
                 <ChevronRight size={28} />
               </button>
             </div>
           )}
 
-          {/* Bottom Toolbar */}
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className="flex flex-col items-center gap-3 pointer-events-auto"
-          >
-            {/* Thumbnails Strip */}
+          {/* Toolbar */}
+          <div className="flex flex-col items-center gap-3 pointer-events-auto">
             {isGalleryMode && (
-              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-2">
-                {imageList.map((img, index) => (
+              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-2 max-w-full overflow-x-auto no-scrollbar">
+                {imageList.map((img, idx) => (
                   <button
-                    key={index}
+                    key={idx}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCurrentIndex(index);
+                      setCurrentIndex(idx);
                     }}
                     className={cn(
-                      "relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden transition-all duration-200",
+                      "relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden shrink-0 transition-all duration-200",
                       "ring-2 ring-offset-1 ring-offset-black/50",
-                      currentIndex === index
+                      currentIndex === idx
                         ? "ring-white scale-105"
                         : "ring-transparent hover:ring-white/50 opacity-60 hover:opacity-100",
                     )}
                   >
                     <img
                       src={img}
-                      alt={`Thumbnail ${index + 1}`}
+                      alt={`Thumbnail ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    {currentIndex === index && (
-                      <div className="absolute inset-0 bg-white/10" />
-                    )}
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Tools */}
-            <div className="flex items-center gap-1 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-1.5 sm:p-2 shadow-2xl">
+            <div className="flex items-center gap-1 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-1.5 sm:p-2 shadow-2xl overflow-x-auto max-w-full">
               <ToolButton
                 icon={ZoomOut}
-                onClick={() => setScale((s) => Math.max(0.5, s - 0.25))}
+                onClick={() => updateScale(scaleMv.get() - 0.25)}
                 label="Zoom Out"
               />
-              <div className="px-2 sm:px-3 min-w-[50px] sm:min-w-[60px] text-center font-mono text-xs sm:text-sm font-medium text-white/90">
-                {Math.round(scale * 100)}%
+              <div className="px-2 sm:px-3 min-w-[50px] text-center font-mono text-xs sm:text-sm font-medium text-white/90">
+                {Math.round(scaleDisplay * 100)}%
               </div>
               <ToolButton
                 icon={ZoomIn}
-                onClick={() => setScale((s) => Math.min(5, s + 0.25))}
+                onClick={() => updateScale(scaleMv.get() + 0.25)}
                 label="Zoom In"
               />
               <div className="w-px h-5 sm:h-6 bg-white/10 mx-1 sm:mx-2" />
               <ToolButton
                 icon={RotateCw}
-                onClick={() => setRotation((r) => r + 90)}
+                onClick={() => rotateMv.set(rotateMv.get() + 90)}
                 label="Rotate"
               />
-              <ToolButton
-                icon={RotateCcw}
-                onClick={resetView}
-                label="Reset View"
-                active={scale !== 1 || rotation !== 0}
-              />
+              <ToolButton icon={RotateCcw} onClick={resetView} label="Reset" />
               <ToolButton
                 icon={isFullscreen ? Minimize2 : Maximize2}
                 onClick={toggleFullscreen}
-                label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                label="Full"
               />
               {showDownload && (
                 <>
@@ -497,88 +458,62 @@ export function ImageViewerModal({
                     icon={Download}
                     onClick={handleDownload}
                     label="Download"
-                    className="bg-white/15 hover:bg-white/25 text-white"
                   />
                 </>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Image Layer - wrapper div for event handling */}
+        {/* Image Container */}
         <div
           ref={combinedContainerRef}
-          className={cn(
-            "absolute inset-0 flex items-center justify-center p-4 pb-36 sm:p-12 sm:pb-40 pointer-events-auto select-none",
-            scale > 1 ? "cursor-grab" : "cursor-default",
-            isDragging && "cursor-grabbing",
-          )}
+          className="absolute inset-0 flex items-center justify-center p-4 pb-36 sm:p-12 sm:pb-40 pointer-events-auto select-none touch-none cursor-grab active:cursor-grabbing"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          onClick={handleDoubleTap}
+          onDoubleClick={handleDoubleTap}
         >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="flex items-center justify-center w-full h-full"
-          >
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center text-white/30">
-                <Loader2 size={48} className="animate-spin" />
-              </div>
-            )}
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <Loader2 size={48} className="animate-spin text-white/30" />
+            </div>
+          )}
 
-            {currentImageUrl ? (
-              <motion.img
-                ref={imageRef}
-                key={currentImageUrl}
-                src={currentImageUrl}
-                alt={alt}
-                onLoad={() => setLoading(false)}
-                onError={() => setLoading(false)}
-                animate={{
-                  scale,
-                  rotate: rotation,
-                  x: position.x,
-                  y: position.y,
-                }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 30,
-                  mass: 0.8,
-                }}
-                draggable={false}
-                className={cn(
-                  "max-w-full max-h-full object-contain shadow-2xl rounded-sm",
-                  loading ? "opacity-0" : "opacity-100",
-                  "transition-opacity duration-200",
-                )}
-                style={{
-                  pointerEvents: "none",
-                  userSelect: "none",
-                }}
-              />
-            ) : (
+          {imageList[currentIndex] || src ? (
+            <motion.img
+              ref={imageRef}
+              src={imageList[currentIndex] || src}
+              alt={alt}
+              style={{
+                scale: scaleMv,
+                rotate: rotateMv,
+                x: xMv,
+                y: yMv,
+                opacity: loading ? 0 : 1,
+              }}
+              className="max-w-full max-h-full object-contain shadow-2xl rounded-sm transition-opacity duration-300"
+              draggable={false}
+              onLoad={() => setLoading(false)}
+              onError={() => setLoading(false)}
+            />
+          ) : (
+            !loading && (
               <div className="text-white/50 flex flex-col items-center gap-2">
                 <Maximize2 size={48} className="opacity-50" />
                 <p>No Image Available</p>
               </div>
-            )}
-          </motion.div>
+            )
+          )}
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
-
-  return createPortal(modalContent, document.body);
 }
 
-function ToolButton({ icon: Icon, onClick, label, className, active }) {
+function ToolButton({ icon: Icon, onClick, label, className }) {
   return (
     <button
       onClick={(e) => {
@@ -587,8 +522,8 @@ function ToolButton({ icon: Icon, onClick, label, className, active }) {
       }}
       className={cn(
         "p-2 sm:p-2.5 rounded-full transition-all duration-200 group active:scale-95",
-        active && "ring-2 ring-white/30",
-        className || "text-zinc-300 hover:text-white hover:bg-white/10",
+        "text-zinc-300 hover:text-white hover:bg-white/10",
+        className,
       )}
       title={label}
     >
