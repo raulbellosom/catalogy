@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ExternalLink,
   Share2,
+  MessageCircle,
   Sparkles,
   Hexagon,
   Globe,
@@ -21,9 +22,15 @@ import {
   CatalogControls,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
@@ -86,6 +93,28 @@ export function PrismTemplate({ store, products, isPreview = false }) {
     toggleFeaturedOnly,
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
+
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
 
   const [viewer, setViewer] = useState({
     isOpen: false,
@@ -169,6 +198,23 @@ export function PrismTemplate({ store, products, isPreview = false }) {
             : null
         }
         onMobileMenuToggle={() => setMobileMenuOpen(true)}
+        actions={
+          catalog.showCart && (
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full glass-card hover:bg-white/10 transition-colors"
+            >
+              <span className="text-xs font-bold uppercase tracking-wider text-white">
+                Carrito
+              </span>
+              {cart.length > 0 && (
+                <span className="bg-[var(--prism-accent)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+          )
+        }
       />
 
       <header className="relative py-20 lg:py-32 px-4 overflow-hidden -mt-[4rem]">
@@ -332,15 +378,38 @@ export function PrismTemplate({ store, products, isPreview = false }) {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
 
                       {catalog.showShareButton && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            shareProduct(product);
-                          }}
-                          className="absolute top-3 right-3 p-2 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 hover:bg-[var(--prism-accent)] transition-colors"
-                        >
-                          <Share2 size={14} />
-                        </button>
+                        <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              shareProduct(product);
+                            }}
+                            className="p-2 rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 hover:bg-[var(--prism-accent)] transition-colors"
+                          >
+                            <Share2 size={14} />
+                          </button>
+                          {store.whatsapp && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const number = store.whatsapp.replace(
+                                  /\D/g,
+                                  "",
+                                );
+                                const text = encodeURIComponent(
+                                  `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                                );
+                                window.open(
+                                  `https://wa.me/${number}?text=${text}`,
+                                  "_blank",
+                                );
+                              }}
+                              className="p-2 rounded-full bg-[#25D366]/40 backdrop-blur-md text-white border border-white/10 hover:bg-[#25D366] transition-colors"
+                            >
+                              <MessageCircle size={14} />
+                            </button>
+                          )}
+                        </div>
                       )}
 
                       {/* Price Badge */}
@@ -506,8 +575,36 @@ export function PrismTemplate({ store, products, isPreview = false }) {
           tone="dark"
           showShareButton={catalog.showShareButton}
           showPaymentButton={catalog.showPaymentButton}
+          onAddToCart={addToCart}
         />
       )}
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+          tone="dark"
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

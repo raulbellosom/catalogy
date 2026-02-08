@@ -7,6 +7,8 @@ import {
   ExternalLink,
   Menu,
   SlidersHorizontal,
+  Share2,
+  MessageCircle,
 } from "lucide-react";
 import {
   StoreNavbar,
@@ -15,12 +17,18 @@ import {
   ProductDetailModal,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -64,6 +72,28 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
     toggleFeaturedOnly,
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
+
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -178,10 +208,34 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
                 <Search size={18} strokeWidth={1.5} />
               </button>
             )}
+
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="hover:text-[var(--ethereal-accent)] transition-colors relative"
+                aria-label="Cart"
+              >
+                <span className="text-sm font-medium tracking-wide uppercase">
+                  CARRITO
+                </span>
+                {cart.length > 0 && (
+                  <span className="absolute -top-2 -right-3 bg-[var(--ethereal-accent)] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
 
-          {/* Mobile Search/Bag placeholder */}
           <div className="lg:hidden flex gap-4">
+            {catalog.showCart && (
+              <button onClick={() => setIsCartOpen(true)} className="relative">
+                {/* Use a simple text or bag icon for mobile */}
+                <span className="text-sm font-serif italic">
+                  Bag ({cart.length})
+                </span>
+              </button>
+            )}
             <button onClick={() => setIsMobileMenuOpen(true)}>
               <Search size={20} strokeWidth={1} />
             </button>
@@ -276,14 +330,45 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
                     </div>
                   )}
 
-                  {/* Featured Badge */}
+                  {/* Featured Badge (Moved to Left) */}
                   {product.isFeatured && (
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1">
+                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 z-10">
                       <span className="text-[10px] uppercase tracking-widest font-medium text-black">
                         Destacado
                       </span>
                     </div>
                   )}
+
+                  {/* Actions (Top Right) */}
+                  <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        shareProduct(product);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center bg-white/90 backdrop-blur-sm text-stone-600 hover:text-black hover:bg-white transition-colors"
+                    >
+                      <Share2 size={16} />
+                    </button>
+                    {store.whatsapp && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const number = store.whatsapp.replace(/\D/g, "");
+                          const text = encodeURIComponent(
+                            `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                          );
+                          window.open(
+                            `https://wa.me/${number}?text=${text}`,
+                            "_blank",
+                          );
+                        }}
+                        className="w-8 h-8 flex items-center justify-center bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors"
+                      >
+                        <MessageCircle size={16} />
+                      </button>
+                    )}
+                  </div>
 
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
@@ -618,8 +703,35 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
           store={store}
           showShareButton={catalog.showShareButton}
           showPaymentButton={catalog.showPaymentButton}
+          onAddToCart={addToCart}
         />
       )}
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

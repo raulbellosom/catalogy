@@ -6,6 +6,7 @@ import {
   Gauge,
   ExternalLink,
   Share2,
+  MessageCircle,
   Zap,
   Activity,
   Trophy,
@@ -17,12 +18,18 @@ import {
   StoreFooter,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -67,6 +74,28 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -94,6 +123,12 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
         "--velocity-secondary": secondaryColor,
         "--store-navbar-height": "4rem",
         "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
+        "--color-border": "#e2e8f0",
+        "--color-bg-secondary": "#f1f5f9",
+        "--color-fg": "#0f172a",
+        "--color-fg-secondary": "#334155",
+        "--color-primary": "#dc2626",
+        "--color-card": "#ffffff",
       }}
     >
       <style>{`
@@ -150,6 +185,21 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
           accent: "text-[var(--velocity-primary)]",
           glass: false,
         }}
+        actions={
+          catalog.showCart && (
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="hidden md:flex items-center gap-1 font-black italic uppercase tracking-tighter hover:text-[var(--velocity-primary)] transition-colors"
+            >
+              CART
+              {cart.length > 0 && (
+                <span className="ml-1 bg-[var(--velocity-primary)] text-white text-[10px] px-1.5 py-0.5 velocity-skew">
+                  <span className="block velocity-unskew">{cart.length}</span>
+                </span>
+              )}
+            </button>
+          )
+        }
       />
 
       {/* Hero Section */}
@@ -308,13 +358,17 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                       sortOrder={sortOrder}
                       setSortOrder={setSortOrder}
                       categories={categories}
-                      tone="noir"
+                      tone="light"
                       showSearch={false} // Shown in navbar
                       showFilters={true}
                       showSort={catalog.showSort}
                       showPrice={catalog.showFilters}
                       showCategories={catalog.showFilters}
+                      showFeaturedOnly={showFeaturedOnly}
+                      onToggleFeaturedOnly={toggleFeaturedOnly}
+                      hasFeaturedProducts={hasFeaturedProducts}
                       variant="minimal"
+                      orientation="vertical"
                     />
                   </div>
                 </div>
@@ -410,7 +464,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                         </div>
 
                         {/* Badges */}
-                        <div className="absolute top-4 left-0 velocity-unskew z-10">
+                        <div className="absolute top-4 left-0 velocity-unskew z-10 flex flex-col gap-2 items-start">
                           {product.stock > 0 ? (
                             <span className="bg-[var(--velocity-primary)] text-white text-xs font-black italic uppercase px-3 py-1 shadow-lg">
                               Disponible
@@ -418,6 +472,11 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                           ) : (
                             <span className="bg-slate-800 text-white text-xs font-black italic uppercase px-3 py-1 shadow-lg">
                               Agotado
+                            </span>
+                          )}
+                          {product.isFeatured && (
+                            <span className="bg-yellow-400 text-black text-xs font-black italic uppercase px-3 py-1 shadow-lg border-2 border-black">
+                              Destacado
                             </span>
                           )}
                         </div>
@@ -448,17 +507,9 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                               ))}
                             </div>
                           )}
-                        {/* Speed Badge / Featured Badge */}
-                        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-                          {product.isFeatured && (
-                            <div className="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 transform -skew-x-12 uppercase tracking-tighter border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                              Destacado
-                            </div>
-                          )}
-                        </div>
 
                         {catalog.showShareButton && (
-                          <div className="absolute -top-10 right-2 md:-right-4">
+                          <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -468,6 +519,27 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                             >
                               <Share2 size={14} />
                             </button>
+                            {store.whatsapp && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const number = store.whatsapp.replace(
+                                    /\D/g,
+                                    "",
+                                  );
+                                  const text = encodeURIComponent(
+                                    `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                                  );
+                                  window.open(
+                                    `https://wa.me/${number}?text=${text}`,
+                                    "_blank",
+                                  );
+                                }}
+                                className="w-8 h-8 bg-[#25D366] border-2 border-slate-900 flex items-center justify-center hover:bg-[#20bd5a] hover:border-[#20bd5a] text-white transition-colors shadow-lg"
+                              >
+                                <MessageCircle size={14} />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -524,7 +596,8 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm md:hidden"
+              className="fixed left-0 right-0 bottom-0 z-50 bg-black/90 backdrop-blur-sm md:hidden"
+              style={{ top: "var(--store-navbar-offset)" }}
               onClick={() => setIsMobileMenuOpen(false)}
             />
             <motion.div
@@ -532,7 +605,8 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed inset-y-0 right-0 z-50 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              className="fixed right-0 bottom-0 z-50 w-[85%] bg-white p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              style={{ top: "var(--store-navbar-offset)" }}
             >
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -565,7 +639,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                     sortOrder={sortOrder}
                     setSortOrder={setSortOrder}
                     categories={categories}
-                    tone="noir"
+                    tone="light"
                     showSearch={catalog.showSearch}
                     showFilters={catalog.showFilters}
                     showSort={catalog.showSort}
@@ -592,8 +666,36 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
           store={store}
           showShareButton={catalog.showShareButton}
           showPaymentButton={catalog.showPaymentButton}
+          onAddToCart={addToCart}
         />
       )}
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+          tone="light"
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

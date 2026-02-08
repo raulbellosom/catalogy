@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Search,
   Menu,
+  ShoppingBag,
   X,
   Share2,
   Filter,
@@ -24,9 +25,15 @@ import {
   StorePurchaseInfo,
   StoreFooter,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -279,6 +286,28 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
+
   // Featured Products Logic
   const featuredProductIds = catalog.featuredProductIds || [];
 
@@ -421,6 +450,21 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                 <ExternalLink className="w-4 h-4" />
                 Ir a pagar
               </CoastalButton>
+            )}
+
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 text-slate-800 hover:text-(--coastal-primary) transition-colors"
+                title="Ver carrito"
+              >
+                <ShoppingBag className="w-6 h-6" />
+                {cart.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-(--coastal-primary) text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
             )}
           </div>
 
@@ -682,6 +726,7 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
                   primaryColor={primary}
                   onClick={() => setSelectedProduct(product)}
                   isFeatured={product.isFeatured}
+                  whatsappNumber={store.whatsapp}
                 />
               ))}
             </div>
@@ -729,7 +774,33 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
         store={store}
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+        />
+      )}
 
       {/* Mobile Sidebar (Filters & Menu) */}
       <AnimatePresence>
@@ -829,6 +900,7 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
           </>
         )}
       </AnimatePresence>
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

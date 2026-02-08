@@ -23,6 +23,12 @@ const isValidUrl = (string) => {
   }
 };
 
+const isValidPhoneNumber = (string) => {
+  // Allows + followed by 7-15 digits
+  const regex = /^\+?[1-9]\d{7,14}$/;
+  return regex.test(string);
+};
+
 export function GeneralTab({ store }) {
   const toast = useToast();
   const updateStore = useUpdateStore();
@@ -34,6 +40,7 @@ export function GeneralTab({ store }) {
   const [description, setDescription] = useState("");
   const [purchaseInstructions, setPurchaseInstructions] = useState("");
   const [paymentLink, setPaymentLink] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -45,7 +52,9 @@ export function GeneralTab({ store }) {
       setSlug(store.slug || "");
       setDescription(store.description || "");
       setPurchaseInstructions(store.purchaseInstructions || "");
+      setPurchaseInstructions(store.purchaseInstructions || "");
       setPaymentLink(store.paymentLink || "");
+      setWhatsapp(store.whatsapp || "");
     }
   }, [store]);
 
@@ -54,7 +63,8 @@ export function GeneralTab({ store }) {
     slug.trim() !== (store?.slug || "") ||
     description.trim() !== (store?.description || "") ||
     purchaseInstructions.trim() !== (store?.purchaseInstructions || "") ||
-    paymentLink.trim() !== (store?.paymentLink || "");
+    paymentLink.trim() !== (store?.paymentLink || "") ||
+    whatsapp.trim() !== (store?.whatsapp || "");
 
   const sections = useMemo(
     () => [
@@ -95,6 +105,16 @@ export function GeneralTab({ store }) {
     if (event?.preventDefault) event.preventDefault();
     if (!hasChanges) return;
 
+    const isWhatsappValid =
+      !whatsapp.trim() || isValidPhoneNumber(whatsapp.trim());
+    const isPaymentLinkValid =
+      !paymentLink.trim() || isValidUrl(paymentLink.trim());
+
+    if (!isWhatsappValid || !isPaymentLinkValid) {
+      toast.error("Por favor corrige los errores antes de guardar");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const data = {
@@ -102,6 +122,7 @@ export function GeneralTab({ store }) {
         slug: slug.trim().toLowerCase(),
         description: description.trim(),
         purchaseInstructions: purchaseInstructions.trim(),
+        whatsapp: whatsapp.trim(),
       };
 
       if (paymentLink.trim()) {
@@ -143,7 +164,8 @@ export function GeneralTab({ store }) {
 
   const handleSectionSelect = (id) => {
     const root = sectionScrollRef.current;
-    const element = root?.querySelector(`#${id}`) || document.getElementById(id);
+    const element =
+      root?.querySelector(`#${id}`) || document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -159,7 +181,10 @@ export function GeneralTab({ store }) {
         sidebarTitle="General"
         sidebarSubtitle="Configura los datos esenciales de tu tienda."
         sidebarFooter={
-          <StickySaveButton isSubmitting={isSubmitting} hasChanges={hasChanges} />
+          <StickySaveButton
+            isSubmitting={isSubmitting}
+            hasChanges={hasChanges}
+          />
         }
       >
         <GeneralBasicsSection
@@ -167,6 +192,13 @@ export function GeneralTab({ store }) {
           onNameChange={setName}
           description={description}
           onDescriptionChange={setDescription}
+          whatsapp={whatsapp}
+          onWhatsappChange={setWhatsapp}
+          whatsappError={
+            whatsapp.trim() && !isValidPhoneNumber(whatsapp.trim())
+              ? "Formato inválido. Ej: +521234567890"
+              : undefined
+          }
         />
         <GeneralLinkSection
           slug={slug}

@@ -9,6 +9,7 @@ import {
   ExternalLink,
   SlidersHorizontal,
   ArrowRight,
+  MessageCircle,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -18,9 +19,15 @@ import {
   StoreFooter,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
@@ -78,6 +85,28 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
     toggleFeaturedOnly,
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
+
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -182,14 +211,44 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
               <button
                 onClick={() => setIsFilterOpen(true)}
                 className="hover:text-[var(--gallery-accent)] transition-colors"
+                title="Buscador"
               >
                 <Search size={18} />
+              </button>
+            )}
+
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="hover:text-[var(--gallery-accent)] transition-colors relative"
+                title="Ver Carrito"
+              >
+                <span className="font-bold uppercase tracking-wider">
+                  CARRITO
+                </span>
+                {cart.length > 0 && (
+                  <span className="ml-1 text-[10px] align-top bg-stone-900 text-white px-1 py-0.5 rounded-full">
+                    {cart.length}
+                  </span>
+                )}
               </button>
             )}
           </div>
 
           {/* Mobile Menu Trigger */}
           <div className="lg:hidden flex items-center gap-4">
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2"
+              >
+                <span className="sr-only">Carrito</span>
+                {/* Simple indicator */}
+                <div className="flex items-center gap-1 font-bold text-xs">
+                  CART {cart.length > 0 && `(${cart.length})`}
+                </div>
+              </button>
+            )}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="p-2 -mr-2"
@@ -332,16 +391,41 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                           <button
                             onClick={(e) =>
                               openViewer(
-                                0,
-                                product.imageFileIds.map((id) =>
-                                  getProductImageUrl(id),
-                                ),
+                                idx,
+                                product.imageFileIds.map(getProductImageUrl),
                                 e,
                               )
                             }
                             className="p-2 bg-white/20 text-white hover:bg-white/40 rounded-full transition-colors"
                           >
                             <Maximize2 size={16} />
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="p-2 bg-white/20 text-white hover:bg-white/40 rounded-full transition-colors"
+                        >
+                          <Share2 size={16} />
+                        </button>
+                        {store.whatsapp && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const number = store.whatsapp.replace(/\D/g, "");
+                              const text = encodeURIComponent(
+                                `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                              );
+                              window.open(
+                                `https://wa.me/${number}?text=${text}`,
+                                "_blank",
+                              );
+                            }}
+                            className="p-2 bg-[#25D366] text-white hover:bg-[#20bd5a] rounded-full transition-colors"
+                          >
+                            <MessageCircle size={16} />
                           </button>
                         )}
                       </div>
@@ -614,7 +698,34 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
         tone="gallery"
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

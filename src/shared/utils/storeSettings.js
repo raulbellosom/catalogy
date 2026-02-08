@@ -11,6 +11,7 @@ export const DEFAULT_CATALOG_SETTINGS = {
   showShareButton: true,
   showPurchaseInfo: true,
   showPaymentButton: true,
+  showCart: true,
   featuredProductIds: [],
 };
 

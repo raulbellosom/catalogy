@@ -8,5 +8,7 @@ export * from "./ProductDetailModal";
 export * from "./StorePurchaseInfo";
 export * from "./StoreNavbar";
 export * from "./CatalogFilters";
-export * from "./CatalogFilters";
+
 export * from "./catalogHooks";
+export * from "./CartDrawer";
+export * from "./WhatsAppFloatingButton";

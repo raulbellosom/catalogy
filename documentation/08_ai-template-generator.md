@@ -25,6 +25,7 @@ interface Store {
   name: string;
   description?: string;
   logoFileId?: string;
+  whatsapp?: string; // Numero de WhatsApp de la tienda (solo digitos)
   categoriesJson: string; // Parsear: Array<{id: string, name: string}>
   purchaseInstructions?: string; // Instrucciones de pago/entrega
   paymentLink?: string; // Link externo de pago
@@ -84,7 +85,8 @@ Debes implementar los siguientes filtros de manera **LOCAL** (ya están resuelto
   - Visualizador de imágenes (Carousel si hay > 1).
   - Descripción extendida.
   - Stock disponible ("Disponibles").
-  - Botón de compartir.
+  - Botón de compartir (Share API).
+  - Botón de WhatsApp: SI `store.whatsapp` existe, botón dedicado que abre `https://wa.me/${store.whatsapp}` con mensaje predefinido.
 
 ## 5. Diseño y Estética Premium
 

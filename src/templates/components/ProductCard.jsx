@@ -6,7 +6,7 @@
  */
 
 import { motion } from "motion/react";
-import { Tag, Share2, Sparkles } from "lucide-react";
+import { Tag, Share2, Sparkles, MessageCircle } from "lucide-react";
 import { shareProduct } from "./catalogHooks";
 import { getProductImageUrl } from "@/shared/services/productService";
 import { ProductImageCarousel } from "./ProductImageCarousel";
@@ -56,6 +56,7 @@ export function ProductCard({
   shared = false,
   tone = "light",
   isFeatured = false,
+  whatsappNumber,
 }) {
   const isNoir = tone === "noir";
   const handleShare = async (event) => {
@@ -96,14 +97,33 @@ export function ProductCard({
       {/* Imagen */}
       <div className="aspect-square relative overflow-hidden">
         {showShareButton && (
-          <button
-            type="button"
-            onClick={handleShare}
-            className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-(--card)/80 border border-(--border) flex items-center justify-center text-(--muted-foreground) hover:text-(--primary)"
-            aria-label="Compartir producto"
-          >
-            <Share2 className="h-4 w-4" />
-          </button>
+          <div className="absolute right-2 top-2 z-10 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="h-8 w-8 rounded-full bg-(--card)/80 border border-(--border) flex items-center justify-center text-(--muted-foreground) hover:text-(--primary) transition-colors"
+              aria-label="Compartir producto"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+            {whatsappNumber && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const number = whatsappNumber.replace(/\D/g, "");
+                  const text = encodeURIComponent(
+                    `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                  );
+                  window.open(`https://wa.me/${number}?text=${text}`, "_blank");
+                }}
+                className="h-8 w-8 rounded-full bg-[#25D366] border border-[#25D366] flex items-center justify-center text-white hover:bg-[#20bd5a] transition-colors shadow-sm"
+                aria-label="Pedir por WhatsApp"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         )}
         <ProductImageCarousel
           imageFileIds={imageFileIds}

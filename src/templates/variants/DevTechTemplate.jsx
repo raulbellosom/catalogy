@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Share2,
   Zap,
+  ShoppingBag,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import {
@@ -20,8 +21,14 @@ import {
   CatalogFilters,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
@@ -55,6 +62,30 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [booting, setBooting] = useState(true);
   const [bootLog, setBootLog] = useState([]);
+
+  // Hooks
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    isCartOpen,
+    setIsCartOpen,
+    getCartShareUrl,
+    getCartWhatsAppMessage,
+  } = useShoppingCart(store.id || store.$id);
+
+  const initialProduct = useProductDeepLink(products);
+
+  // Auto-open product from deep link
+  useEffect(() => {
+    if (initialProduct && products) {
+      const product = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (product) {
+        setSelectedProduct(product);
+      }
+    }
+  }, [initialProduct, products]);
 
   // Mouse tracking for interactive glow effect
   useEffect(() => {
@@ -125,6 +156,23 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
 
   const openViewer = (index, images) => {
     setViewer({ isOpen: true, images, index });
+  };
+
+  const handleShareCart = async () => {
+    const url = getCartShareUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Mi carrito de ${store.name}`,
+          url: url,
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Link del carrito copiado!");
+    }
   };
 
   return (
@@ -235,19 +283,33 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
           }
           onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
           actions={
-            store?.paymentLink &&
-            catalog.showPaymentButton && (
-              <div className="hidden md:flex items-center gap-4">
-                <a
-                  href={store.paymentLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-5 py-2 bg-(--dev-accent) text-(--dev-bg) rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                  <Zap size={16} /> Ir al pago
-                </a>
-              </div>
-            )
+            <div className="flex items-center gap-4">
+              {/* Cart Trigger */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 text-(--dev-text) hover:text-(--dev-accent) transition-colors"
+              >
+                <ShoppingBag size={20} />
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-(--dev-accent) text-(--dev-bg) text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+
+              {store?.paymentLink && catalog.showPaymentButton && (
+                <div className="hidden md:flex items-center gap-4">
+                  <a
+                    href={store.paymentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2 bg-(--dev-accent) text-(--dev-bg) rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                  >
+                    <Zap size={16} /> Ir al pago
+                  </a>
+                </div>
+              )}
+            </div>
           }
         />
 
@@ -615,8 +677,21 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
           tone="dark"
           showShareButton={catalog.showShareButton}
           showPaymentButton={catalog.showPaymentButton}
+          onAddToCart={addToCart}
+        />
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQuantity}
+          onShareCart={handleShareCart}
+          onWhatsAppCheckout={getCartWhatsAppMessage}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
         />
       </motion.div>
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} tone="dark" />
     </div>
   );
 }

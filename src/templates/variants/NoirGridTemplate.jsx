@@ -9,8 +9,14 @@ import {
   StoreNavbar,
   StoreFooter,
   StorePurchaseInfo,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
@@ -58,6 +64,28 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
     toggleFeaturedOnly,
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
+
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products, setSelectedProduct]);
 
   // ImageViewerModal State
   const [viewer, setViewer] = useState({
@@ -140,14 +168,31 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
           store?.paymentLink &&
           catalog.showPaymentButton && (
             <div className="hidden md:flex items-center gap-4">
-              <a
-                href={store.paymentLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-2 bg-(--noir-strong) text-black rounded-full text-sm font-bold tracking-wide hover:bg-(--noir-accent) transition-colors"
-              >
-                PAGAR
-              </a>
+              {store?.paymentLink && catalog.showPaymentButton && (
+                <a
+                  href={store.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2 bg-(--noir-strong) text-black rounded-full text-sm font-bold tracking-wide hover:bg-(--noir-accent) transition-colors"
+                >
+                  PAGAR
+                </a>
+              )}
+              {catalog.showCart && (
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="text-white hover:text-(--noir-accent) transition-colors relative"
+                >
+                  <span className="font-bold tracking-widest text-xs">
+                    CARRITO
+                  </span>
+                  {cart.length > 0 && (
+                    <span className="absolute -top-3 -right-3 bg-(--noir-accent) text-white text-[9px] px-1.5 py-0.5 rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
           )
         }
@@ -292,6 +337,7 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
                         <ProductCard
                           product={product}
                           tone="noir"
+                          whatsappNumber={store.whatsapp}
                           size="full"
                           onCategoryClick={
                             catalog.showFilters
@@ -469,7 +515,27 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
         tone="noir"
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onCheckout={() => {
+            const url = getCartShareUrl();
+            if (url) window.open(url, "_blank");
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+          tone="noir"
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} tone="dark" />
     </div>
   );
 }

@@ -207,18 +207,152 @@ export const useCatalogFilters = ({ store, products }) => {
 
 export const useCatalog = useCatalogFilters;
 
+// --- Cart System ---
+
+export const useShoppingCart = (storeId) => {
+  const storageKey = `catalogy_cart_${storeId}`;
+
+  const [cart, setCart] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      // Check for shared cart in URL first
+      const params = new URLSearchParams(window.location.search);
+      const sharedCart = params.get("cart");
+      if (sharedCart) {
+        // Format: ID:QTY;ID:QTY
+        const items = sharedCart.split(";").map((item) => {
+          const [id, qty] = item.split(":");
+          return { id, quantity: Number(qty) || 1 };
+        });
+        // Clear param to clean URL but keep items in memory to save them
+        window.history.replaceState({}, "", window.location.pathname);
+        return items;
+      }
+
+      const item = window.localStorage.getItem(storageKey);
+      return item ? JSON.parse(item) : [];
+    } catch (error) {
+      console.error("Error loading cart:", error);
+      return [];
+    }
+  });
+
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(storageKey, JSON.stringify(cart));
+    }
+  }, [cart, storageKey]);
+
+  const addToCart = (product, quantity = 1) => {
+    setCart((prev) => {
+      const existing = prev.find(
+        (item) => item.id === (product.id || product.$id),
+      );
+      if (existing) {
+        return prev.map((item) =>
+          item.id === (product.id || product.$id)
+            ? { ...item, quantity: item.quantity + quantity }
+            : item,
+        );
+      }
+      return [...prev, { id: product.id || product.$id, quantity, product }]; // Store product data for display if needed
+    });
+    setIsCartOpen(true);
+  };
+
+  const removeFromCart = (productId) => {
+    setCart((prev) => prev.filter((item) => item.id !== productId));
+  };
+
+  const updateQuantity = (productId, delta) => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.id === productId) {
+          const newQty = Math.max(1, item.quantity + delta);
+          return { ...item, quantity: newQty };
+        }
+        return item;
+      }),
+    );
+  };
+
+  const clearCart = () => setCart([]);
+
+  const getCartShareUrl = () => {
+    if (typeof window === "undefined" || cart.length === 0) return "";
+    const cartString = cart
+      .map((item) => `${item.id}:${item.quantity}`)
+      .join(";");
+    const url = new URL(window.location.href);
+    url.searchParams.set("cart", cartString);
+    return url.toString();
+  };
+
+  const getCartWhatsAppMessage = (storeName) => {
+    if (cart.length === 0) return "";
+    let message = `Hola! Me interesa comprar lo siguiente de ${storeName}:\n\n`;
+    cart.forEach((item) => {
+      // We might not have full product details if loaded from URL, handle gracefully
+      const name = item.product?.name || `Producto ID: ${item.id}`;
+      const price = item.product?.price ? `$${item.product.price}` : "";
+      message += `• ${item.quantity}x ${name} ${price}\n`;
+    });
+    return encodeURIComponent(message);
+  };
+
+  return {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    updateQty: updateQuantity, // Alias for templates
+    clearCart,
+    isCartOpen,
+    setIsCartOpen,
+    getCartShareUrl,
+    getCartWhatsAppMessage,
+    handleWhatsAppCheckout: getCartWhatsAppMessage, // Alias for templates
+  };
+};
+
+export const useProductDeepLink = (products) => {
+  const [initialProductId, setInitialProductId] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("product");
+    if (productId && products?.length) {
+      const exists = products.find((p) => (p.id || p.$id) === productId);
+      if (exists) {
+        setInitialProductId(productId);
+        // Optional: Clean URL
+        // window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, [products]);
+
+  return initialProductId;
+};
+
 export const getProductShareUrl = (productId) => {
   if (!productId) return "";
-  if (typeof window === "undefined") return `/product/${productId}`;
-  return new URL(`/product/${productId}`, window.location.origin).toString();
+  if (typeof window === "undefined") return `?product=${productId}`;
+  const url = new URL(window.location.href);
+  url.searchParams.set("product", productId);
+  return url.toString();
 };
 
 export const shareProduct = async (product) => {
-  if (!product?.$id) return "noop";
-  const url = getProductShareUrl(product.$id);
+  if (!product?.$id && !product?.id) return "noop";
+  const id = product.$id || product.id;
+  const url = getProductShareUrl(id);
+
   const payload = {
     title: product.name,
-    text: product.description || "",
+    text: product.description || `Mira este producto: ${product.name}`,
     url,
   };
 
@@ -227,7 +361,9 @@ export const shareProduct = async (product) => {
       await navigator.share(payload);
       return "shared";
     } catch (error) {
-      // Fallback to clipboard
+      if (error.name !== "AbortError") {
+        console.error("Share failed:", error);
+      }
     }
   }
 
@@ -240,11 +376,6 @@ export const shareProduct = async (product) => {
     }
   }
 
-  if (typeof window !== "undefined") {
-    window.open(url, "_blank", "noopener,noreferrer");
-    return "opened";
-  }
-
   return "failed";
 };
 
@@ -254,8 +385,8 @@ export const useProductShare = () => {
   const handleShare = async (product) => {
     const result = await shareProduct(product);
     if (result === "copied") {
-      setSharedProductId(product.$id);
-      setTimeout(() => setSharedProductId(null), 1500);
+      setSharedProductId(product.id || product.$id);
+      setTimeout(() => setSharedProductId(null), 2000);
     }
   };
 

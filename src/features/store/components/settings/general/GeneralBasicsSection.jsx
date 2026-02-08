@@ -7,6 +7,9 @@ export function GeneralBasicsSection({
   onNameChange,
   description,
   onDescriptionChange,
+  whatsapp,
+  onWhatsappChange,
+  whatsappError,
 }) {
   return (
     <SettingsSection
@@ -34,6 +37,14 @@ export function GeneralBasicsSection({
             maxLength={500}
           />
         </div>
+        <Input
+          label="WhatsApp Business / Contacto"
+          placeholder="+521234567890"
+          value={whatsapp}
+          onChange={(event) => onWhatsappChange(event.target.value)}
+          error={whatsappError}
+          hint="Incluye el código de país (ej. +52). Se usará para el botón de contacto flotante."
+        />
       </div>
     </SettingsSection>
   );

@@ -181,6 +181,7 @@ Document ID:
 | name                 | string  | yes      |          | size=120      | nombre de la tienda                                      |
 | description          | string  | no       |          | size=500      | descripcion corta                                        |
 | logoFileId           | string  | no       |          | size=64       | FK -> storeLogos bucket                                  |
+| whatsapp             | string  | no       |          | size=20       | numero de whatsapp                                       |
 | templateId           | string  | no       | minimal  | size=50       | ID del template (minimal/storefront/gallery)             |
 | activeRenderer       | enum    | no       | template | template,puck | decide que render se publica                             |
 | categoriesJson       | string  | no       | "[]"     | size=2000     | JSON de categorias propias de la tienda                  |

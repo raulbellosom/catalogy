@@ -6,6 +6,7 @@ import {
   X,
   Filter,
   Share2,
+  MessageCircle,
   Menu,
   Eraser,
 } from "lucide-react";
@@ -17,9 +18,15 @@ import {
   CatalogFilters,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -88,6 +95,28 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
     toggleFeaturedOnly,
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
+
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
 
   // ImageViewer State
   const [viewer, setViewer] = useState({
@@ -167,15 +196,46 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
               <Filter size={20} className="stroke-[3]" />
               Filtros
             </button>
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="flex items-center gap-2 font-bold hover:underline decoration-2 underline-offset-4 relative"
+                style={{ color: primary }}
+              >
+                <ShoppingBag size={20} className="stroke-[3]" />
+                Carrito
+                {cart.length > 0 && (
+                  <span className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-black rounded-full h-5 w-5 flex items-center justify-center sketchy-border">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Mobile Toggle */}
-          <button
-            className="md:hidden relative z-50 text-stone-800"
-            onClick={() => setShowFilters(true)}
-          >
-            <Menu size={28} className="stroke-[3]" />
-          </button>
+          <div className="flex md:hidden items-center gap-4">
+            {catalog.showCart && (
+              <button
+                className="relative z-50"
+                onClick={() => setIsCartOpen(true)}
+                style={{ color: primary }}
+              >
+                <ShoppingBag size={24} className="stroke-[3]" />
+                {cart.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+            )}
+            <button
+              className="relative z-50 text-stone-800"
+              onClick={() => setShowFilters(true)}
+            >
+              <Menu size={28} className="stroke-[3]" />
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -411,6 +471,7 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
         tone="light" // Use light tone but maybe we can custom style later
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
       <ImageViewerModal
         isOpen={viewer.isOpen}
@@ -418,6 +479,33 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
         images={viewer.images}
         initialIndex={viewer.index}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+          tone="light"
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

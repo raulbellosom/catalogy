@@ -6,6 +6,7 @@ import {
   X,
   Filter,
   Share2,
+  MessageCircle,
   ArrowLeft,
   ArrowRight,
   Menu,
@@ -20,9 +21,15 @@ import {
   CatalogFilters,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 import { Logo } from "@/shared/ui/atoms/Logo";
@@ -138,6 +145,28 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
+
   // ImageViewer State
   const [viewer, setViewer] = useState({
     isOpen: false,
@@ -209,6 +238,21 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
               >
                 <Menu size={24} />
               </button>
+
+              {/* Cart Trigger */}
+              {catalog.showCart && (
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative p-2 hover:text-stone-600 transition-colors"
+                >
+                  <ShoppingBag size={24} />
+                  {cart.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </nav>
@@ -486,10 +530,43 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
                       </div>
                     )}
 
-                    {/* Featured Badge */}
+                    {/* Featured Badge (Moved to Left) */}
                     {product.isFeatured && (
-                      <div className="absolute top-2 right-2 bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest z-10">
+                      <div className="absolute top-2 left-2 bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-widest z-10">
                         Destacado
+                      </div>
+                    )}
+
+                    {/* Actions (Top Right) */}
+                    {catalog.showShareButton && (
+                      <div className="absolute top-2 right-2 flex flex-col gap-2 z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            shareProduct(product);
+                          }}
+                          className="w-8 h-8 flex items-center justify-center bg-white text-black hover:bg-black hover:text-white transition-colors border border-stone-200"
+                        >
+                          <Share2 size={14} />
+                        </button>
+                        {store.whatsapp && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const number = store.whatsapp.replace(/\D/g, "");
+                              const text = encodeURIComponent(
+                                `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                              );
+                              window.open(
+                                `https://wa.me/${number}?text=${text}`,
+                                "_blank",
+                              );
+                            }}
+                            className="w-8 h-8 flex items-center justify-center bg-[#25D366] text-white hover:bg-[#20bd5a] transition-colors"
+                          >
+                            <MessageCircle size={14} />
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -621,7 +698,35 @@ export function StorefrontTemplate({ store, products, isPreview = false }) {
         tone="dark"
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+          tone="dark"
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

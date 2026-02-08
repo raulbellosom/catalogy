@@ -13,6 +13,7 @@ import {
   ArrowRight,
   ExternalLink,
   Share2,
+  MessageCircle,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -23,9 +24,15 @@ import {
   CatalogFilters,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
@@ -113,6 +120,28 @@ export function NatureTemplate({ store, products, isPreview = false }) {
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
+
   // ImageViewer State
   const [viewer, setViewer] = useState({
     isOpen: false,
@@ -194,6 +223,24 @@ export function NatureTemplate({ store, products, isPreview = false }) {
           }
           onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="backdrop-blur-md shadow-sm"
+          actions={
+            catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 text-[#1a2e1a] hover:text-(--nature-primary) transition-colors"
+                title="Carrito"
+              >
+                <div className="flex items-center gap-1 font-bold">
+                  CARRITO
+                  {cart.length > 0 && (
+                    <span className="bg-(--nature-primary) text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          }
         />
       </nav>
 
@@ -395,17 +442,42 @@ export function NatureTemplate({ store, products, isPreview = false }) {
                         )}
 
                         {catalog.showShareButton && (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              shareProduct(product);
-                            }}
-                            className="absolute right-4 top-4 h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm text-[#1a2e1a] flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:bg-(--nature-primary) hover:text-white"
-                            aria-label="Compartir producto"
-                          >
-                            <Share2 size={18} />
-                          </button>
+                          <div className="absolute right-4 top-4 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                shareProduct(product);
+                              }}
+                              className="h-10 w-10 rounded-full bg-white/80 backdrop-blur-sm text-[#1a2e1a] flex items-center justify-center shadow-sm hover:bg-(--nature-primary) hover:text-white transition-colors"
+                              aria-label="Compartir producto"
+                            >
+                              <Share2 size={18} />
+                            </button>
+                            {store.whatsapp && (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  const number = store.whatsapp.replace(
+                                    /\D/g,
+                                    "",
+                                  );
+                                  const text = encodeURIComponent(
+                                    `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                                  );
+                                  window.open(
+                                    `https://wa.me/${number}?text=${text}`,
+                                    "_blank",
+                                  );
+                                }}
+                                className="h-10 w-10 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-sm hover:bg-[#20bd5a] transition-colors"
+                                aria-label="Pedir por WhatsApp"
+                              >
+                                <MessageCircle size={18} />
+                              </button>
+                            )}
+                          </div>
                         )}
 
                         {/* Price Tag Overlay - Organic Pill */}
@@ -594,7 +666,33 @@ export function NatureTemplate({ store, products, isPreview = false }) {
         tone="nature"
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }

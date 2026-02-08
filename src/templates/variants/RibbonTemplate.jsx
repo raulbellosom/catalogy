@@ -6,6 +6,7 @@ import {
   X,
   Filter,
   Share2,
+  MessageCircle,
   Menu,
   ChevronRight,
 } from "lucide-react";
@@ -18,9 +19,15 @@ import {
   CatalogFilters,
   StorePurchaseInfo,
   shareProduct,
+  CartDrawer,
+  WhatsAppFloatingButton,
 } from "../components";
 import { ImageViewerModal } from "@/shared/ui/molecules/ImageViewerModal";
-import { useCatalogFilters } from "../components/catalogHooks";
+import {
+  useCatalogFilters,
+  useShoppingCart,
+  useProductDeepLink,
+} from "../components/catalogHooks";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
 
@@ -82,6 +89,28 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
     hasFeaturedProducts,
   } = useCatalogFilters({ store, products });
 
+  // Cart Logic
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQty,
+    getCartShareUrl,
+    handleWhatsAppCheckout,
+    isCartOpen,
+    setIsCartOpen,
+  } = useShoppingCart(store.id || store.$id);
+
+  // Deep Linking
+  const initialProduct = useProductDeepLink(products);
+
+  useEffect(() => {
+    if (initialProduct && products) {
+      const found = products.find((p) => (p.id || p.$id) === initialProduct);
+      if (found) setSelectedProduct(found);
+    }
+  }, [initialProduct, products]);
+
   // ImageViewer State
   const [viewer, setViewer] = useState({
     isOpen: false,
@@ -139,14 +168,27 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
               </div>
             </div>
 
-            {/* Right: Search (Icon only to keep clean) */}
-            <div className="w-[100px] flex justify-end">
+            {/* Right: Search and Cart */}
+            <div className="w-[100px] flex justify-end items-center gap-2">
               {catalog.showSearch && (
                 <button
                   onClick={() => setIsFilterDrawerOpen(true)} // Search lives in drawer
-                  className="p-2 text-stone-500 hover:text-[var(--ribbon-primary)]"
+                  className="p-2 text-stone-500 hover:text-[var(--ribbon-primary)] transition-colors"
                 >
                   <Search size={22} strokeWidth={1.5} />
+                </button>
+              )}
+              {catalog.showCart && (
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative p-2 text-stone-500 hover:text-[var(--ribbon-primary)] transition-colors"
+                >
+                  <ShoppingBag size={22} strokeWidth={1.5} />
+                  {cart.length > 0 && (
+                    <span className="absolute top-0 right-0 bg-[var(--ribbon-primary)] text-white text-[10px] font-bold h-4 w-4 flex items-center justify-center rounded-full">
+                      {cart.length}
+                    </span>
+                  )}
                 </button>
               )}
             </div>
@@ -235,6 +277,41 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
                       {product.isFeatured && (
                         <div className="bg-[var(--ribbon-primary)] text-white text-[10px] font-bold px-3 py-1 shadow-sm rounded-r-full uppercase tracking-wider transform -translate-x-2 group-hover:translate-x-0 transition-transform delay-75">
                           Destacado
+                        </div>
+                      )}
+                      {/* Buttons Overlay */}
+                      {catalog.showShareButton && (
+                        <div className="absolute top-2 right-2 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              shareProduct(product);
+                            }}
+                            className="p-1.5 rounded-full bg-white/90 text-stone-600 hover:text-[var(--ribbon-primary)] shadow-sm"
+                          >
+                            <Share2 size={16} />
+                          </button>
+                          {store.whatsapp && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const number = store.whatsapp.replace(
+                                  /\D/g,
+                                  "",
+                                );
+                                const text = encodeURIComponent(
+                                  `Hola! Me interesa este producto: ${product.name} ${formatPrice(product.price, product.currency)}`,
+                                );
+                                window.open(
+                                  `https://wa.me/${number}?text=${text}`,
+                                  "_blank",
+                                );
+                              }}
+                              className="p-1.5 rounded-full bg-[#25D366] text-white hover:bg-[#20bd5a] shadow-sm"
+                            >
+                              <MessageCircle size={16} />
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -426,7 +503,35 @@ export function RibbonTemplate({ store, products, isPreview = false }) {
         tone="ribbon"
         showShareButton={catalog.showShareButton}
         showPaymentButton={catalog.showPaymentButton}
+        onAddToCart={addToCart}
       />
+
+      {catalog.showCart && (
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          cart={cart}
+          onRemove={removeFromCart}
+          onUpdateQty={updateQty}
+          onShareCart={() => {
+            const url = getCartShareUrl();
+            if (navigator.share) {
+              navigator.share({
+                title: `Mi Carrito en ${store.name}`,
+                url: url,
+              });
+            } else {
+              navigator.clipboard.writeText(url);
+              alert("Link copiado al portapapeles");
+            }
+          }}
+          onWhatsAppCheckout={handleWhatsAppCheckout}
+          storeName={store.name}
+          whatsappNumber={store.whatsapp}
+          tone="ribbon"
+        />
+      )}
+      <WhatsAppFloatingButton phoneNumber={store.whatsapp} />
     </div>
   );
 }
