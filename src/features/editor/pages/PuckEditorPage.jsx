@@ -5,7 +5,7 @@
  * Permite arrastrar y soltar bloques para construir el layout.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { Puck } from "@puckeditor/core";
 import "@puckeditor/core/puck.css";
@@ -21,10 +21,16 @@ import {
 import { useAuth } from "../../../app/providers/AuthProvider";
 import { Button } from "../../../shared/ui/atoms/Button";
 import {
-  catalogPuckConfig,
+  PUCK_COMPONENT_TYPES,
   catalogDefaultData,
+  catalogPuckConfig,
 } from "../configs/catalogConfig";
 import { EditorHeader, SAVE_STATES } from "../components/EditorHeader";
+import {
+  injectPuckRuntimeContext,
+  normalizePuckData,
+  sanitizePuckDataForStorage,
+} from "../utils/puckData";
 
 /**
  * @returns {JSX.Element}
@@ -44,7 +50,7 @@ export function PuckEditorPage() {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.STORES,
-        [Query.equal("profileId", user.$id)],
+        [Query.equal("profileId", user.$id), Query.equal("enabled", true)],
       );
       return response.documents[0] || null;
     },
@@ -58,7 +64,11 @@ export function PuckEditorPage() {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.PRODUCTS,
-        [Query.equal("storeId", store.$id), Query.equal("enabled", true)],
+        [
+          Query.equal("storeId", store.$id),
+          Query.equal("enabled", true),
+          Query.equal("status", true),
+        ],
       );
       return response.documents;
     },
@@ -68,37 +78,38 @@ export function PuckEditorPage() {
   // Inicializar datos del editor
   useEffect(() => {
     if (!store) return;
-    if (store.puckData) {
-      try {
-        const data =
-          typeof store.puckData === "string"
-            ? JSON.parse(store.puckData)
-            : store.puckData;
-        setEditorData(data);
-      } catch (error) {
-        console.error("Error parsing puckData:", error);
-        setEditorData(catalogDefaultData);
-      }
-    } else {
-      setEditorData(catalogDefaultData);
-    }
+
+    const normalized = normalizePuckData({
+      rawData: store.puckData,
+      defaultData: catalogDefaultData,
+      allowedComponentTypes: PUCK_COMPONENT_TYPES,
+    });
+
+    setEditorData(normalized);
   }, [store]);
 
   // Mutation para guardar cambios
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      const sanitized = sanitizePuckDataForStorage({
+        data,
+        defaultData: catalogDefaultData,
+        allowedComponentTypes: PUCK_COMPONENT_TYPES,
+      });
+
       await databases.updateDocument(
         DATABASE_ID,
         COLLECTIONS.STORES,
         store.$id,
         {
-          puckData: JSON.stringify(data),
+          puckData: JSON.stringify(sanitized),
         },
       );
     },
     onSuccess: () => {
       setSaveState(SAVE_STATES.SAVED);
-      queryClient.invalidateQueries(["my-store"]);
+      queryClient.invalidateQueries({ queryKey: ["my-store", user?.$id] });
+      queryClient.invalidateQueries({ queryKey: ["store", "user", user?.$id] });
       setTimeout(() => setSaveState(SAVE_STATES.IDLE), 2000);
     },
     onError: (error) => {
@@ -110,7 +121,13 @@ export function PuckEditorPage() {
 
   // Handler de cambios en el editor
   const handleChange = useCallback((data) => {
-    setEditorData(data);
+    setEditorData(
+      sanitizePuckDataForStorage({
+        data,
+        defaultData: catalogDefaultData,
+        allowedComponentTypes: PUCK_COMPONENT_TYPES,
+      }),
+    );
   }, []);
 
   // Guardar
@@ -123,7 +140,7 @@ export function PuckEditorPage() {
   // Preview en nueva ventana
   const handlePreview = useCallback(() => {
     if (store?.slug) {
-      const previewUrl = `https://${store.slug}.catalogy.racoondevs.com`;
+      const previewUrl = `/app/store/${store.slug}/preview?renderer=puck`;
       window.open(previewUrl, "_blank");
     }
   }, [store]);
@@ -175,21 +192,31 @@ export function PuckEditorPage() {
       />
 
       {/* Puck Editor */}
-      <div className="flex-1 overflow-hidden puck-editor-theme-fix">
+      <div className="flex-1 min-h-0 overflow-hidden puck-editor-theme-fix">
         <Puck
           config={catalogPuckConfig}
-          data={{
-            ...editorData,
-            root: {
-              ...editorData.root,
-              props: {
-                ...editorData.root?.props,
-                store,
-                products,
-              },
-            },
+          height="100%"
+          data={injectPuckRuntimeContext({
+            data: editorData,
+            defaultData: catalogDefaultData,
+            allowedComponentTypes: PUCK_COMPONENT_TYPES,
+            store,
+            products,
+            isPreview: false,
+            isEditor: true,
+            previewOffset: 0,
+          })}
+          metadata={{
+            store,
+            products,
+            isPreview: false,
+            isEditor: true,
+            previewOffset: 0,
           }}
           onChange={handleChange}
+          overrides={{
+            header: () => <Fragment />,
+          }}
         />
       </div>
     </div>

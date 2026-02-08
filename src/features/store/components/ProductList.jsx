@@ -564,28 +564,36 @@ const ProductCard = React.forwardRef(
               </Button>
             </div>
           )}
-
-          {!isOverlay && onToggleFeatured && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFeatured(product);
-              }}
-              className={`absolute top-2 left-2 z-30 p-2 rounded-full shadow-lg transition-all ${
-                isFeatured
-                  ? "bg-yellow-400 text-white"
-                  : "bg-white/80 text-gray-400 hover:text-yellow-400"
-              }`}
-            >
-              <Star className={`w-4 h-4 ${isFeatured ? "fill-current" : ""}`} />
-            </button>
-          )}
         </div>
 
         <div className="p-5 flex-1 flex flex-col">
-          <h3 className="font-semibold text-(--color-fg) truncate mb-2">
-            {product.name}
-          </h3>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <h3 className="font-semibold text-(--color-fg) truncate">
+              {product.name}
+            </h3>
+            {!isOverlay && onToggleFeatured && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFeatured(product);
+                }}
+                className={`p-2 rounded-lg border transition-colors ${
+                  isFeatured
+                    ? "bg-yellow-400/15 border-yellow-400/40 text-yellow-500"
+                    : "bg-(--color-bg-tertiary) border-(--color-border) text-(--color-fg-muted) hover:text-yellow-500"
+                }`}
+                aria-pressed={isFeatured}
+                aria-label={
+                  isFeatured ? "Quitar de destacados" : "Marcar como destacado"
+                }
+              >
+                <Star
+                  className={`w-4 h-4 ${isFeatured ? "fill-current" : ""}`}
+                />
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-1 mb-2">
             <DollarSign className="w-4 h-4 text-(--color-fg-secondary)" />
             <span className="text-xl font-bold text-(--color-primary)">

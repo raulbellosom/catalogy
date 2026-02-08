@@ -10,7 +10,7 @@ import {
   getStoreBySlug,
   createStore,
   updateStore,
-  deleteStore,
+  deleteStoreCompletely,
   uploadStoreLogo,
   deleteStoreLogo,
   toggleStorePublished,
@@ -104,9 +104,12 @@ export function useDeleteStore() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: (storeId) => deleteStore(storeId),
+    mutationFn: ({ storeId, email, password }) =>
+      deleteStoreCompletely({ storeId, email, password }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["store", "user", user.$id] });
+      queryClient.removeQueries({ queryKey: ["store", "slug"] });
+      queryClient.removeQueries({ queryKey: ["products"] });
     },
   });
 }

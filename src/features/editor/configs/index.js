@@ -2,4 +2,8 @@
  * Editor Configs Index
  */
 
-export { catalogPuckConfig, catalogDefaultData } from "./catalogConfig";
+export {
+  catalogPuckConfig,
+  catalogDefaultData,
+  PUCK_COMPONENT_TYPES,
+} from "./catalogConfig";

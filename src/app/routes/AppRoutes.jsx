@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useSubdomainContext } from "@/app/providers";
 import { useDynamicHead } from "@/shared/hooks/useDynamicHead";
 import { ScrollToTop } from "@/shared/utils/ScrollToTop";
+import { featureFlags } from "@/shared/lib/env";
 
 // Layouts
 import { AppLayout } from "@/app/layouts/AppLayout";
@@ -156,14 +157,16 @@ export function AppRoutes() {
         </Route>
 
         {/* Editor route - full screen, outside AppLayout */}
-        <Route
-          path="app/editor"
-          element={
-            <ProtectedRoute>
-              <PuckEditorPage />
-            </ProtectedRoute>
-          }
-        />
+        {featureFlags.enablePuck && (
+          <Route
+            path="app/editor"
+            element={
+              <ProtectedRoute>
+                <PuckEditorPage />
+              </ProtectedRoute>
+            }
+          />
+        )}
 
         {/* Store Preview */}
         <Route

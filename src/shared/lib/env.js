@@ -29,6 +29,19 @@ function getEnvVar(key, defaultValue = "", required = false) {
   return value;
 }
 
+/**
+ * Obtiene una variable de entorno booleana
+ * Valores truthy soportados: true,1,yes,on (case-insensitive)
+ * @param {string} key
+ * @param {boolean} [defaultValue=false]
+ * @returns {boolean}
+ */
+function getBooleanEnvVar(key, defaultValue = false) {
+  const raw = import.meta.env[key];
+  if (raw === undefined || raw === null || raw === "") return defaultValue;
+  return ["true", "1", "yes", "on"].includes(String(raw).toLowerCase());
+}
+
 // ============================================================
 // Core Appwrite Configuration
 // ============================================================
@@ -119,6 +132,14 @@ export const appConfig = {
   ),
 };
 
+// ============================================================
+// Feature Flags
+// ============================================================
+
+export const featureFlags = {
+  enablePuck: getBooleanEnvVar("VITE_ENABLE_PUCK", false),
+};
+
 // Alias legacy para compatibilidad
 export const APP_CONFIG = {
   ...appConfig,
@@ -196,6 +217,7 @@ export default {
   buckets,
   functions,
   appConfig,
+  featureFlags,
   validateConfig,
   // Legacy exports
   COLLECTIONS,

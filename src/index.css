@@ -407,3 +407,8 @@ html {
   --puck-color-white: #ffffff;
   --puck-color-black: #000000;
 }
+
+/* Hide Puck native header to avoid duplicated top bars in /app/editor */
+.puck-editor-theme-fix [class*="PuckLayout-header"] {
+  display: none !important;
+}

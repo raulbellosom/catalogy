@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/shared/ui/atoms/Button";
 import { useUserStore, useProducts } from "@/shared/hooks";
-import { appConfig } from "@/shared/lib/env";
+import { appConfig, featureFlags } from "@/shared/lib/env";
 import { GeneralTab } from "../components/settings/GeneralTab";
 import { AppearanceTab } from "../components/settings/AppearanceTab";
 import { CategoriesTab } from "../components/settings/CategoriesTab";
@@ -103,14 +103,16 @@ export function StoreSettingsPage() {
                   </Button>
                 </>
               )}
-              <Button
-                variant="primary"
-                className="flex-1 md:flex-none w-full md:w-auto"
-                onClick={() => navigate("/app/editor")}
-              >
-                <LayoutTemplate className="w-4 h-4 mr-2" />
-                Editor Visual
-              </Button>
+              {featureFlags.enablePuck && (
+                <Button
+                  variant="primary"
+                  className="flex-1 md:flex-none w-full md:w-auto"
+                  onClick={() => navigate("/app/editor")}
+                >
+                  <LayoutTemplate className="w-4 h-4 mr-2" />
+                  Editor Visual
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -2,22 +2,19 @@ import { useEffect } from "react";
 import { Store as StoreIcon, Loader2, Clock } from "lucide-react";
 import { useSubdomainContext } from "@/app/providers";
 import { useStoreBySlug, useProducts, useTrackVisit } from "@/shared/hooks";
+import { featureFlags } from "@/shared/lib/env";
 import { getTemplate, resolveThemeSettings } from "@/templates/registry";
 import { PuckRenderer } from "@/features/editor/components/PuckRenderer";
-import { EmptyCatalog } from "../components/EmptyCatalog";
-import { ProductCard } from "../components/ProductCard";
 
 /**
  * Public catalog page
  * Renders store catalog for public viewing via subdomain
  */
-export function CatalogPage({ previewSlug }) {
+export function CatalogPage({ previewSlug, forcedRenderer = null }) {
   const {
-    slug: subdomainSlug,
     store: subdomainStore,
     user,
   } = useSubdomainContext();
-  const slug = previewSlug || subdomainSlug;
 
   // Use store from context if on subdomain, otherwise fetch (for preview)
   const {
@@ -30,9 +27,7 @@ export function CatalogPage({ previewSlug }) {
   const loadingStore = previewSlug ? loadingPreviewStore : false;
 
   // Fetch products if store exists
-  const { data: productsData, isLoading: loadingProducts } = useProducts(
-    store?.$id,
-  );
+  const { data: productsData } = useProducts(store?.$id);
 
   const products = productsData?.documents || [];
 
@@ -100,46 +95,63 @@ export function CatalogPage({ previewSlug }) {
 
   const template = getTemplate(store.templateId);
   const TemplateComponent = template.component;
-  const activeRenderer = store?.activeRenderer === "puck" ? "puck" : "template";
+  const puckEnabled = featureFlags.enablePuck;
+  const rendererFromStore =
+    puckEnabled && store?.activeRenderer === "puck" ? "puck" : "template";
+  const forcedRendererSafe =
+    forcedRenderer === "template"
+      ? "template"
+      : forcedRenderer === "puck" && puckEnabled
+        ? "puck"
+        : null;
+  const activeRenderer =
+    forcedRendererSafe || rendererFromStore;
 
-  const theme = resolveThemeSettings(store);
-  const { colors, font: fontId } = theme;
+  /** @type {Record<string, string> | undefined} */
+  let themeStyle;
+  if (activeRenderer === "template") {
+    const theme = resolveThemeSettings(store);
+    const { colors, font: fontId } = theme;
+    const FONT_MAP = {
+      inter: '"Inter", sans-serif',
+      merriweather: '"Merriweather", serif',
+      jetbrains: '"JetBrains Mono", monospace',
+      roboto: '"Roboto", sans-serif',
+      playfair: '"Playfair Display", serif',
+      montserrat: '"Montserrat", sans-serif',
+    };
 
-  const FONT_MAP = {
-    inter: '"Inter", sans-serif',
-    merriweather: '"Merriweather", serif',
-    jetbrains: '"JetBrains Mono", monospace',
-    roboto: '"Roboto", sans-serif',
-    playfair: '"Playfair Display", serif',
-    montserrat: '"Montserrat", sans-serif',
-  };
+    /** @type {Record<string, string>} */
+    const style = {};
+    if (colors.primary) {
+      style["--color-primary"] = colors.primary;
+      style["--primary"] = colors.primary;
+    }
+    if (colors.secondary) {
+      style["--color-bg"] = colors.secondary;
+      style["--background"] = colors.secondary;
+    }
 
-  /** @type {Record<string, string>} */
-  const themeStyle = {};
-  if (colors.primary) {
-    themeStyle["--color-primary"] = colors.primary;
-    themeStyle["--primary"] = colors.primary;
+    style["--border"] = "var(--color-border)";
+    style["--foreground"] = "var(--color-fg)";
+    style["--muted"] = "var(--color-bg-tertiary)";
+    style["--muted-foreground"] = "var(--color-fg-muted)";
+    if (fontId && FONT_MAP[fontId]) style["fontFamily"] = FONT_MAP[fontId];
+    themeStyle = style;
   }
-  if (colors.secondary) {
-    themeStyle["--color-bg"] = colors.secondary;
-    themeStyle["--background"] = colors.secondary;
-  }
-
-  // Standard theme aliases
-  themeStyle["--border"] = "var(--color-border)";
-  themeStyle["--foreground"] = "var(--color-fg)";
-  themeStyle["--muted"] = "var(--color-bg-tertiary)";
-  themeStyle["--muted-foreground"] = "var(--color-fg-muted)";
-
-  if (fontId && FONT_MAP[fontId]) themeStyle["fontFamily"] = FONT_MAP[fontId];
 
   return (
     <div
-      className="bg-(--color-bg) transition-colors duration-300"
+      className={`transition-colors duration-300 ${activeRenderer === "template" ? "bg-(--color-bg)" : ""}`}
       style={themeStyle}
     >
       {activeRenderer === "puck" ? (
-        <PuckRenderer store={store} products={products} />
+        <PuckRenderer
+          store={store}
+          products={products}
+          isPreview={!!previewSlug}
+          previewOffset={previewSlug ? 40 : 0}
+        />
       ) : (
         <TemplateComponent
           store={store}
@@ -150,40 +162,3 @@ export function CatalogPage({ previewSlug }) {
     </div>
   );
 }
-
-// TODO: The following components were previously defined here but might be useful in templates directly or context
-// ProductsGrid, ProductCard, EmptyProducts
-// They have been extracted to components/ or are used inside TemplateComponents (which is distinct)
-// The original CatalogPage rendered TemplateComponent which might USE these internally?
-// Wait, TemplateComponent (like MinimalTemplate) takes `products` as prop.
-// Does it use `ProductCard`?
-// If `MinimalTemplate` imports `ProductCard` from somewhere, we should ensure it matches.
-// In this refactor, I moved `ProductCard` to `src/features/catalog/components/ProductCard.jsx`.
-// If existing templates are using a local version, they might need updates, or they have their own.
-// But `CatalogPage` logic above does NOT render `ProductCard` directly.
-// It renders `TemplateComponent`.
-// The extracted components `EmptyCatalog` and `ProductCard` are valuable if `TemplateComponent` uses them.
-// Let's check if I should have modified `TemplateComponent`?
-// The user asked to refactor `CatalogPage`.
-// The file `CatalogPage.jsx` *contained* `ProductCard` and `EmptyProducts` definitions at the bottom (lines 168+).
-// But were they USED?
-// Looking at lines 155-160 in original code:
-// <TemplateComponent store={store} products={products} ... />
-// The `ProductsGrid`, `ProductCard`, `EmptyProducts` defined at bottom of `CatalogPage.jsx` were NOT used in the `CatalogPage` component itself (lines 22-163).
-// They seem to be unused exports or dead code in this file if `TemplateComponent` handles rendering?
-// Or maybe they were exported for templates to use?
-// The original code didn't export them.
-// `function ProductsGrid`... `function ProductCard`... were not exported.
-// So they were likely DEAD CODE in `CatalogPage.jsx`?
-// Or maybe I missed something.
-// Let's re-read line 22-163.
-// `CatalogPage` returns `<TemplateComponent ... />`.
-// It does NOT use `ProductCard` or `ProductsGrid`.
-// So the code at the bottom of `CatalogPage.jsx` was likely vestigial or copied code that wasn't being used by `CatalogPage` itself.
-// However, to be safe, I've extracted them.
-// If they were truly unused, removing them is good cleanup.
-// I will keep the extracted files just in case other templates import them (but they weren't exported).
-// If they weren't exported, no one could import them.
-// So they were local logic that was unused?
-// Actually, `MinimalTemplate` might want to use them if we refactor it too.
-// For now, `CatalogPage` is cleaned up.

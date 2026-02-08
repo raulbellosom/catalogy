@@ -1,6 +1,7 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { CatalogPage } from "@/features/catalog/pages/CatalogPage";
+import { featureFlags } from "@/shared/lib/env";
 
 /**
  * Preview page for store owners
@@ -8,6 +9,13 @@ import { CatalogPage } from "@/features/catalog/pages/CatalogPage";
  */
 export function StorePreviewPage() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
+  const rendererParam = searchParams.get("renderer");
+  const forcedRenderer =
+    rendererParam === "template" ||
+    (rendererParam === "puck" && featureFlags.enablePuck)
+      ? rendererParam
+      : null;
 
   return (
     <div className="store-preview-wrapper relative">
@@ -25,7 +33,7 @@ export function StorePreviewPage() {
         </div>
         <div className="w-24" /> {/* Spacer to balance the layout */}
       </div>
-      <CatalogPage previewSlug={slug} />
+      <CatalogPage previewSlug={slug} forcedRenderer={forcedRenderer} />
     </div>
   );
 }

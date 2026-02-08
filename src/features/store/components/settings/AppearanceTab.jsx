@@ -2,6 +2,7 @@
 import { Globe, LayoutTemplate, Droplets, Filter, Image } from "lucide-react";
 import { StickySaveButton } from "./StickySaveButton";
 import { useToast } from "@/shared/ui/molecules";
+import { featureFlags } from "@/shared/lib/env";
 import { TEMPLATES, resolveThemeSettings } from "@/templates/registry";
 import { useUpdateStore, useUploadStoreLogo } from "@/shared/hooks";
 import {
@@ -57,6 +58,7 @@ const COLOR_PRESETS = [
 ];
 
 export function AppearanceTab({ store }) {
+  const puckEnabled = featureFlags.enablePuck;
   const toast = useToast();
   const updateStore = useUpdateStore();
   const uploadLogo = useUploadStoreLogo();
@@ -84,7 +86,9 @@ export function AppearanceTab({ store }) {
   useEffect(() => {
     if (store) {
       setTemplateId(store.templateId || "minimal");
-      setActiveRenderer(store.activeRenderer || "template");
+      setActiveRenderer(
+        puckEnabled ? store.activeRenderer || "template" : "template",
+      );
       setCurrentLogoId(store.logoFileId || "");
       setLogoPreviewUrl(
         store.logoFileId ? getStoreLogoUrl(store.logoFileId) : null,
@@ -99,7 +103,7 @@ export function AppearanceTab({ store }) {
       setUseTemplateStyles(!!settings.useTemplateStyles);
       setCatalogSettings(normalizeCatalogSettings(settings.catalog));
     }
-  }, [store]);
+  }, [store, puckEnabled]);
 
   useEffect(() => {
     if (useTemplateStyles && templateId) {
@@ -116,9 +120,9 @@ export function AppearanceTab({ store }) {
     () => [
       {
         id: "appearance-render",
-        label: "Render público",
+        label: "Render publico",
         icon: Globe,
-        hint: "Template o editor",
+        hint: puckEnabled ? "Template o editor" : "Solo template",
       },
       {
         id: "appearance-template",
@@ -130,13 +134,13 @@ export function AppearanceTab({ store }) {
         id: "appearance-style",
         label: "Estilo",
         icon: Droplets,
-        hint: "Colores y tipografía",
+        hint: "Colores y tipografia",
       },
       {
         id: "appearance-catalog",
         label: "Controles",
         icon: Filter,
-        hint: "Búsqueda y filtros",
+        hint: "Busqueda y filtros",
       },
       {
         id: "appearance-logo",
@@ -145,7 +149,7 @@ export function AppearanceTab({ store }) {
         hint: "Identidad visual",
       },
     ],
-    [],
+    [puckEnabled],
   );
 
   const { activeSection } = useSectionScrollSpy(
@@ -176,9 +180,12 @@ export function AppearanceTab({ store }) {
   const hasCatalogChanges =
     JSON.stringify(catalogSettings) !== JSON.stringify(initialCatalogSettings);
 
+  const expectedRenderer =
+    puckEnabled ? store?.activeRenderer || "template" : "template";
+
   const hasChanges =
     templateId !== (store?.templateId || "minimal") ||
-    activeRenderer !== (store?.activeRenderer || "template") ||
+    activeRenderer !== expectedRenderer ||
     !!pendingLogoFile ||
     currentLogoId !== (store?.logoFileId || "") ||
     primaryColor !== initialTheme.colors?.primary ||
@@ -187,8 +194,10 @@ export function AppearanceTab({ store }) {
     useTemplateStyles !== !!initialSettings.useTemplateStyles ||
     hasCatalogChanges;
 
+  const effectiveRenderer = puckEnabled ? activeRenderer : "template";
+
   const rendererLabel =
-    activeRenderer === "puck"
+    effectiveRenderer === "puck"
       ? "Editor (Puck)"
       : `Template (${templateId || "minimal"})`;
 
@@ -206,7 +215,7 @@ export function AppearanceTab({ store }) {
       }
 
       const data = {
-        activeRenderer,
+        activeRenderer: effectiveRenderer,
         templateId,
         logoFileId: finalLogoId || null,
         settings: {
@@ -263,9 +272,10 @@ export function AppearanceTab({ store }) {
         }
       >
         <AppearanceRenderSection
-          activeRenderer={activeRenderer}
+          activeRenderer={effectiveRenderer}
           onRendererChange={setActiveRenderer}
           rendererLabel={rendererLabel}
+          puckEnabled={puckEnabled}
         />
         <AppearanceTemplateSection
           templateId={templateId}

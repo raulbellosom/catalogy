@@ -6,34 +6,40 @@
  */
 
 import { Render } from "@puckeditor/core";
-import { catalogPuckConfig, catalogDefaultData } from "../configs/catalogConfig";
+import {
+  PUCK_COMPONENT_TYPES,
+  catalogDefaultData,
+  catalogPuckConfig,
+} from "../configs/catalogConfig";
+import { injectPuckRuntimeContext } from "../utils/puckData";
 
-const resolvePuckData = (raw) => {
-  if (!raw) return catalogDefaultData;
-  try {
-    return typeof raw === "string" ? JSON.parse(raw) : raw;
-  } catch (error) {
-    console.error("Error parsing puckData:", error);
-    return catalogDefaultData;
-  }
-};
-
-export function PuckRenderer({ store, products }) {
-  const parsed = resolvePuckData(store?.puckData);
+export function PuckRenderer({
+  store,
+  products,
+  isPreview = false,
+  previewOffset = 0,
+}) {
+  const data = injectPuckRuntimeContext({
+    data: store?.puckData,
+    defaultData: catalogDefaultData,
+    allowedComponentTypes: PUCK_COMPONENT_TYPES,
+    store,
+    products,
+    isPreview,
+    isEditor: false,
+    previewOffset,
+  });
 
   return (
     <Render
       config={catalogPuckConfig}
-      data={{
-        ...parsed,
-        root: {
-          ...(parsed?.root || {}),
-          props: {
-            ...(parsed?.root?.props || {}),
-            store,
-            products,
-          },
-        },
+      data={data}
+      metadata={{
+        store,
+        products,
+        isPreview,
+        isEditor: false,
+        previewOffset,
       }}
     />
   );

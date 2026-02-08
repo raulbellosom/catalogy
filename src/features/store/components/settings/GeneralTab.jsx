@@ -1,10 +1,16 @@
 ﻿import { useState, useEffect, useMemo, useRef } from "react";
-import { Store, Globe, Link, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Store, Globe, Link, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Modal, ModalFooter } from "@/shared/ui/molecules/Modal";
 import { ShareStoreModal } from "../../components/ShareStoreModal";
 import { useToast } from "@/shared/ui/molecules";
-import { useUpdateStore, useToggleStorePublished } from "@/shared/hooks";
+import {
+  useDeleteStore,
+  useUpdateStore,
+  useToggleStorePublished,
+} from "@/shared/hooks";
 import { appConfig } from "@/shared/lib/env";
+import { useAuth } from "@/app/providers";
 import { StickySaveButton } from "./StickySaveButton";
 import { SettingsSectionLayout } from "./layout/SettingsSectionLayout";
 import { useSectionScrollSpy } from "./layout/useSectionScrollSpy";
@@ -12,6 +18,7 @@ import { GeneralBasicsSection } from "./general/GeneralBasicsSection";
 import { GeneralLinkSection } from "./general/GeneralLinkSection";
 import { GeneralPurchaseSection } from "./general/GeneralPurchaseSection";
 import { GeneralStatusSection } from "./general/GeneralStatusSection";
+import { GeneralDangerSection } from "./general/GeneralDangerSection";
 import { Button } from "@/shared/ui/atoms/Button";
 
 const isValidUrl = (string) => {
@@ -30,7 +37,10 @@ const isValidPhoneNumber = (string) => {
 };
 
 export function GeneralTab({ store }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const toast = useToast();
+  const deleteStore = useDeleteStore();
   const updateStore = useUpdateStore();
   const togglePublished = useToggleStorePublished();
   const sectionScrollRef = useRef(null);
@@ -45,6 +55,9 @@ export function GeneralTab({ store }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     if (store) {
@@ -91,6 +104,12 @@ export function GeneralTab({ store }) {
         label: "Estado",
         icon: ShieldCheck,
         hint: "Publicación",
+      },
+      {
+        id: "general-danger",
+        label: "Eliminar",
+        icon: ShieldAlert,
+        hint: "Borrar tienda",
       },
     ],
     [],
@@ -162,6 +181,39 @@ export function GeneralTab({ store }) {
     toast.success("Link copiado al portapapeles");
   };
 
+  const handleDeleteStore = async () => {
+    if (!store?.$id) return;
+    if (!deletePassword.trim()) {
+      setDeleteError("Ingresa tu contraseña para continuar");
+      return;
+    }
+
+    setDeleteError("");
+
+    try {
+      await deleteStore.mutateAsync({
+        storeId: store.$id,
+        email: user?.email,
+        password: deletePassword,
+      });
+
+      toast.success("Tienda eliminada permanentemente");
+      setIsDeleteModalOpen(false);
+      navigate("/app");
+    } catch (error) {
+      if (error?.code === 401 || error?.response?.status === 401) {
+        setDeleteError("Contraseña incorrecta");
+        return;
+      }
+
+      if (error?.message) {
+        setDeleteError(error.message);
+      } else {
+        toast.error("No se pudo eliminar la tienda. Intenta de nuevo.");
+      }
+    }
+  };
+
   const handleSectionSelect = (id) => {
     const root = sectionScrollRef.current;
     const element =
@@ -224,6 +276,14 @@ export function GeneralTab({ store }) {
           store={store}
           onPublishClick={() => setIsPublishModalOpen(true)}
         />
+        <GeneralDangerSection
+          onDeleteClick={() => {
+            setDeletePassword("");
+            setDeleteError("");
+            setIsDeleteModalOpen(true);
+          }}
+          isDeleting={deleteStore.isPending}
+        />
       </SettingsSectionLayout>
 
       <Modal
@@ -262,6 +322,69 @@ export function GeneralTab({ store }) {
           <code className="block bg-(--color-bg) p-2 rounded border border-(--color-border) select-all">
             https://{store?.slug}.{appConfig.baseDomain}
           </code>
+        </div>
+      </Modal>
+
+      <Modal
+        open={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Eliminar tienda"
+        description="Esta acción es irreversible. Ingresa tu contraseña para continuar."
+        size="sm"
+        footer={
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={deleteStore.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleDeleteStore}
+              isLoading={deleteStore.isPending}
+            >
+              Eliminar definitivamente
+            </Button>
+          </ModalFooter>
+        }
+      >
+        <div className="space-y-4">
+          <div className="p-3 rounded-lg bg-(--color-bg-secondary) text-sm text-(--color-fg-secondary) border border-(--color-border)">
+            <p className="font-semibold text-(--color-fg)">Se eliminará:</p>
+            <ul className="list-disc pl-5 mt-2 space-y-1">
+              <li>Todos los productos y sus imágenes en el storage.</li>
+              <li>El documento de la tienda y su configuración.</li>
+              <li>Las métricas y analíticas asociadas.</li>
+            </ul>
+          </div>
+
+          <div className="space-y-2">
+            <label
+              className="text-sm font-medium text-(--color-fg)"
+              htmlFor="store-delete-password"
+            >
+              Confirma con tu contraseña
+            </label>
+            <input
+              id="store-delete-password"
+              type="password"
+              className="w-full px-3 py-2 rounded-lg bg-(--color-bg-secondary) border border-(--color-border) text-(--color-fg) focus:ring-2 focus:ring-(--color-primary) focus:outline-none"
+              placeholder="Ingresa tu contraseña"
+              value={deletePassword}
+              onChange={(e) => {
+                setDeletePassword(e.target.value);
+                if (deleteError) setDeleteError("");
+              }}
+              disabled={deleteStore.isPending}
+            />
+            {deleteError ? (
+              <p className="text-sm text-(--color-error)">{deleteError}</p>
+            ) : null}
+          </div>
         </div>
       </Modal>
 

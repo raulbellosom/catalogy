@@ -4,6 +4,7 @@
  */
 
 import {
+  account,
   databases,
   storage,
   DATABASE_ID,
@@ -16,6 +17,7 @@ import {
   validateSlugFormat,
   generateSlug,
 } from "./slugValidationService";
+import { deleteProductImages } from "./productService";
 
 // Re-export for backward compatibility
 export { validateSlugFormat as validateSlug, generateSlug };
@@ -237,16 +239,136 @@ export async function toggleStorePublished(storeId, published) {
   );
 }
 
+async function listAllDocuments(collectionId, queries = [], limit = 100) {
+  const allDocuments = [];
+  let cursor = null;
+
+  while (true) {
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      collectionId,
+      [
+        ...queries,
+        Query.limit(limit),
+        cursor ? Query.cursorAfter(cursor) : null,
+      ].filter(Boolean),
+    );
+
+    allDocuments.push(...response.documents);
+
+    if (response.documents.length < limit) break;
+    cursor = response.documents[response.documents.length - 1].$id;
+  }
+
+  return allDocuments;
+}
+
+async function performStoreHardDelete(storeId) {
+  if (!storeId) {
+    throw new Error("storeId is required for deletion");
+  }
+
+  // Fetch store to capture assets before deletion
+  let store;
+  try {
+    store = await databases.getDocument(
+      DATABASE_ID,
+      COLLECTIONS.STORES,
+      storeId,
+    );
+  } catch (error) {
+    console.error("Store not found for hard delete:", error);
+    throw new Error("No se encontró la tienda para eliminar.");
+  }
+
+  // Collect all products (including disabled/inactive)
+  const products = await listAllDocuments(COLLECTIONS.PRODUCTS, [
+    Query.equal("storeId", storeId),
+  ]);
+
+  // Collect and delete product images
+  const imageIds = new Set();
+  products.forEach((product) => {
+    if (Array.isArray(product.imageFileIds)) {
+      product.imageFileIds.forEach((id) => id && imageIds.add(id));
+    } else if (product.imageFileId) {
+      imageIds.add(product.imageFileId);
+    }
+  });
+
+  if (imageIds.size > 0) {
+    await deleteProductImages([...imageIds]);
+  }
+
+  // Delete product documents
+  for (const product of products) {
+    try {
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.PRODUCTS,
+        product.$id,
+      );
+    } catch (error) {
+      console.error(`Error deleting product ${product.$id}:`, error);
+    }
+  }
+
+  // Delete analytics/metrics
+  const analyticsDocs = await listAllDocuments(COLLECTIONS.STORE_ANALYTICS, [
+    Query.equal("storeId", storeId),
+  ]);
+
+  for (const doc of analyticsDocs) {
+    try {
+      await databases.deleteDocument(
+        DATABASE_ID,
+        COLLECTIONS.STORE_ANALYTICS,
+        doc.$id,
+      );
+    } catch (error) {
+      console.error(`Error deleting analytics doc ${doc.$id}:`, error);
+    }
+  }
+
+  // Delete store logo if present
+  if (store?.logoFileId) {
+    await deleteStoreLogo(store.logoFileId);
+  }
+
+  // Finally delete the store document
+  await databases.deleteDocument(DATABASE_ID, COLLECTIONS.STORES, storeId);
+
+  return {
+    productsDeleted: products.length,
+    productImagesDeleted: imageIds.size,
+    analyticsDeleted: analyticsDocs.length,
+    storeDeleted: true,
+  };
+}
+
 /**
- * Delete store (soft delete)
- * @param {string} storeId
+ * Delete store permanently (products, images, analytics, store)
+ * Optionally re-authenticates user with password before deletion.
+ * @param {{ storeId: string, email?: string, password?: string }} params
  * @returns {Promise<Object>}
  */
-export async function deleteStore(storeId) {
-  return await databases.updateDocument(
-    DATABASE_ID,
-    COLLECTIONS.STORES,
-    storeId,
-    { enabled: false },
-  );
+export async function deleteStoreCompletely({ storeId, email, password }) {
+  if (password && !email) {
+    throw new Error("Email is required when providing password");
+  }
+
+  // Optional re-auth before destructive action
+  if (password && email) {
+    const session = await account.createEmailPasswordSession(email, password);
+    try {
+      return await performStoreHardDelete(storeId);
+    } finally {
+      if (session?.$id) {
+        // Remove the temporary session to avoid duplicates
+        account.deleteSession(session.$id).catch(() => {});
+      }
+    }
+  }
+
+  return await performStoreHardDelete(storeId);
 }
