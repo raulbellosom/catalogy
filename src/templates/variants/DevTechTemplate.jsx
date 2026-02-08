@@ -236,85 +236,86 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
         )}
       </AnimatePresence>
 
+      {/* Background Effects */}
+      {/* Interactive Glow following cursor */}
+      <div
+        className="fixed pointer-events-none z-0 w-96 h-96 rounded-full blur-[100px] opacity-15"
+        style={{
+          background: `radial-gradient(circle, ${primary}, transparent 70%)`,
+          left: mousePosition.x - 192,
+          top: mousePosition.y - 192,
+        }}
+      />
+
+      {/* Background Grid & Scanline Effect */}
+      <div
+        className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(var(--dev-text) 1px, transparent 1px), linear-gradient(90deg, var(--dev-text) 1px, transparent 1px)`,
+          backgroundSize: "60px 60px",
+        }}
+      />
+      <div className="fixed inset-0 pointer-events-none z-[1] dev-scanline opacity-20" />
+
+      {/* Shared Navbar */}
+      <StoreNavbar
+        store={store}
+        isPreview={isPreview}
+        config={{
+          bg: "bg-(--dev-bg)/80",
+          text: "text-(--dev-text)",
+          border: "border-(--dev-border)",
+          accent: "text-(--dev-accent)",
+          glass: true,
+        }}
+        search={
+          catalog.showSearch
+            ? {
+                query: searchQuery,
+                onQueryChange: setSearchQuery,
+              }
+            : null
+        }
+        onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
+        actions={
+          <div className="flex items-center gap-4">
+            {/* Cart Trigger */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative p-2 text-(--dev-text) hover:text-(--dev-accent) transition-colors"
+            >
+              <ShoppingBag size={20} />
+              {cart.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-(--dev-accent) text-(--dev-bg) text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {cart.length}
+                </span>
+              )}
+            </button>
+
+            {store?.paymentLink && catalog.showPaymentButton && (
+              <div className="hidden md:flex items-center gap-4">
+                <a
+                  href={store.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-2 bg-(--dev-accent) text-(--dev-bg) rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                >
+                  <Zap size={16} /> Ir al pago
+                </a>
+              </div>
+            )}
+          </div>
+        }
+      />
+
       {/* Main Content Wrapper */}
       <motion.div
         animate={{ opacity: booting ? 0 : 1 }}
         transition={{ duration: 1 }}
-        className="flex flex-col min-h-screen relative"
+        className="flex flex-col min-h-screen"
       >
-        {/* Interactive Glow following cursor */}
-        <div
-          className="fixed pointer-events-none z-0 w-96 h-96 rounded-full blur-[100px] opacity-15"
-          style={{
-            background: `radial-gradient(circle, ${primary}, transparent 70%)`,
-            left: mousePosition.x - 192,
-            top: mousePosition.y - 192,
-          }}
-        />
-
-        {/* Background Grid & Scanline Effect */}
-        <div
-          className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]"
-          style={{
-            backgroundImage: `linear-gradient(var(--dev-text) 1px, transparent 1px), linear-gradient(90deg, var(--dev-text) 1px, transparent 1px)`,
-            backgroundSize: "60px 60px",
-          }}
-        />
-        <div className="fixed inset-0 pointer-events-none z-[1] dev-scanline opacity-20" />
-
-        {/* Shared Navbar */}
-        <StoreNavbar
-          store={store}
-          isPreview={isPreview}
-          config={{
-            bg: "bg-(--dev-bg)/80",
-            text: "text-(--dev-text)",
-            border: "border-(--dev-border)",
-            accent: "text-(--dev-accent)",
-            glass: true,
-          }}
-          search={
-            catalog.showSearch
-              ? {
-                  query: searchQuery,
-                  onQueryChange: setSearchQuery,
-                }
-              : null
-          }
-          onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
-          actions={
-            <div className="flex items-center gap-4">
-              {/* Cart Trigger */}
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-(--dev-text) hover:text-(--dev-accent) transition-colors"
-              >
-                <ShoppingBag size={20} />
-                {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-(--dev-accent) text-(--dev-bg) text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {cart.length}
-                  </span>
-                )}
-              </button>
-
-              {store?.paymentLink && catalog.showPaymentButton && (
-                <div className="hidden md:flex items-center gap-4">
-                  <a
-                    href={store.paymentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-5 py-2 bg-(--dev-accent) text-(--dev-bg) rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-                  >
-                    <Zap size={16} /> Ir al pago
-                  </a>
-                </div>
-              )}
-            </div>
-          }
-        />
-
         {/* Hero Section - Compact */}
-        <header className="relative z-10 py-12 md:py-16 border-b border-(--dev-border) overflow-hidden">
+        <header className="relative py-12 md:py-16 border-b border-(--dev-border) overflow-hidden">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

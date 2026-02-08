@@ -127,11 +127,13 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col pt-20"
+      className="min-h-screen flex flex-col pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
       style={{
         fontFamily,
         colorScheme: "light",
         "--sketchy-primary": primary,
+        "--store-navbar-height": "5rem",
+        "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
         backgroundColor: secondary,
         // Notebook ruled paper effect
         backgroundImage: `linear-gradient(${secondary} 97%, #e5e7eb 97%)`,
@@ -152,8 +154,8 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
       `}</style>
 
       {/* Navbar: Sticky Note Header */}
-      <nav className="fixed top-[var(--store-navbar-offset)] left-0 right-0 z-50 transition-all duration-300">
-        <div className="absolute inset-0 bg-white shadow-md -skew-y-1 origin-top-left h-20 border-b-2 border-stone-200" />
+      <nav className="fixed top-[var(--store-navbar-offset)] left-0 right-0 z-50 transition-all duration-300 h-20">
+        <div className="absolute inset-0 bg-white shadow-md -skew-y-1 origin-top-left border-b-2 border-stone-200" />
         <div className="relative max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2 transform -rotate-1">
@@ -382,55 +384,58 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
               animate={{ x: 0, rotate: 0 }}
               exit={{ x: "100%", rotate: 2 }}
               transition={{ type: "spring", damping: 20 }}
-              className="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-yellow-50 shadow-2xl p-8 flex flex-col border-l-4 border-stone-900"
+              className="fixed top-[var(--store-navbar-offset)] bottom-0 right-0 z-[60] w-full max-w-sm bg-yellow-50 shadow-2xl p-4 sm:p-8 flex flex-col border-l-4 border-stone-900 overflow-y-auto overflow-x-hidden"
               style={{
                 backgroundImage:
                   "radial-gradient(#d6d3d1 1px, transparent 1px)",
                 backgroundSize: "20px 20px",
               }}
             >
-              <div className="flex justify-between items-center mb-8 pb-4 border-b-2 border-stone-900 border-dashed">
-                <h2 className="text-3xl font-black transform -rotate-1">
+              <div className="flex justify-between items-center mb-4 sm:mb-8 pb-4 border-b-2 border-stone-900 border-dashed">
+                <h2 className="text-2xl sm:text-3xl font-black transform -rotate-1 text-stone-900">
                   Mis Filtros
                 </h2>
-                <button onClick={() => setShowFilters(false)}>
-                  <X size={32} className="stroke-[3]" />
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="text-stone-900"
+                >
+                  <X size={28} className="stroke-[3] sm:w-8 sm:h-8" />
                 </button>
               </div>
 
-              <div className="space-y-8 flex-grow overflow-y-auto">
+              <div className="space-y-4 sm:space-y-8 flex-grow overflow-y-auto overflow-x-hidden">
                 {/* Search */}
-                <div className="bg-white p-4 shadow-md transform rotate-1 border-2 border-stone-200">
-                  <label className="block font-bold mb-2 uppercase text-xs tracking-widest text-stone-500">
+                <div className="bg-white p-3 sm:p-4 shadow-md transform rotate-1 border-2 border-stone-200">
+                  <label className="block font-bold mb-2 uppercase text-[10px] sm:text-xs tracking-widest text-stone-500">
                     Búsqueda
                   </label>
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full text-lg font-bold outline-none border-b-2 border-stone-300 focus:border-black transition-colors bg-transparent"
+                    className="w-full text-base sm:text-lg font-bold outline-none border-b-2 border-stone-300 focus:border-black transition-colors bg-transparent text-stone-900"
                     placeholder="..."
                   />
                 </div>
 
                 {/* Price Doodle */}
-                <div className="bg-white p-4 shadow-md transform -rotate-1 border-2 border-stone-200">
-                  <label className="block font-bold mb-2 uppercase text-xs tracking-widest text-stone-500">
+                <div className="bg-white p-3 sm:p-4 shadow-md transform -rotate-1 border-2 border-stone-200">
+                  <label className="block font-bold mb-2 uppercase text-[10px] sm:text-xs tracking-widest text-stone-500">
                     Precio ($)
                   </label>
-                  <div className="flex gap-4">
+                  <div className="flex gap-2">
                     <input
                       type="number"
                       value={minPrice}
                       onChange={(e) => setMinPrice(Number(e.target.value))}
-                      className="w-full border-2 border-stone-200 p-2 font-bold rounded-md"
+                      className="w-full border-2 border-stone-200 p-1.5 sm:p-2 font-bold rounded-md text-sm sm:text-base text-stone-900"
                       placeholder="Min"
                     />
                     <input
                       type="number"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(Number(e.target.value))}
-                      className="w-full border-2 border-stone-200 p-2 font-bold rounded-md"
+                      className="w-full border-2 border-stone-200 p-1.5 sm:p-2 font-bold rounded-md text-sm sm:text-base text-stone-900"
                       placeholder="Max"
                     />
                   </div>
@@ -448,10 +453,10 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
                 />
 
                 {/* Actions */}
-                <div className="pt-4 space-y-4">
+                <div className="pt-2 sm:pt-4 space-y-4">
                   <button
                     onClick={resetFilters}
-                    className="w-full py-4 bg-stone-900 text-white font-black text-xl hover:bg-stone-800 transition-colors transform rotate-1 shadow-lg"
+                    className="w-full py-3 sm:py-4 bg-stone-900 text-white font-black text-lg sm:text-xl hover:bg-stone-800 transition-colors transform rotate-1 shadow-lg"
                   >
                     LIMPIAR TODO
                   </button>

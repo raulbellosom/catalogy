@@ -9,7 +9,7 @@ export function CatalogFilters({
   maxPrice,
   onMinPriceChange,
   onMaxPriceChange,
-  priceBounds,
+  priceBounds = { min: 0, max: 0 },
   sortOrder,
   setSortOrder,
   primaryColor = "#000000",

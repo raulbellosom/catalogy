@@ -73,12 +73,14 @@ export function ImageViewerModal({
 
   // Reset view when image changes or modal opens
   useEffect(() => {
+    if (!isOpen) return;
+
     scaleMv.set(1);
     rotateMv.set(0);
     xMv.set(0);
     yMv.set(0);
     setScaleDisplay(1);
-    setLoading(!!(imageList[currentIndex] || src));
+    setLoading(true);
 
     stateRef.current = {
       isDragging: false,
@@ -86,7 +88,7 @@ export function ImageViewerModal({
       touchStartDist: null,
       initialPinchScale: 1,
     };
-  }, [currentIndex, isOpen, src, imageList, scaleMv, rotateMv, xMv, yMv]);
+  }, [currentIndex, isOpen, scaleMv, rotateMv, xMv, yMv]);
 
   // Lock body scroll
   useEffect(() => {
