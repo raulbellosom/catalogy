@@ -1,18 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "motion/react";
-import { X, ArrowRight, Search, ExternalLink } from "lucide-react";
+import {
+  X,
+  ArrowRight,
+  Search,
+  ExternalLink,
+  Menu,
+  SlidersHorizontal,
+} from "lucide-react";
 import {
   StoreNavbar,
   StoreFooter,
   CatalogControls,
-  ProductCard,
   ProductDetailModal,
   StorePurchaseInfo,
+  shareProduct,
 } from "../components";
-import { useCatalogFilters } from "../components/catalogHooks";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
+import { getProductImageUrl } from "@/shared/services/productService";
 import { resolveThemeSettings } from "@/templates/registry";
 import { resolveCatalogSettings } from "@/shared/utils/storeSettings";
+import { useCatalogFilters } from "../components/catalogHooks";
 
 const resolveFontFamily = (fontId) => {
   const map = {
@@ -26,40 +34,14 @@ const resolveFontFamily = (fontId) => {
   return map[fontId] || "'Playfair Display', serif";
 };
 
-// Animated product card with intersection observer
-const AnimatedProductCard = ({
-  product,
-  index,
-  onCategoryClick,
-  onClick,
-  showShareButton,
-  showCategories,
-}) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-      transition={{
-        duration: 0.6,
-        delay: (index % 4) * 0.1,
-        ease: [0.25, 0.46, 0.45, 0.94],
-      }}
-    >
-      <ProductCard
-        product={product}
-        size="full"
-        tone="light"
-        onCategoryClick={onCategoryClick}
-        onClick={onClick}
-        showShareButton={showShareButton}
-        showCategories={showCategories}
-      />
-    </motion.div>
-  );
+const formatPrice = (price, currency = "MXN") => {
+  if (typeof price !== "number") return "";
+  return price.toLocaleString("es-MX", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
 };
 
 export function EtherealTemplate({ store, products, isPreview = false }) {
@@ -81,12 +63,12 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
   } = useCatalogFilters({ store, products });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [scrollY, setScrollY] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Scroll tracking for parallax
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -95,280 +77,267 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
   const catalog = resolveCatalogSettings(store);
   const primaryColor = theme.colors.primary;
   const secondaryColor = theme.colors.secondary;
-  const fontFamily = resolveFontFamily(theme.font);
+  const fontFamily = resolveFontFamily(theme.font || "playfair");
 
   return (
     <div
-      className="min-h-screen selection:bg-opacity-20 pt-[calc(var(--store-navbar-height)+var(--store-navbar-offset)+env(safe-area-inset-top))]"
+      className="min-h-screen text-stone-900 selection:bg-stone-200 selection:text-black"
       style={{
-        backgroundColor: secondaryColor,
-        color: "#1c1917",
+        backgroundColor: secondaryColor || "#fafaf9", // Stone-50 fallback
         fontFamily,
         colorScheme: "light",
-        "--primary": primaryColor,
-        "--color-primary": primaryColor,
-        "--color-bg-secondary": secondaryColor,
-        "--color-border": `${primaryColor}40`,
-        "--color-fg": "#1c1917",
-        "--card": "#FFFFFF",
-        "--border": "rgba(0,0,0,0.05)",
-        "--muted": "#f5f5f4",
-        "--muted-foreground": "#78716c",
-        "--foreground": "#1c1917",
-        "--store-navbar-height": "4rem",
+        "--ethereal-accent": primaryColor,
         "--store-navbar-offset": isPreview ? "2.5rem" : "0rem",
       }}
     >
       <style>{`
-        ::selection {
-          background-color: ${primaryColor};
-          color: white;
+        .ethereal-serif {
+          font-family: 'Playfair Display', serif;
         }
-        @keyframes softFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+        .ethereal-sans {
+          font-family: 'Inter', sans-serif;
         }
-        @keyframes textReveal {
-          0% { clip-path: inset(0 100% 0 0); }
-          100% { clip-path: inset(0 0 0 0); }
+        .image-reveal {
+          clip-path: inset(0 0 0 0);
+          transition: clip-path 0.8s cubic-bezier(0.65, 0, 0.35, 1);
         }
-        @keyframes fadeSlideUp {
-          0% { opacity: 0; transform: translateY(30px); }
-          100% { opacity: 1; transform: translateY(0); }
+        .group:hover .image-reveal {
+          clip-path: inset(2% 2% 2% 2%);
         }
-        .ethereal-btn {
-          background-color: transparent;
-          border: 1px solid ${primaryColor};
-          color: #1c1917;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .ethereal-btn:hover {
-          background-color: ${primaryColor};
-          color: white;
-          transform: translateY(-2px);
-          box-shadow: 0 10px 30px -10px ${primaryColor}60;
-        }
-        .ethereal-card {
-          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .ethereal-card:hover {
-          transform: translateY(-6px);
-          box-shadow: 0 20px 40px -15px rgba(0,0,0,0.12);
-        }
-        .soft-shadow {
-          box-shadow: 0 0 60px -20px rgba(0,0,0,0.08);
-          transition: box-shadow 0.5s ease;
-        }
-        .soft-shadow:hover {
-          box-shadow: 0 0 80px -15px ${primaryColor}30;
+        .noise-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
         }
       `}</style>
 
-      {/* Shared Navbar */}
-      <StoreNavbar
-        store={store}
-        isPreview={isPreview}
-        onMobileMenuToggle={() => setIsMobileMenuOpen(true)}
-        search={
-          catalog.showSearch
-            ? {
-                query: searchQuery,
-                onQueryChange: setSearchQuery,
-              }
-            : null
-        }
-        config={{
-          bg: "bg-stone-50/80",
-          text: "text-stone-900",
-          border: "border-stone-900/5",
-          accent: "text-(--primary)",
-          glass: true,
-        }}
-        actions={
-          <div className="hidden md:flex items-center space-x-6 text-sm tracking-widest uppercase opacity-80">
-            <button
-              onClick={() =>
-                window.scrollTo({ top: window.innerHeight, behavior: "smooth" })
-              }
-              className="hover:text-(--primary) transition-colors"
+      {/* Noise Overlay for texture */}
+      <div className="noise-bg" />
+
+      {/* Navbar - Minimal & Centered */}
+      <nav
+        className={`fixed left-0 right-0 z-40 transition-all duration-500 ${
+          scrolled
+            ? "bg-white/80 backdrop-blur-md border-b border-stone-100 py-4"
+            : "bg-transparent py-6"
+        }`}
+        style={{ top: "var(--store-navbar-offset, 0px)" }}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          {/* Mobile Menu Trigger */}
+          <button
+            className="lg:hidden p-2 -ml-2 hover:bg-black/5 rounded-full transition-colors"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Menu"
+          >
+            <Menu size={24} strokeWidth={1} />
+          </button>
+
+          {/* Brand */}
+          <div className="text-xl md:text-2xl font-medium tracking-tight mx-auto lg:mx-0">
+            {store.logoFileId ? (
+              <img
+                src={getStoreLogoUrl(store.logoFileId)}
+                alt={store.name}
+                className="h-10 w-auto object-contain"
+              />
+            ) : (
+              <span className="font-serif italic">{store.name}</span>
+            )}
+          </div>
+
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex items-center gap-8 text-sm font-medium tracking-wide uppercase">
+            <a
+              href="#catalog"
+              className="hover:text-[var(--ethereal-accent)] transition-colors"
             >
-              Catálogo
+              Colección
+            </a>
+            <a
+              href="#about"
+              className="hover:text-[var(--ethereal-accent)] transition-colors"
+            >
+              Nosotros
+            </a>
+            {catalog.showSearch && (
+              <button
+                className="hover:text-[var(--ethereal-accent)] transition-colors"
+                aria-label="Search"
+                onClick={() => setIsFilterOpen(true)}
+              >
+                <Search size={18} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+
+          {/* Mobile Search/Bag placeholder */}
+          <div className="lg:hidden flex gap-4">
+            <button onClick={() => setIsMobileMenuOpen(true)}>
+              <Search size={20} strokeWidth={1} />
             </button>
           </div>
-        }
-      />
-
-      {/* Hero Section */}
-      <div className="relative h-[55vh] md:h-[65vh] w-full overflow-hidden mt-0">
-        {/* Background with parallax effect */}
-        <motion.div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage: store?.logoFileId
-              ? `url(${getStoreLogoUrl(store.logoFileId)})`
-              : "radial-gradient(circle at top, rgba(0,0,0,0.08), transparent 60%)",
-            opacity: store?.logoFileId ? 0.12 : 1,
-            y: scrollY * 0.3,
-          }}
-        />
-        <div
-          className="absolute inset-0 bg-linear-to-b from-transparent to-current"
-          style={{ color: secondaryColor }}
-        />
-
-        {/* Decorative floating elements */}
-        <div
-          className="absolute top-20 right-[15%] w-32 h-32 rounded-full blur-3xl opacity-20"
-          style={{
-            backgroundColor: primaryColor,
-            transform: `translateY(${scrollY * -0.2}px)`,
-          }}
-        />
-        <div
-          className="absolute bottom-20 left-[10%] w-48 h-48 rounded-full blur-3xl opacity-15"
-          style={{
-            backgroundColor: primaryColor,
-            transform: `translateY(${scrollY * 0.15}px)`,
-          }}
-        />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pt-10">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="text-4xl md:text-6xl lg:text-7xl font-light mb-6 tracking-wide"
-          >
-            {store.name}
-          </motion.h1>
-          {store.description && (
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.8,
-                delay: 0.2,
-                ease: [0.25, 0.46, 0.45, 0.94],
-              }}
-              className="max-w-md mx-auto text-base md:text-lg opacity-70 mb-8 font-light italic line-clamp-2"
-            >
-              {store.description}
-            </motion.p>
-          )}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            onClick={() =>
-              window.scrollTo({ top: window.innerHeight, behavior: "smooth" })
-            }
-            className="group flex items-center gap-2 px-8 py-3 bg-(--primary) text-white hover:bg-opacity-90 transition-all duration-300 hover:shadow-lg"
-          >
-            <span className="tracking-widest uppercase text-sm">
-              Ver Productos
-            </span>
-            <ArrowRight
-              size={16}
-              className="group-hover:translate-x-1 transition-transform"
-            />
-          </motion.button>
         </div>
-      </div>
+      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 md:px-8 py-16">
-        {/* Filters & Controls */}
-        {(catalog.showSearch || catalog.showFilters) && (
+      {/* Hero Section - Editorial Style */}
+      <header className="pt-32 pb-20 px-6 md:px-12 lg:px-24">
+        <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-12 sticky top-20 z-30 py-4 transition-all duration-300 bg-opacity-95 backdrop-blur-sm shadow-sm rounded-xl px-6 border border-stone-100 soft-shadow"
-            style={{ backgroundColor: secondaryColor }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col items-center text-center space-y-8"
           >
-            <CatalogControls
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              activeCategoryIds={activeCategoryIds}
-              onToggleCategory={toggleCategory}
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              onMinPriceChange={setMinPrice}
-              onMaxPriceChange={setMaxPrice}
-              priceBounds={priceBounds}
-              sortOrder={sortOrder}
-              setSortOrder={setSortOrder}
-              categories={categories}
-              tone="light"
-              onReset={resetFilters}
-              showSearch={catalog.showSearch}
-              showFilters={catalog.showFilters}
-              showSort={catalog.showSort}
-              showPrice={catalog.showFilters}
-              showCategories={catalog.showFilters}
-            />
-          </motion.div>
-        )}
+            <span className="text-xs font-medium tracking-[0.2em] uppercase text-stone-500">
+              {store.name?.toUpperCase()}
+            </span>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8 md:gap-y-12">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif italic font-light tracking-tight leading-[1.1]">
+              {store.name}
+            </h1>
+
+            {store.description && (
+              <p className="max-w-lg text-lg text-stone-600 font-light leading-relaxed">
+                {store.description}
+              </p>
+            )}
+
+            {/* Removed empty Editorial placeholder */}
+          </motion.div>
+        </div>
+      </header>
+
+      {/* Catalog Section */}
+      <main id="catalog" className="max-w-7xl mx-auto px-6 pb-32">
+        {/* Filters Header (Sticky) */}
+        <div className="sticky top-0 z-30 bg-[color:var(--ethereal-secondary,var(--bg-color,#fafaf9))] pt-4 pb-8 border-b border-stone-200 mb-12 bg-opacity-95 backdrop-blur-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-baseline gap-4">
+              <h2 className="text-2xl font-serif italic">Catálogo</h2>
+              <span className="text-xs text-stone-400 font-mono">
+                ({filteredProducts?.length} ARTÍCULOS)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Desktop Filter Trigger */}
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className="hidden lg:flex items-center gap-2 text-sm uppercase tracking-wider border border-stone-300 px-4 py-2 hover:bg-white transition-colors"
+              >
+                <SlidersHorizontal size={14} /> Filtros
+              </button>
+
+              {/* Mobile Filter Trigger */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="lg:hidden flex items-center gap-2 text-sm uppercase tracking-wider border border-stone-300 px-4 py-2 hover:bg-white transition-colors"
+              >
+                <SlidersHorizontal size={14} /> Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Grid - Minimalist */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-12 md:gap-y-16">
           {filteredProducts &&
-            filteredProducts.map((product, index) => (
-              <AnimatedProductCard
+            filteredProducts.map((product, idx) => (
+              <motion.div
                 key={product.$id}
-                product={product}
-                index={index}
-                onCategoryClick={
-                  catalog.showFilters ? (id) => toggleCategory(id) : undefined
-                }
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.05, duration: 0.6 }}
+                className="group cursor-pointer"
                 onClick={() => setSelectedProduct(product)}
-                showShareButton={catalog.showShareButton}
-                showCategories={catalog.showFilters}
-              />
+              >
+                <div className="aspect-[3/4] overflow-hidden bg-stone-100 relative mb-4">
+                  {product.imageFileIds?.[0] ? (
+                    <img
+                      src={getProductImageUrl(product.imageFileIds[0])}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-300">
+                      <span className="font-serif italic text-2xl">Imagen</span>
+                    </div>
+                  )}
+
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+
+                  {/* Quick View Button */}
+                  <div className="absolute bottom-4 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 transform translate-y-2 group-hover:translate-y-0">
+                    <button className="bg-white text-black px-6 py-2 text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors shadow-xl">
+                      Vista Rápida
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-center space-y-1">
+                  <h3 className="text-sm md:text-base font-medium text-stone-900 group-hover:underline decoration-stone-300 underline-offset-4 transition-all">
+                    {product.name}
+                  </h3>
+                  <p className="text-sm text-stone-500 font-serif italic">
+                    {formatPrice(product.price, product.currency)}
+                  </p>
+                </div>
+              </motion.div>
             ))}
         </div>
 
         {(!filteredProducts || filteredProducts.length === 0) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-32 opacity-50"
-          >
-            <p className="text-xl font-light italic">
-              No se encontraron productos.
-            </p>
+          <div className="py-32 text-center">
+            <span className="block font-serif italic text-2xl text-stone-400 mb-4">
+              Sin resultados
+            </span>
             <button
               onClick={resetFilters}
-              className="mt-4 text-sm underline hover:text-(--primary)"
+              className="text-xs uppercase tracking-widest border-b border-black pb-1 hover:text-[var(--ethereal-accent)] hover:border-[var(--ethereal-accent)] transition-colors"
             >
               Limpiar Filtros
             </button>
-          </motion.div>
+          </div>
         )}
       </main>
 
-      {/* Shared Footer */}
-      <div id="footer">
-        {catalog.showPurchaseInfo && (
-          <StorePurchaseInfo
+      {/* Footer - Elegant */}
+      <div className="bg-stone-100 pt-20 pb-10 px-6 border-t border-stone-200">
+        <div className="max-w-7xl mx-auto">
+          {catalog.showPurchaseInfo && (
+            <div className="mb-10">
+              <StorePurchaseInfo
+                store={store}
+                showPaymentButton={catalog.showPaymentButton}
+                wrapperClassName="bg-white p-8 border border-stone-100"
+              />
+            </div>
+          )}
+
+          <StoreFooter
             store={store}
-            showPaymentButton={catalog.showPaymentButton}
-            wrapperClassName="max-w-7xl mx-auto px-4 md:px-8 pb-12"
+            config={{
+              bg: "bg-transparent",
+              text: "text-stone-600",
+              muted: "text-stone-400",
+              border: "border-transparent",
+              accent: "text-black",
+            }}
           />
-        )}
-        <StoreFooter
-          store={store}
-          config={{
-            bg: "bg-stone-900",
-            text: "text-stone-100",
-            muted: "text-stone-400",
-            border: "border-stone-800",
-            accent: "text-(--primary)",
-          }}
-        />
+        </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -376,65 +345,230 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
               onClick={() => setIsMobileMenuOpen(false)}
             />
             <motion.div
-              initial={{ x: "100%" }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-60 w-[85%] bg-stone-50 p-6 pt-24 shadow-2xl overflow-y-auto md:hidden"
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 left-0 z-50 w-[80%] max-w-sm bg-[#fafaf9] p-8 shadow-2xl overflow-y-auto"
+              style={{ top: "var(--store-navbar-offset, 0px)" }}
             >
-              <button
-                className="absolute top-8 right-8 text-stone-900 p-2 border border-stone-200 rounded-full"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X size={24} strokeWidth={1} />
-              </button>
-
-              <div className="space-y-10">
-                {(catalog.showSearch || catalog.showFilters) && (
-                  <CatalogControls
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    activeCategoryIds={activeCategoryIds}
-                    onToggleCategory={toggleCategory}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    onMinPriceChange={setMinPrice}
-                    onMaxPriceChange={setMaxPrice}
-                    priceBounds={priceBounds}
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    categories={categories}
-                    tone="light"
-                    onReset={resetFilters}
-                    showSearch={catalog.showSearch}
-                    showFilters={catalog.showFilters}
-                    showSort={catalog.showSort}
-                    showPrice={catalog.showFilters}
-                    showCategories={catalog.showFilters}
+              <div className="flex justify-between items-center mb-12">
+                <span className="font-serif italic text-xl">{store.name}</span>
+                <button onClick={() => setIsMobileMenuOpen(false)}>
+                  <X
+                    size={24}
+                    strokeWidth={1}
+                    className="text-stone-400 hover:text-black"
                   />
-                )}
+                </button>
+              </div>
 
-                {store?.paymentLink && catalog.showPaymentButton && (
-                  <a
-                    href={store.paymentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-4 px-4 bg-(--primary) text-white rounded-full font-bold flex items-center justify-center shadow-lg whitespace-nowrap"
-                  >
-                    Ir al pago
-                  </a>
-                )}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-4">
+                    Filtrar por Categoría
+                  </h3>
+                  <div className="space-y-3">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          toggleCategory(cat.id);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`block text-lg font-serif italic ${activeCategoryIds.includes(cat.id) ? "text-black underline" : "text-stone-500 hover:text-black"}`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-4">
+                    Ordenar
+                  </h3>
+                  {/* Simple sort options could go here */}
+                  <div className="space-y-2 text-sm text-stone-600">
+                    <button
+                      onClick={() => setSortOrder("newest")}
+                      className="block hover:text-black"
+                    >
+                      Lo más nuevo
+                    </button>
+                    <button
+                      onClick={() => setSortOrder("price-asc")}
+                      className="block hover:text-black"
+                    >
+                      Precio: Menor a Mayor
+                    </button>
+                    <button
+                      onClick={() => setSortOrder("price-desc")}
+                      className="block hover:text-black"
+                    >
+                      Precio: Mayor a Menor
+                    </button>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Product Modal */}
+      {/* Filter Drawer (Desktop) */}
+      <AnimatePresence>
+        {isFilterOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm hidden lg:block"
+              onClick={() => setIsFilterOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 right-0 z-50 w-[400px] bg-[#fafaf9] p-8 shadow-2xl overflow-y-auto hidden lg:block border-l border-stone-200"
+              style={{ top: "var(--store-navbar-offset, 0px)" }}
+            >
+              <div className="flex justify-between items-center mb-8">
+                <span className="font-serif italic text-xl">Filtros</span>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="hover:rotate-90 transition-transform duration-300"
+                >
+                  <X size={24} strokeWidth={1} />
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                {/* Search */}
+                {catalog.showSearch && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                      Buscar
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Buscar productos..."
+                        className="w-full bg-white border border-stone-200 px-4 py-2 text-sm focus:outline-none focus:border-black transition-colors placeholder:text-stone-300"
+                        autoFocus
+                      />
+                      <Search
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400"
+                        size={16}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Categories */}
+                {categories.length > 0 && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                      Categorías
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => toggleCategory(cat.id)}
+                          className={`px-3 py-1 text-sm border transition-all ${
+                            activeCategoryIds.includes(cat.id)
+                              ? "border-black bg-black text-white"
+                              : "border-stone-200 text-stone-600 hover:border-black"
+                          }`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Price Range */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                    Rango de Precio
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(Number(e.target.value))}
+                        placeholder="Min"
+                        className="w-full bg-white border border-stone-200 pl-6 pr-2 py-2 text-sm focus:outline-none focus:border-black"
+                      />
+                    </div>
+                    <span className="text-stone-400">-</span>
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(Number(e.target.value))}
+                        placeholder="Max"
+                        className="w-full bg-white border border-stone-200 pl-6 pr-2 py-2 text-sm focus:outline-none focus:border-black"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sort */}
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-stone-400">
+                    Ordenar por
+                  </label>
+                  <div className="flex flex-col gap-1">
+                    {[
+                      { label: "Relevancia", value: "" },
+                      { label: "Precio: Menor a Mayor", value: "price-asc" },
+                      { label: "Precio: Mayor a Menor", value: "price-desc" },
+                      { label: "Más nuevos", value: "newest" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.label}
+                        onClick={() => setSortOrder(opt.value)}
+                        className={`text-left text-sm py-1 transition-colors ${sortOrder === opt.value ? "text-black font-medium" : "text-stone-500 hover:text-black"}`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-stone-100">
+                  <button
+                    onClick={resetFilters}
+                    className="w-full py-3 bg-stone-900 text-white text-xs uppercase tracking-widest hover:bg-black transition-colors"
+                  >
+                    Limpiar Todo
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Product Detail Modal */}
       {selectedProduct && (
         <ProductDetailModal
           product={selectedProduct}
