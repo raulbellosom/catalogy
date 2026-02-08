@@ -209,7 +209,7 @@ export const useCatalog = useCatalogFilters;
 
 // --- Cart System ---
 
-export const useShoppingCart = (storeId) => {
+export const useShoppingCart = (storeId, products = []) => {
   const storageKey = `catalogy_cart_${storeId}`;
 
   const [cart, setCart] = useState(() => {
@@ -222,7 +222,8 @@ export const useShoppingCart = (storeId) => {
         // Format: ID:QTY;ID:QTY
         const items = sharedCart.split(";").map((item) => {
           const [id, qty] = item.split(":");
-          return { id, quantity: Number(qty) || 1 };
+          const product = products.find((p) => (p.id || p.$id) === id);
+          return { id, quantity: Number(qty) || 1, product };
         });
         // Clear param to clean URL but keep items in memory to save them
         window.history.replaceState({}, "", window.location.pathname);
@@ -238,6 +239,31 @@ export const useShoppingCart = (storeId) => {
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Auto-open cart if it was shared via URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("cart")) {
+        setIsCartOpen(true);
+      }
+    }
+  }, []);
+
+  // Reconcile cart items with full product details when products load
+  useEffect(() => {
+    if (products?.length > 0 && cart.length > 0) {
+      setCart((prev) =>
+        prev.map((item) => {
+          if (!item.product) {
+            const found = products.find((p) => (p.id || p.$id) === item.id);
+            if (found) return { ...item, product: found };
+          }
+          return item;
+        }),
+      );
+    }
+  }, [products, cart.length]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -257,7 +283,10 @@ export const useShoppingCart = (storeId) => {
             : item,
         );
       }
-      return [...prev, { id: product.id || product.$id, quantity, product }]; // Store product data for display if needed
+      return [
+        ...prev,
+        { id: product.id || product.$id, quantity, product }, // Store product data for display if needed
+      ];
     });
     setIsCartOpen(true);
   };

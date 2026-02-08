@@ -121,6 +121,14 @@ export function ImageViewerModal({
     setCurrentIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
   }, [isGalleryMode, imageList.length]);
 
+  const resetView = useCallback(() => {
+    scaleMv.set(1);
+    rotateMv.set(0);
+    xMv.set(0);
+    yMv.set(0);
+    setScaleDisplay(1);
+  }, [scaleMv, rotateMv, xMv, yMv]);
+
   const updateScale = useCallback(
     (newScale) => {
       const clamped = Math.min(5, Math.max(0.5, newScale));
@@ -142,8 +150,31 @@ export function ImageViewerModal({
     [scaleMv, updateScale],
   );
 
+  // Double tap/click detection
+  const lastTapRef = useRef(0);
+  const handleDoubleTap = useCallback(
+    (e) => {
+      const now = Date.now();
+      const isDouble = e?.type === "dblclick" || now - lastTapRef.current < 300;
+      if (e?.type === "dblclick") e.preventDefault();
+
+      if (isDouble) {
+        if (scaleMv.get() > 1.01) {
+          resetView();
+        } else {
+          updateScale(2.5);
+        }
+      }
+      lastTapRef.current = now;
+    },
+    [scaleMv, resetView, updateScale],
+  );
+
   const handleTouchStart = useCallback(
     (e) => {
+      const now = Date.now();
+      const isDoubleTap = now - lastTapRef.current < 300;
+
       if (e.touches.length === 2) {
         e.preventDefault();
         const dist = Math.hypot(
@@ -153,16 +184,24 @@ export function ImageViewerModal({
         stateRef.current.touchStartDist = dist;
         stateRef.current.initialPinchScale = scaleMv.get();
       } else if (e.touches.length === 1) {
+        if (isDoubleTap) {
+          e.preventDefault();
+          handleDoubleTap();
+          return;
+        }
+
         stateRef.current.lastTouch = {
           x: e.touches[0].clientX,
           y: e.touches[0].clientY,
         };
+        // Always allow drag start if scale > 1
         if (scaleMv.get() > 1) {
           stateRef.current.isDragging = true;
         }
       }
+      lastTapRef.current = now;
     },
-    [scaleMv],
+    [scaleMv, handleDoubleTap],
   );
 
   const handleTouchMove = useCallback(
@@ -178,13 +217,13 @@ export function ImageViewerModal({
         );
         const scaleFactor = dist / touchStartDist;
         updateScale(stateRef.current.initialPinchScale * scaleFactor);
-      } else if (e.touches.length === 1 && isDragging) {
+      } else if (e.touches.length === 1 && scaleMv.get() > 1) {
+        // Force dragging if scale > 1 even if it didn't start that way (e.g. pinch then drag)
         e.preventDefault();
-        // Calculate delta
+
         const deltaX = e.touches[0].clientX - stateRef.current.lastTouch.x;
         const deltaY = e.touches[0].clientY - stateRef.current.lastTouch.y;
 
-        // Apply immediately to motion values
         xMv.set(xMv.get() + deltaX);
         yMv.set(yMv.get() + deltaY);
 
@@ -194,7 +233,7 @@ export function ImageViewerModal({
         };
       }
     },
-    [xMv, yMv, updateScale],
+    [xMv, yMv, updateScale, scaleMv],
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -233,7 +272,6 @@ export function ImageViewerModal({
         e.preventDefault();
         stateRef.current.lastTouch = { x: e.clientX, y: e.clientY };
         stateRef.current.isDragging = true;
-        // Optional: change cursor
         if (containerRef.current)
           containerRef.current.style.cursor = "grabbing";
       }
@@ -262,14 +300,6 @@ export function ImageViewerModal({
       containerRef.current.style.cursor = "grab";
     }
   }, [scaleMv]);
-
-  const resetView = useCallback(() => {
-    scaleMv.set(1);
-    rotateMv.set(0);
-    xMv.set(0);
-    yMv.set(0);
-    setScaleDisplay(1);
-  }, [scaleMv, rotateMv, xMv, yMv]);
 
   const handleClose = useCallback(() => {
     resetView();
@@ -304,26 +334,6 @@ export function ImageViewerModal({
       document.body.removeChild(link);
     },
     [currentIndex, imageList, src, downloadFilename],
-  );
-
-  // Double tap/click
-  const lastTapRef = useRef(0);
-  const handleDoubleTap = useCallback(
-    (e) => {
-      const now = Date.now();
-      const isDouble = e.type === "dblclick" || now - lastTapRef.current < 300;
-      if (e.type === "dblclick") e.preventDefault();
-
-      if (isDouble) {
-        if (scaleMv.get() > 1) {
-          resetView();
-        } else {
-          updateScale(2.5);
-        }
-      }
-      lastTapRef.current = now;
-    },
-    [scaleMv, resetView, updateScale],
   );
 
   useEffect(() => {
@@ -364,12 +374,25 @@ export function ImageViewerModal({
               </div>
             )}
             {!isGalleryMode && <div />}
-            <button
-              onClick={handleClose}
-              className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10"
-            >
-              <X size={24} />
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resetView();
+                }}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 text-xs font-semibold backdrop-blur-md flex items-center gap-2"
+              >
+                <RotateCcw size={16} />
+                <span className="hidden sm:inline">Restablecer</span>
+              </button>
+              <button
+                onClick={handleClose}
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10"
+              >
+                <X size={24} />
+              </button>
+            </div>
           </div>
 
           {/* Navigation */}

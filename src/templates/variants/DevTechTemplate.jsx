@@ -73,7 +73,7 @@ export function DevTechTemplate({ store, products, isPreview = false }) {
     setIsCartOpen,
     getCartShareUrl,
     getCartWhatsAppMessage,
-  } = useShoppingCart(store.id || store.$id);
+  } = useShoppingCart(store.id || store.$id, products);
 
   const initialProduct = useProductDeepLink(products);
 

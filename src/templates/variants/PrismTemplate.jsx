@@ -104,7 +104,7 @@ export function PrismTemplate({ store, products, isPreview = false }) {
     handleWhatsAppCheckout,
     isCartOpen,
     setIsCartOpen,
-  } = useShoppingCart(store.id || store.$id);
+  } = useShoppingCart(store.id || store.$id, products);
 
   // Deep Linking
   const initialProduct = useProductDeepLink(products);
