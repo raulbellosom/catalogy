@@ -125,7 +125,7 @@ export function ProductDetailModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 overflow-hidden">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -138,7 +138,7 @@ export function ProductDetailModal({
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className={`relative w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-6xl overflow-hidden bg-white sm:rounded-3xl shadow-2xl flex flex-col md:flex-row ${
+            className={`relative w-full max-w-full h-[100dvh] sm:h-auto sm:max-h-[90dvh] sm:max-w-6xl overflow-hidden bg-white sm:rounded-3xl shadow-2xl flex flex-col md:flex-row ${
               needsLightText
                 ? "bg-slate-900 text-white"
                 : "bg-white text-slate-800"
@@ -152,19 +152,19 @@ export function ProductDetailModal({
             {showShareButton && (
               <button
                 onClick={() => shareProduct(product)}
-                className="absolute top-4 right-16 z-50 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-colors"
+                className="absolute top-2 right-12 sm:top-4 sm:right-16 z-50 p-1.5 sm:p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-colors"
                 title="Compartir"
               >
-                <Share2 size={24} />
+                <Share2 size={20} className="sm:w-6 sm:h-6" />
               </button>
             )}
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-colors"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 p-1.5 sm:p-2 rounded-full bg-black/20 hover:bg-black/40 text-white backdrop-blur-sm transition-colors"
             >
-              <X size={24} />
+              <X size={20} className="sm:w-6 sm:h-6" />
             </button>
 
             {/* Left: Image Gallery (60% width on desktop) */}
@@ -193,42 +193,47 @@ export function ProductDetailModal({
                   <>
                     <button
                       onClick={prevImg}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors z-10"
+                      className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors z-10"
                     >
-                      <ChevronLeft size={24} />
+                      <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
                     </button>
                     <button
                       onClick={nextImg}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors z-10"
+                      className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-white transition-colors z-10"
                     >
-                      <ChevronRight size={24} />
+                      <ChevronRight size={20} className="sm:w-6 sm:h-6" />
                     </button>
                   </>
                 )}
 
                 {/* Zoom Indicator */}
-                <div className="absolute bottom-4 right-4 pointer-events-none z-10">
-                  <div className="bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5">
-                    <ZoomIn size={14} />
-                    <span>Click para ampliar</span>
+                <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 pointer-events-none z-10">
+                  <div className="bg-black/50 backdrop-blur-md text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-medium flex items-center gap-1 sm:gap-1.5">
+                    <ZoomIn size={12} className="sm:w-3.5 sm:h-3.5" />
+                    <span className="hidden sm:inline">Click para ampliar</span>
+                    <span className="sm:hidden">Ampliar</span>
                   </div>
                 </div>
               </div>
 
               {/* Thumbnails (Desktop bottom) */}
               {imageUrls.length > 1 && (
-                <div className="h-20 bg-white/5 backdrop-blur-md border-t border-white/10 flex items-center gap-2 px-4 overflow-x-auto z-10 relative">
+                <div className="h-16 sm:h-20 bg-white/5 backdrop-blur-md border-t border-white/10 flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 overflow-x-auto z-10 relative">
                   {imageUrls.map((url, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentIdx(idx)}
-                      className={`h-14 w-14 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
+                      className={`h-12 w-12 sm:h-14 sm:w-14 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
                         idx === currentIdx
                           ? "border-white scale-105"
                           : "border-transparent opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <img src={url} className="w-full h-full object-cover" />
+                      <img
+                        src={url}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                   ))}
                 </div>
@@ -237,7 +242,7 @@ export function ProductDetailModal({
 
             {/* Right: Product Details (40% width on desktop) */}
             <div className="w-full md:w-[40%] flex flex-col h-[55dvh] sm:h-[50vh] md:h-auto border-t md:border-t-0 md:border-l border-white/10">
-              <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
                 {/* Header */}
                 <div>
                   <div className="flex flex-wrap gap-2 mb-3">
@@ -250,10 +255,10 @@ export function ProductDetailModal({
                       </span>
                     ))}
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold leading-tight mb-2">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight mb-2">
                     {product.name}
                   </h2>
-                  <div className="text-xl md:text-2xl font-light opacity-90">
+                  <div className="text-lg sm:text-xl md:text-2xl font-light opacity-90">
                     {formatPrice(product.price, product.currency)}
                   </div>
                 </div>
@@ -261,13 +266,13 @@ export function ProductDetailModal({
                 {/* Stock & Description */}
                 <div className="space-y-4">
                   {typeof product.stock === "number" && (
-                    <div className="flex items-center gap-2 text-sm font-medium opacity-70">
-                      <Package size={16} />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm font-medium opacity-70">
+                      <Package size={14} className="sm:w-4 sm:h-4" />
                       <span>{product.stock} disponibles</span>
                     </div>
                   )}
                   {product.description && (
-                    <p className="text-sm md:text-base leading-relaxed opacity-80 whitespace-pre-line">
+                    <p className="text-xs sm:text-sm md:text-base leading-relaxed opacity-80 whitespace-pre-line">
                       {product.description}
                     </p>
                   )}
@@ -275,40 +280,42 @@ export function ProductDetailModal({
               </div>
 
               {/* Footer Actions */}
-              <div className="p-6 md:p-8 border-t border-white/10 bg-black/5 space-y-4">
+              <div className="p-3 sm:p-4 md:p-6 lg:p-8 border-t border-white/10 bg-black/5 space-y-3 sm:space-y-4">
                 {/* Quantity & Add to Cart */}
-                <div className="flex gap-4">
+                <div className="flex gap-2 sm:gap-3 md:gap-4">
                   {/* Quantity Selector */}
                   <div className="flex items-center bg-white/10 rounded-xl border border-white/10">
                     <button
                       onClick={() => setQty((q) => Math.max(1, q - 1))}
-                      className="p-3 hover:bg-white/10 transition-colors"
+                      className="p-2 sm:p-2.5 md:p-3 hover:bg-white/10 transition-colors"
                     >
-                      <Minus size={18} />
+                      <Minus size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
-                    <span className="w-12 text-center font-bold">{qty}</span>
+                    <span className="w-10 sm:w-12 text-center text-sm sm:text-base font-bold">
+                      {qty}
+                    </span>
                     <button
                       onClick={() => setQty((q) => q + 1)}
-                      className="p-3 hover:bg-white/10 transition-colors"
+                      className="p-2 sm:p-2.5 md:p-3 hover:bg-white/10 transition-colors"
                     >
-                      <Plus size={18} />
+                      <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
                     </button>
                   </div>
 
                   {/* Add to Cart Button */}
                   <button
                     onClick={handleAddToCart}
-                    className="flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 text-white shadow-lg"
+                    className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all active:scale-95 text-white shadow-lg"
                     style={{ backgroundColor: primary || "#3b82f6" }}
                   >
                     {justAdded ? (
                       <>
-                        <Check size={20} />
+                        <Check size={18} className="sm:w-5 sm:h-5" />
                         <span>Agregado</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingCart size={20} />
+                        <ShoppingCart size={18} className="sm:w-5 sm:h-5" />
                         <span>Agregar</span>
                       </>
                     )}
@@ -321,13 +328,14 @@ export function ProductDetailModal({
                     href={store.paymentLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`w-full py-3 px-4 rounded-xl font-bold text-center text-sm flex items-center justify-center gap-2 transition-colors ${
+                    className={`w-full py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-bold text-center text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors ${
                       needsLightText
                         ? "bg-white text-black hover:bg-white/90"
                         : "bg-slate-900 text-white hover:bg-slate-800"
                     }`}
                   >
-                    <ExternalLink size={16} /> Comprar Directo
+                    <ExternalLink size={14} className="sm:w-4 sm:h-4" /> Comprar
+                    Directo
                   </a>
                 )}
 
@@ -347,9 +355,12 @@ export function ProductDetailModal({
                           "_blank",
                         );
                       }}
-                      className="w-full bg-[#25D366] text-white py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors font-bold text-sm shadow-lg shadow-green-900/10"
+                      className="w-full bg-[#25D366] text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition-colors font-bold text-xs sm:text-sm shadow-lg shadow-green-900/10"
                     >
-                      <MessageCircle size={18} />
+                      <MessageCircle
+                        size={16}
+                        className="sm:w-[18px] sm:h-[18px]"
+                      />
                       Pedir por WhatsApp
                     </button>
                   </div>

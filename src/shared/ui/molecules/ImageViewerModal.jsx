@@ -355,7 +355,7 @@ export function ImageViewerModal({
     <AnimatePresence mode="wait">
       <motion.div
         key="image-viewer-root"
-        className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden touch-none"
+        className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden touch-none w-screen h-[100dvh]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -367,7 +367,15 @@ export function ImageViewerModal({
         />
 
         {/* UI Controls */}
-        <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-6 z-10 text-white">
+        <div
+          className="absolute inset-0 pointer-events-none flex flex-col justify-between p-2 sm:p-4 md:p-6 z-10 text-white"
+          style={{
+            paddingTop: "max(0.5rem, env(safe-area-inset-top))",
+            paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
+            paddingLeft: "max(0.5rem, env(safe-area-inset-left))",
+            paddingRight: "max(0.5rem, env(safe-area-inset-right))",
+          }}
+        >
           {/* Header */}
           <div className="flex justify-between items-center pointer-events-auto">
             {isGalleryMode && (
@@ -383,40 +391,40 @@ export function ImageViewerModal({
                   e.stopPropagation();
                   resetView();
                 }}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 text-xs font-semibold backdrop-blur-md flex items-center gap-2"
+                className="px-2 py-1.5 sm:px-4 sm:py-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10 text-[10px] sm:text-xs font-semibold backdrop-blur-md flex items-center gap-1 sm:gap-2"
               >
-                <RotateCcw size={16} />
+                <RotateCcw size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Restablecer</span>
               </button>
               <button
                 onClick={handleClose}
-                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10"
+                className="p-1.5 sm:p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-colors border border-white/10"
               >
-                <X size={24} />
+                <X size={20} className="sm:w-6 sm:h-6" />
               </button>
             </div>
           </div>
 
           {/* Navigation */}
           {isGalleryMode && (
-            <div className="flex-1 flex items-center justify-between pointer-events-none px-4 sm:px-8">
+            <div className="flex-1 flex items-center justify-between pointer-events-none px-2 sm:px-4 md:px-8">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   prevImage();
                 }}
-                className="pointer-events-auto p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10 -ml-2"
+                className="pointer-events-auto p-2 sm:p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10"
               >
-                <ChevronLeft size={28} />
+                <ChevronLeft size={20} className="sm:w-7 sm:h-7" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   nextImage();
                 }}
-                className="pointer-events-auto p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10 -mr-2"
+                className="pointer-events-auto p-2 sm:p-3 bg-black/30 hover:bg-black/50 rounded-full transition-all border border-white/10"
               >
-                <ChevronRight size={28} />
+                <ChevronRight size={20} className="sm:w-7 sm:h-7" />
               </button>
             </div>
           )}
@@ -424,7 +432,7 @@ export function ImageViewerModal({
           {/* Toolbar */}
           <div className="flex flex-col items-center gap-3 pointer-events-auto">
             {isGalleryMode && (
-              <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-2 max-w-full overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-1.5 sm:p-2 max-w-[calc(100vw-2rem)] sm:max-w-full overflow-x-auto no-scrollbar">
                 {imageList.map((img, idx) => (
                   <button
                     key={idx}
@@ -433,7 +441,7 @@ export function ImageViewerModal({
                       setCurrentIndex(idx);
                     }}
                     className={cn(
-                      "relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden shrink-0 transition-all duration-200",
+                      "relative w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shrink-0 transition-all duration-200",
                       "ring-2 ring-offset-1 ring-offset-black/50",
                       currentIndex === idx
                         ? "ring-white scale-105"
@@ -450,13 +458,13 @@ export function ImageViewerModal({
               </div>
             )}
 
-            <div className="flex items-center gap-1 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-1.5 sm:p-2 shadow-2xl overflow-x-auto max-w-full">
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-black/50 backdrop-blur-xl border border-white/10 rounded-full p-1 sm:p-1.5 md:p-2 shadow-2xl overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-full">
               <ToolButton
                 icon={ZoomOut}
                 onClick={() => updateScale(scaleMv.get() - 0.25)}
                 label="Zoom Out"
               />
-              <div className="px-2 sm:px-3 min-w-[50px] text-center font-mono text-xs sm:text-sm font-medium text-white/90">
+              <div className="px-1.5 sm:px-2 md:px-3 min-w-[40px] sm:min-w-[50px] text-center font-mono text-[10px] sm:text-xs md:text-sm font-medium text-white/90">
                 {Math.round(scaleDisplay * 100)}%
               </div>
               <ToolButton
@@ -464,7 +472,7 @@ export function ImageViewerModal({
                 onClick={() => updateScale(scaleMv.get() + 0.25)}
                 label="Zoom In"
               />
-              <div className="w-px h-5 sm:h-6 bg-white/10 mx-1 sm:mx-2" />
+              <div className="w-px h-4 sm:h-5 md:h-6 bg-white/10 mx-0.5 sm:mx-1 md:mx-2" />
               <ToolButton
                 icon={RotateCw}
                 onClick={() => rotateMv.set(rotateMv.get() + 90)}
@@ -478,7 +486,7 @@ export function ImageViewerModal({
               />
               {showDownload && (
                 <>
-                  <div className="w-px h-5 sm:h-6 bg-white/10 mx-1 sm:mx-2" />
+                  <div className="w-px h-4 sm:h-5 md:h-6 bg-white/10 mx-0.5 sm:mx-1 md:mx-2" />
                   <ToolButton
                     icon={Download}
                     onClick={handleDownload}
@@ -493,7 +501,11 @@ export function ImageViewerModal({
         {/* Image Container */}
         <div
           ref={combinedContainerRef}
-          className="absolute inset-0 flex items-center justify-center p-4 pb-36 sm:p-12 sm:pb-40 pointer-events-auto select-none touch-none cursor-grab active:cursor-grabbing"
+          className="absolute inset-0 flex items-center justify-center px-2 py-4 pb-32 sm:px-6 sm:pb-36 md:p-12 md:pb-40 pointer-events-auto select-none touch-none cursor-grab active:cursor-grabbing"
+          style={{
+            paddingBottom:
+              "max(8rem, calc(8rem + env(safe-area-inset-bottom)))",
+          }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -546,15 +558,15 @@ function ToolButton({ icon: Icon, onClick, label, className }) {
         onClick();
       }}
       className={cn(
-        "p-2 sm:p-2.5 rounded-full transition-all duration-200 group active:scale-95",
+        "p-1.5 sm:p-2 md:p-2.5 rounded-full transition-all duration-200 group active:scale-95",
         "text-zinc-300 hover:text-white hover:bg-white/10",
         className,
       )}
       title={label}
     >
       <Icon
-        size={18}
-        className="sm:w-5 sm:h-5 transition-transform group-hover:scale-110"
+        size={16}
+        className="sm:w-[18px] sm:h-[18px] md:w-5 md:h-5 transition-transform group-hover:scale-110"
       />
     </button>
   );
