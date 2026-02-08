@@ -174,7 +174,7 @@ export function PrismTemplate({ store, products, isPreview = false }) {
 
       {/* Background Refractions */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-[var(--prism-accent)] opacity-[0.15] blur-[150px]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-(--prism-accent) opacity-[0.15] blur-[150px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-500 opacity-[0.1] blur-[120px]" />
         <div className="absolute top-[40%] right-[20%] w-[20vw] h-[20vw] rounded-full bg-purple-500 opacity-[0.08] blur-[100px] animate-pulse" />
       </div>
@@ -202,13 +202,12 @@ export function PrismTemplate({ store, products, isPreview = false }) {
           catalog.showCart && (
             <button
               onClick={() => setIsCartOpen(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full glass-card hover:bg-white/10 transition-colors"
+              className="flex items-center justify-center p-2 rounded-full glass-card hover:bg-white/10 transition-colors relative"
+              aria-label="Ver Carrito"
             >
-              <span className="text-xs font-bold uppercase tracking-wider text-white">
-                Carrito
-              </span>
+              <ShoppingBag size={20} className="text-white" />
               {cart.length > 0 && (
-                <span className="bg-[var(--prism-accent)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                <span className="absolute -top-1 -right-1 bg-[var(--prism-accent)] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(var(--prism-accent-rgb),0.5)]">
                   {cart.length}
                 </span>
               )}

@@ -10,6 +10,7 @@ import {
   Zap,
   Activity,
   Trophy,
+  ShoppingBag,
 } from "lucide-react";
 import {
   CatalogControls,
@@ -189,11 +190,12 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
           catalog.showCart && (
             <button
               onClick={() => setIsCartOpen(true)}
-              className="hidden md:flex items-center gap-1 font-black italic uppercase tracking-tighter hover:text-[var(--velocity-primary)] transition-colors"
+              className="flex items-center justify-center p-2 font-black italic hover:text-(--velocity-primary) transition-colors relative"
+              aria-label="Ver Carrito"
             >
-              CART
+              <ShoppingBag size={22} className="velocity-skew" />
               {cart.length > 0 && (
-                <span className="ml-1 bg-[var(--velocity-primary)] text-white text-[10px] px-1.5 py-0.5 velocity-skew">
+                <span className="absolute -top-1 -right-1 bg-(--velocity-primary) text-white text-[9px] px-1 py-0.5 velocity-skew min-w-[18px] flex items-center justify-center">
                   <span className="block velocity-unskew">{cart.length}</span>
                 </span>
               )}
@@ -231,7 +233,7 @@ export function VelocityTemplate({ store, products, isPreview = false }) {
                   {store.name}
                 </h1>
                 {store.description && (
-                  <p className="text-lg md:text-xl text-slate-600 font-medium max-w-lg mx-auto md:mx-0 border-l-4 border-[var(--velocity-primary)] pl-4">
+                  <p className="text-lg md:text-xl text-slate-600 font-medium max-w-lg mx-auto md:mx-0 border-l-4 border-(--velocity-primary) pl-4">
                     {store.description}
                   </p>
                 )}

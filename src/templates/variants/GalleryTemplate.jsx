@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   ArrowRight,
   MessageCircle,
+  ShoppingBag,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -220,14 +221,12 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
             {catalog.showCart && (
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="hover:text-[var(--gallery-accent)] transition-colors relative"
+                className="hover:text-[var(--gallery-accent)] transition-colors relative p-2"
                 title="Ver Carrito"
               >
-                <span className="font-bold uppercase tracking-wider">
-                  CARRITO
-                </span>
+                <ShoppingBag size={20} />
                 {cart.length > 0 && (
-                  <span className="ml-1 text-[10px] align-top bg-stone-900 text-white px-1 py-0.5 rounded-full">
+                  <span className="absolute top-0 right-0 text-[9px] font-bold bg-stone-900 text-white px-1.5 py-0.5 rounded-full">
                     {cart.length}
                   </span>
                 )}
@@ -242,11 +241,12 @@ export function GalleryTemplate({ store, products, isPreview = false }) {
                 onClick={() => setIsCartOpen(true)}
                 className="relative p-2"
               >
-                <span className="sr-only">Carrito</span>
-                {/* Simple indicator */}
-                <div className="flex items-center gap-1 font-bold text-xs">
-                  CART {cart.length > 0 && `(${cart.length})`}
-                </div>
+                <ShoppingBag size={20} />
+                {cart.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-stone-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">
+                    {cart.length}
+                  </span>
+                )}
               </button>
             )}
             <button

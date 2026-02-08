@@ -9,6 +9,7 @@ import {
   SlidersHorizontal,
   Share2,
   MessageCircle,
+  ShoppingBag,
 } from "lucide-react";
 import {
   StoreNavbar,
@@ -212,14 +213,12 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
             {catalog.showCart && (
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="hover:text-[var(--ethereal-accent)] transition-colors relative"
+                className="hover:text-[var(--ethereal-accent)] transition-colors relative flex items-center gap-1"
                 aria-label="Cart"
               >
-                <span className="text-sm font-medium tracking-wide uppercase">
-                  CARRITO
-                </span>
+                <ShoppingBag size={20} strokeWidth={1} />
                 {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-3 bg-[var(--ethereal-accent)] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                  <span className="absolute -top-2 -right-3 bg-(--ethereal-accent) text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                     {cart.length}
                   </span>
                 )}
@@ -230,10 +229,12 @@ export function EtherealTemplate({ store, products, isPreview = false }) {
           <div className="lg:hidden flex gap-4">
             {catalog.showCart && (
               <button onClick={() => setIsCartOpen(true)} className="relative">
-                {/* Use a simple text or bag icon for mobile */}
-                <span className="text-sm font-serif italic">
-                  Bag ({cart.length})
-                </span>
+                <ShoppingBag size={20} strokeWidth={1} />
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-(--ethereal-accent) text-white text-[8px] font-bold px-1 py-0.5 rounded-full">
+                    {cart.length}
+                  </span>
+                )}
               </button>
             )}
             <button onClick={() => setIsMobileMenuOpen(true)}>

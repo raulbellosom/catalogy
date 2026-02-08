@@ -199,13 +199,13 @@ export function SketchyTemplate({ store, products, isPreview = false }) {
             {catalog.showCart && (
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="flex items-center gap-2 font-bold hover:underline decoration-2 underline-offset-4 relative"
+                className="flex items-center justify-center p-2 font-bold hover:underline decoration-2 underline-offset-4 relative"
                 style={{ color: primary }}
+                aria-label="Carrito"
               >
                 <ShoppingBag size={20} className="stroke-[3]" />
-                Carrito
                 {cart.length > 0 && (
-                  <span className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-black rounded-full h-5 w-5 flex items-center justify-center sketchy-border">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center sketchy-border">
                     {cart.length}
                   </span>
                 )}

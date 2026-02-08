@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Store as StoreIcon, ExternalLink, X, Search } from "lucide-react";
+import {
+  Store as StoreIcon,
+  ExternalLink,
+  X,
+  Search,
+  ShoppingBag,
+} from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import {
   CatalogControls,
@@ -181,13 +187,12 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
               {catalog.showCart && (
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="text-white hover:text-(--noir-accent) transition-colors relative"
+                  className="text-white hover:text-(--noir-accent) transition-colors relative flex items-center justify-center p-2"
+                  aria-label="Ver Carrito"
                 >
-                  <span className="font-bold tracking-widest text-xs">
-                    CARRITO
-                  </span>
+                  <ShoppingBag size={20} />
                   {cart.length > 0 && (
-                    <span className="absolute -top-3 -right-3 bg-(--noir-accent) text-white text-[9px] px-1.5 py-0.5 rounded-full">
+                    <span className="absolute top-0 right-0 bg-(--noir-accent) text-white text-[9px] px-1.5 py-0.5 rounded-full">
                       {cart.length}
                     </span>
                   )}

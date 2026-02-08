@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Share2,
   MessageCircle,
+  ShoppingBag,
 } from "lucide-react";
 import { getStoreLogoUrl } from "@/shared/services/storeService";
 import { getProductImageUrl } from "@/shared/services/productService";
@@ -227,17 +228,15 @@ export function NatureTemplate({ store, products, isPreview = false }) {
             catalog.showCart && (
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-[#1a2e1a] hover:text-(--nature-primary) transition-colors"
+                className="relative p-2 text-[#1a2e1a] hover:text-(--nature-primary) transition-colors flex items-center justify-center"
                 title="Carrito"
               >
-                <div className="flex items-center gap-1 font-bold">
-                  CARRITO
-                  {cart.length > 0 && (
-                    <span className="bg-(--nature-primary) text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                      {cart.length}
-                    </span>
-                  )}
-                </div>
+                <ShoppingBag size={20} />
+                {cart.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-(--nature-primary) text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white shadow-sm">
+                    {cart.length}
+                  </span>
+                )}
               </button>
             )
           }
