@@ -35,8 +35,10 @@ export function SettingsSectionLayout({
             onSelect={onSectionSelect}
           />
         </div>
-        {sidebarFooter && <div className="mt-4">{sidebarFooter}</div>}
       </aside>
+
+      {/* Footer para botones fijos (desktop y mobile) u otros elementos */}
+      {sidebarFooter}
 
       {/* Contenido principal */}
       <div className="flex-1 min-w-0">
