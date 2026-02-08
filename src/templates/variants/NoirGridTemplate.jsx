@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Store as StoreIcon,
@@ -171,35 +171,32 @@ export function NoirGridTemplate({ store, products, isPreview = false }) {
         }
         onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
         actions={
-          store?.paymentLink &&
-          catalog.showPaymentButton && (
-            <div className="hidden md:flex items-center gap-4">
-              {store?.paymentLink && catalog.showPaymentButton && (
-                <a
-                  href={store.paymentLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-2 bg-(--noir-strong) text-black rounded-full text-sm font-bold tracking-wide hover:bg-(--noir-accent) transition-colors"
-                >
-                  PAGAR
-                </a>
-              )}
-              {catalog.showCart && (
-                <button
-                  onClick={() => setIsCartOpen(true)}
-                  className="text-white hover:text-(--noir-accent) transition-colors relative flex items-center justify-center p-2"
-                  aria-label="Ver Carrito"
-                >
-                  <ShoppingBag size={20} />
-                  {cart.length > 0 && (
-                    <span className="absolute top-0 right-0 bg-(--noir-accent) text-white text-[9px] px-1.5 py-0.5 rounded-full">
-                      {cart.length}
-                    </span>
-                  )}
-                </button>
-              )}
-            </div>
-          )
+          <div className="flex items-center gap-4">
+            {store?.paymentLink && catalog.showPaymentButton && (
+              <a
+                href={store.paymentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden md:inline-flex px-6 py-2 bg-(--noir-strong) text-black rounded-full text-sm font-bold tracking-wide hover:bg-(--noir-accent) transition-colors"
+              >
+                PAGAR
+              </a>
+            )}
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="text-white hover:text-(--noir-accent) transition-colors relative flex items-center justify-center p-2"
+                aria-label="Ver Carrito"
+              >
+                <ShoppingBag size={20} />
+                {cart.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-(--noir-accent) text-white text-[9px] px-1.5 py-0.5 rounded-full">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
         }
       />
 

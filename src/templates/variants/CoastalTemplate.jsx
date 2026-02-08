@@ -468,17 +468,33 @@ export function CoastalTemplate({ store, products, isPreview = false }) {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 !text-slate-600 hover:text-(--coastal-primary) rounded-xl hover:bg-white/50 transition-colors"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
+          {/* Mobile Actions */}
+          <div className="md:hidden flex items-center gap-2">
+            {catalog.showCart && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 text-slate-800 hover:text-(--coastal-primary) transition-colors"
+                title="Ver carrito"
+              >
+                <ShoppingBag className="w-6 h-6" />
+                {cart.length > 0 && (
+                  <span className="absolute top-0 right-0 bg-(--coastal-primary) text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
             )}
-          </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 !text-slate-600 hover:text-(--coastal-primary) rounded-xl hover:bg-white/50 transition-colors"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 
