@@ -11,7 +11,7 @@ import {
 import { Button } from "@/shared/ui/atoms/Button";
 import { ProductList } from "../../components/ProductList";
 import { ProductModal } from "../../components/ProductModal";
-import { useToast } from "@/shared/ui/molecules";
+import { Modal, ModalFooter, useToast } from "@/shared/ui/molecules";
 import {
   useDeleteProduct,
   useUpdateProduct,
@@ -62,6 +62,7 @@ export function ProductsTab({ store, products, isLoading }) {
   const [productActionLoadingId, setProductActionLoadingId] = useState(null);
   const [productActionType, setProductActionType] = useState(null); // 'delete' | 'toggle'
   const [localProducts, setLocalProducts] = useState([]);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   // Featured Products Logic
   const updateStore = useUpdateStore();
@@ -125,8 +126,10 @@ export function ProductsTab({ store, products, isLoading }) {
   // Sync localProducts with products prop
   useEffect(() => {
     if (products) {
-      setLocalProducts(products);
+      setLocalProducts(products.filter((product) => product.enabled !== false));
+      return;
     }
+    setLocalProducts([]);
   }, [products]);
 
   const filteredProducts = localProducts.filter((p) => {
@@ -161,17 +164,28 @@ export function ProductsTab({ store, products, isLoading }) {
     return sortedProducts.filter((p) => featuredProductIds.includes(p.$id));
   }, [sortedProducts, featuredProductIds]);
 
-  const handleProductDelete = async (product) => {
-    if (!confirm("¿Eliminar este producto?")) return;
-    setProductActionLoadingId(product.$id);
+  const handleProductDelete = (product) => {
+    setProductToDelete(product);
+  };
+
+  const handleConfirmProductDelete = async () => {
+    if (!productToDelete?.$id) return;
+
+    const deletingProduct = productToDelete;
+    setProductActionLoadingId(deletingProduct.$id);
     setProductActionType("delete");
+
     try {
-      await deleteProduct.mutateAsync(product.$id);
+      await deleteProduct.mutateAsync(deletingProduct.$id);
+      setLocalProducts((prev) =>
+        prev.filter((product) => product.$id !== deletingProduct.$id),
+      );
+      toast.success("Producto eliminado correctamente");
 
       // Remove from featured if present
-      if (featuredProductIds.includes(product.$id)) {
+      if (featuredProductIds.includes(deletingProduct.$id)) {
         const newFeaturedIds = featuredProductIds.filter(
-          (id) => id !== product.$id,
+          (id) => id !== deletingProduct.$id,
         );
         setFeaturedProductIds(newFeaturedIds);
 
@@ -193,9 +207,11 @@ export function ProductsTab({ store, products, isLoading }) {
           },
         });
       }
+
+      setProductToDelete(null);
     } catch (e) {
       console.error(e);
-      alert("Error al eliminar");
+      toast.error("No se pudo eliminar el producto");
     } finally {
       setProductActionLoadingId(null);
       setProductActionType(null);
@@ -476,6 +492,47 @@ export function ProductsTab({ store, products, isLoading }) {
         product={editingProduct}
         categories={categories}
       />
+
+      <Modal
+        open={Boolean(productToDelete)}
+        onClose={() => {
+          if (deleteProduct.isPending) return;
+          setProductToDelete(null);
+        }}
+        title="Confirmar eliminacion"
+        description="Esta accion ocultara el producto de tu catalogo."
+        size="sm"
+        dismissible={!deleteProduct.isPending}
+        footer={
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setProductToDelete(null)}
+              disabled={deleteProduct.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleConfirmProductDelete}
+              isLoading={deleteProduct.isPending}
+            >
+              Eliminar
+            </Button>
+          </ModalFooter>
+        }
+      >
+        <p className="text-sm text-(--color-fg-secondary)">
+          ¿Seguro que quieres eliminar{" "}
+          <span className="font-semibold text-(--color-fg)">
+            {productToDelete?.name}
+          </span>
+          ?
+        </p>
+      </Modal>
     </div>
   );
 }
+
